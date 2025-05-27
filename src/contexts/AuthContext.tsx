@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useState, ReactNode } from 'react';
-import { setCookie } from 'nookies';
+import { createContext, useState, ReactNode, useEffect } from 'react';
+import { setCookie, parseCookies } from 'nookies';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 
 interface User {
   email: string;
@@ -28,6 +29,7 @@ interface AuthContextData {
   user: User | null;
   error: AuthError | null;
   clearError: () => void;
+  isInitialized: boolean;
 }
 
 // Configurações 
@@ -49,6 +51,16 @@ const DASHBOARD_ROUTES = {
   ROLE_PROFESSOR: '/professor/home',
   ROLE_ALUNO: '/aluno/home',
 } as const;
+
+// ✅ Configurar Axios
+const api = axios.create({
+  baseURL: AUTH_CONFIG.baseURL,
+  timeout: AUTH_CONFIG.requestTimeout,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+});
 
 /**
  * Mapeia status HTTP para mensagens de erro 
@@ -77,26 +89,25 @@ function createError(type: AuthError['type'], message: string, statusCode?: numb
 }
 
 /**
- * Trata diferentes tipos de erro da requisição
+ * Trata diferentes tipos de erro do Axios
  */
-function handleRequestError(error: unknown, response?: Response): AuthError {
+function handleAxiosError(error: AxiosError): AuthError {
   // Erro de rede ou conexão
-  if (!response) {
-    const err = error as Error;
-    if (err.name === 'TypeError' || err.message.includes('fetch')) {
-      return createError('network', 'Erro de conexão. Verifique sua internet.');
-    }
-    if (err.message.includes('Timeout')) {
+  if (!error.response) {
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
       return createError('network', 'Conexão muito lenta. Tente novamente.');
+    }
+    if (error.code === 'ERR_NETWORK') {
+      return createError('network', 'Erro de conexão. Verifique sua internet.');
     }
     return createError('unknown', 'Erro inesperado. Tente novamente.');
   }
 
   // Erro baseado no status da resposta
-  const statusCode = response.status;
+  const statusCode = error.response.status;
   const message = getErrorMessage(statusCode);
   
-  // Categorizar tipos de erro mais especificamente
+  // Categorizar tipos de erro
   if (statusCode === 400 || statusCode === 401 || statusCode === 404 || statusCode === 422) {
     return createError('unauthorized', message, statusCode);
   }
@@ -113,45 +124,10 @@ function handleRequestError(error: unknown, response?: Response): AuthError {
 }
 
 /**
- * Faz requisição HTTP com timeout personalizado
- */
-async function makeRequest(endpoint: string, credentials: LoginCredentials): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), AUTH_CONFIG.requestTimeout);
-
-  try {
-    const response = await fetch(`${AUTH_CONFIG.baseURL}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ 
-        email: credentials.email, 
-        senha: credentials.password 
-      }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    
-    if ((error as Error).name === 'AbortError') {
-      throw new Error('Timeout: A requisição demorou muito para responder');
-    }
-    
-    throw error;
-  }
-}
-
-/**
  * Extrai informações do token JWT
  */
 function decodeUserToken(token: string): User {
   try {
-    // Definir interface para o payload do token
     interface TokenPayload {
       role?: string;
       email?: string;
@@ -164,6 +140,11 @@ function decodeUserToken(token: string): User {
     
     if (!payload.role) {
       throw new Error('Role não encontrada no token');
+    }
+    
+    // Verificar se token não expirou
+    if (payload.exp && payload.exp < Date.now() / 1000) {
+      throw new Error('Token expirado');
     }
     
     return {
@@ -213,6 +194,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // ✅ Inicializar estado do usuário ao carregar a página
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const cookies = parseCookies();
+        const token = cookies[AUTH_CONFIG.cookieName];
+        
+        if (token) {
+          const userData = decodeUserToken(token);
+          setUser(userData);
+        }
+      } catch (error) {
+        console.warn('Token inválido encontrado, removendo:', error);
+        removeToken();
+        setUser(null);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    initializeAuth();
+  }, []);
 
   /**
    * Remove erro atual
@@ -222,45 +227,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   /**
-   * Tenta login em múltiplos endpoints
+   * Tenta login em múltiplos endpoints com Axios
    */
-  async function attemptLogin(credentials: LoginCredentials): Promise<Response> {
+  async function attemptLogin(credentials: LoginCredentials): Promise<AxiosResponse> {
     let lastError: AuthError | null = null;
 
     for (const endpoint of LOGIN_ENDPOINTS) {
       try {
-        const response = await makeRequest(endpoint, credentials);
+        const response = await api.post(endpoint, {
+          email: credentials.email,
+          senha: credentials.password
+        });
         
-        if (response.ok) {
-          return response;
+        return response; // Sucesso!
+        
+      } catch (error) {
+        const axiosError = error as AxiosError;
+        const authError = handleAxiosError(axiosError);
+        
+        // Se é erro de credenciais, não tenta outros endpoints
+        if (axiosError.response?.status === 401 || 
+            axiosError.response?.status === 400 || 
+            axiosError.response?.status === 404) {
+          throw authError;
         }
         
-        // Se é erro de credenciais (401, 400, 404), não tenta outros endpoints
-        if (response.status === 401 || response.status === 400 || response.status === 404) {
-          throw handleRequestError(null, response);
-        }
-        
-        lastError = handleRequestError(null, response);
-      } catch (requestError) {
-        // Se é erro de credenciais, propaga imediatamente
-        if ((requestError as AuthError).type === 'unauthorized') {
-          throw requestError;
-        }
-        
-        lastError = handleRequestError(requestError);
+        lastError = authError;
         continue;
       }
     }
 
-    // Se chegou aqui, todos os endpoints falharam por motivos técnicos
+    // Se chegou aqui, todos os endpoints falharam
     throw lastError || createError('server', 'Nenhum servidor disponível no momento.');
   }
 
   /**
    * Processa resposta do login bem-sucedido
    */
-  async function processLoginResponse(response: Response): Promise<User> {
-    const data = await response.json();
+  function processLoginResponse(response: AxiosResponse): User {
+    const data = response.data;
     
     if (!data.token) {
       throw createError('server', 'Token não retornado pelo servidor');
@@ -281,7 +286,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await attemptLogin(credentials);
-      const userData = await processLoginResponse(response);
+      const userData = processLoginResponse(response);
       
       setUser(userData);
       
@@ -312,7 +317,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     user,
     error,
-    clearError
+    clearError,
+    isInitialized
   };
 
   return (
