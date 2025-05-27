@@ -90,9 +90,8 @@ function setupRequestInterceptor(instance: AxiosInstance): void {
 function setupResponseInterceptor(instance: AxiosInstance): void {
   instance.interceptors.response.use(
     (response: AxiosResponse) => {
-      // Log de sucesso (opcional)
       if (DEFAULT_CONFIG.enableLogging) {
-        console.log(`[API] ✅ ${response.status} ${response.config.url}`);
+        console.log(`[API] ${response.status} ${response.config.url}`);
       }
       return response;
     },
@@ -103,7 +102,6 @@ function setupResponseInterceptor(instance: AxiosInstance): void {
       if (error.response?.status === 401) {
         // Token expirado ou inválido
         if (typeof window !== 'undefined') {
-          // Só redireciona no client-side
           console.warn('[API] Token inválido, redirecionando para login...');
           window.location.href = '/login';
         }
@@ -121,7 +119,6 @@ export function createAPIClient(
   ctx?: GetServerSidePropsContext,
   config: APIClientConfig = {}
 ): AxiosInstance {
-  // Merge configurações
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
   
   // Criar instância do axios
