@@ -103,9 +103,9 @@ export function checkPasswordStrength(password: string) {
   return { score, level, isStrong: score >= 4 };
 }
 
-// Configurações de segurança
-export const securitySettings = {
-  maxLoginAttempts: 5,
-  lockoutTime: 15 * 60 * 1000, // 15 minutos em ms
-  sessionDuration: 24 * 60 * 60 * 1000, // 24 horas em ms
-} as const;
+// // Configurações de segurança
+// export const securitySettings = {
+//   maxLoginAttempts: 5,
+//   lockoutTime: 15 * 60 * 1000, // 15 minutos em ms
+//   sessionDuration: 24 * 60 * 60 * 1000, // 24 horas em ms
+// } as const;

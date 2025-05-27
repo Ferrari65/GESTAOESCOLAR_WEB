@@ -1,0 +1,11 @@
+{
+  "nome": "Flavin",
+  "logradouro": "Avenida dos Estudantes",
+  "bairro": "Centro Universitário",
+  "numero": 275,
+  "cidade": "Belo Horizonte",
+  "UF": "MG",
+  "email": "secretaria.academica1@ufem.edu.br",
+  "senha": "Secretaria@2025",
+  "telefone": "(31) 99876-5432"
+}

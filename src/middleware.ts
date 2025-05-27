@@ -28,7 +28,7 @@ export default async function middleware(request: NextRequest) {
       const role = payload.role as string;
 
       const dashboardMap = {
-        'ROLE_SECRETARIA': '/secretaria/home',
+        'ROLE_SECRETARIA': '/secretaria/home',  
         'ROLE_PROFESSOR': '/professor/home',
         'ROLE_ALUNO': '/aluno/home'
       };

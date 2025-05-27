@@ -5,15 +5,15 @@ import { AuthContext } from '@/contexts/AuthContext';
 import UFEMSidebar from '@/componentes/login/secretaria/home/UFEMSidebar';
 
 // Componente principal
-export default function SecretariaHomePage(): React.JSX.Element {
+export default function ProfessorHomePage(): React.JSX.Element {
   const { user, signOut } = useContext(AuthContext);
 
-  // // Handler para cliques no menu do sidebar
-  // const handleMenuClick = (itemId: string): void => {
-  //   console.log('Menu clicado:', itemId);
-  //   // Aqui você pode adicionar lógica de navegação
-  //   // Ex: router.push(`/secretaria/${itemId}`);
-  // };
+  // Handler para cliques no menu
+  const handleMenuClick = (itemId: string): void => {
+    console.log('Menu clicado:', itemId);
+    // Aqui você pode adicionar lógica de navegação
+    // Ex: router.push(`/professor/${itemId}`);
+  };
 
   // Handler para logout
   const handleSignOut = (): void => {
@@ -37,7 +37,7 @@ export default function SecretariaHomePage(): React.JSX.Element {
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar fixo à esquerda */}
       <UFEMSidebar 
-        // onMenuItemClick={handleMenuClick}
+        onMenuItemClick={handleMenuClick}
         className="fixed left-0 top-0 z-40"
       />
       
@@ -45,11 +45,11 @@ export default function SecretariaHomePage(): React.JSX.Element {
       <main className="flex-1 ml-64 p-8" role="main">
         <div className="max-w-6xl mx-auto">
           {/* Header Section */}
-          <header className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <header className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Dashboard - Secretaria
+                  Dashboard - Professor
                 </h1>
                 <p className="text-gray-600 mt-1">
                   Bem-vindo(a), <span className="font-medium">{user.email}</span>
@@ -67,18 +67,6 @@ export default function SecretariaHomePage(): React.JSX.Element {
               </button>
             </div>
           </header>
-
-          {/* Status Section */}
-          <section className="bg-white rounded-lg shadow-lg p-6 mb-8" aria-labelledby="status-heading">
-            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-              <h2 id="status-heading" className="font-semibold text-blue-900 mb-2">
-                🎉 Sistema Funcionando!
-              </h2>
-              <p className="text-blue-700">
-                Você está logado como <span className="font-medium">{user.role}</span>
-              </p>
-            </div>
-          </section>
         </div>
       </main>
     </div>
