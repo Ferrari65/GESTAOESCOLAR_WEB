@@ -5,17 +5,19 @@ import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginFormData } from '@/schemas/login/loginSchema';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage(): JSX.Element {
   const authContext = useContext(AuthContext);
+  const router = useRouter();
   
   if (!authContext) {
     throw new Error('LoginPage deve ser usado dentro de um AuthProvider');
   }
 
-  const { signIn, isLoading, error, clearError } = authContext;
+  const { signIn, isLoading, error, clearError, user, isInitialized } = authContext;
 
   const {
     register,
@@ -26,10 +28,36 @@ export default function LoginPage(): JSX.Element {
     mode: 'onBlur',
   });
 
+  useEffect(() => {
+    if (isInitialized && user) {
+      const dashboardRoutes = {
+        'ROLE_SECRETARIA': '/secretaria/home',
+        'ROLE_PROFESSOR': '/professor/home',
+        'ROLE_ALUNO': '/aluno/home',
+      };
+      
+      const redirectPath = dashboardRoutes[user.role as keyof typeof dashboardRoutes] || '/login';
+      router.push(redirectPath);
+    }
+  }, [isInitialized, user, router]);
+
   const handleSignIn: SubmitHandler<LoginFormData> = async (data: LoginFormData): Promise<void> => {
     clearError(); 
     await signIn(data);
   };
+
+  if (!isInitialized || user) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600 text-lg">
+            {!isInitialized ? 'Carregando...' : 'Redirecionando...'}
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -40,7 +68,7 @@ export default function LoginPage(): JSX.Element {
         backgroundPosition: 'center'
       }}
     >
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden w-full max-w-6xl mx-4 flex min-h-[600px]">
+      <div className="bg-white rounded-3xl shadow-xl overflow-hidden w-full max-w-4xl mx-4 flex min-h-[400px]">
         {/* Seção do Formulário */}
         <section 
           className="w-full lg:w-1/2 px-20 py-16 flex flex-col justify-between"
