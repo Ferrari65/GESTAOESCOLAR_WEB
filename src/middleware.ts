@@ -14,6 +14,11 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // NOVO: Redireciona a rota raiz para /login
+if (pathname === '/') {
+  return NextResponse.redirect(new URL('/login', request.url));
+}
+
   const token = request.cookies.get('nextauth.token')?.value;
 
   // Redireciona para login se não tiver token
@@ -67,5 +72,5 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/secretaria/:path*', '/professor/:path*', '/aluno/:path*', '/login'],
+  matcher: ['/','/secretaria/:path*', '/professor/:path*', '/aluno/:path*', '/login'],
 };

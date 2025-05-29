@@ -68,14 +68,14 @@ export default function LoginPage(): JSX.Element {
         backgroundPosition: 'center'
       }}
     >
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden w-full max-w-4xl mx-4 flex min-h-[400px]">
+      <div className="bg-white rounded-3xl shadow-xl overflow-hidden w-full max-w-4xl mx-4 flex min-h-[500px]">
         {/* Seção do Formulário */}
         <section 
-          className="w-full lg:w-1/2 px-20 py-16 flex flex-col justify-between"
+          className="w-full lg:w-1/2 px-16 py-16 flex flex-col justify-center relative min-h-[500px]"
           aria-labelledby="login-heading"
         >
           {/* Header com Logo */}
-          <header className="mb-8">
+          <header className="absolute top-8 left-8">
             <Image 
               src="/logo_principal.png" 
               alt="UFEM - Logotipo da instituição" 
@@ -87,45 +87,47 @@ export default function LoginPage(): JSX.Element {
           </header>
 
           {/* Conteúdo Principal */}
-          <div className="flex-1 flex flex-col justify-center max-w-sm">
+          <div className="flex flex-col justify-center max-w-sm mx-auto w-full mt-16">
             <h1 
               id="login-heading"
-              className="text-4xl font-bold text-gray-900 mb-16 text-center"
+              className="text-4xl font-sans text-gray-900 mb-2 text-center"
             >
               LOGIN
             </h1>
 
             {/* Exibir erro de autenticação */}
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+            <div className="min-h-[80px] mb-6">
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-800">Erro no login</p>
+                      <p className="text-sm text-red-600 mt-1">{error.message}</p>
+                    </div>
+                    <button
+                      onClick={clearError}
+                      className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors duration-200"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-red-800">Erro no login</p>
-                    <p className="text-sm text-red-600 mt-1">{error.message}</p>
-                  </div>
-                  <button
-                    onClick={clearError}
-                    className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Formulário */}
             <form onSubmit={handleSubmit(handleSignIn)} className="space-y-8" noValidate>
               {/* Campo Email */}
               <fieldset className="space-y-1">
                 <div className="relative">
-                  <label htmlFor="email" className="sr-only">Email</label>
+                  <label htmlFor="email" className="sr-only">Matrícula</label>
                   <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -134,7 +136,7 @@ export default function LoginPage(): JSX.Element {
                   <input
                     id="email"
                     type="email"
-                    placeholder="Digite seu email"
+                    placeholder="Digite sua matrícula"
                     autoComplete="username"
                     aria-invalid={!!errors.email}
                     aria-describedby={errors.email ? 'email-error' : undefined}
@@ -207,8 +209,6 @@ export default function LoginPage(): JSX.Element {
               </div>
             </form>
           </div>
-
-          <div aria-hidden="true" />
         </section>
 
         {/* Seção Ilustração */}

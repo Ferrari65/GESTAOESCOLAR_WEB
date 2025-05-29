@@ -2,7 +2,7 @@
 
 import React, { useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
-import UFEMSidebar from '@/componentes/login/secretaria/home/UFEMSidebar';
+import UFEMSidebar from '@/components/login/secretaria/home/UFEMSidebar';
 
 // Componente principal
 export default function ProfessorHomePage(): React.JSX.Element {
