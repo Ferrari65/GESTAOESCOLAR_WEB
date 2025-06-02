@@ -1,15 +1,9 @@
 import { z } from 'zod';
 
-/**
- * Lista básica de senhas comuns para rejeitar
- */
 const COMMON_PASSWORDS = [
   '123456', 'password', '123456789', '12345678', 'qwerty', 'abc123'
 ];
 
-/**
- * Validação básica de email
- */
 const emailValidator = z
   .string()
   .trim()
@@ -17,9 +11,6 @@ const emailValidator = z
   .email('Digite um email válido')
   .max(254, 'Email muito longo');
 
-/**
- * Validação básica de senha
- */
 const passwordValidator = z
   .string()
   .min(1, 'Senha é obrigatória')
@@ -30,9 +21,6 @@ const passwordValidator = z
     'Esta senha é muito comum, escolha outra'
   );
 
-/**
- * Validação mais rigorosa para desenvolvimento
- */
 const strictPasswordValidator = z
   .string()
   .min(1, 'Senha é obrigatória')
@@ -55,35 +43,27 @@ const strictPasswordValidator = z
     'Esta senha é muito comum, escolha outra'
   );
 
-// Schema para produção (mais flexível)
 export const productionSchema = z.object({
   email: emailValidator,
   password: passwordValidator,
 });
 
-// Schema para desenvolvimento (mais rigoroso)
+
 export const developmentSchema = z.object({
   email: emailValidator,
   password: strictPasswordValidator,
 });
 
-/**
- * Retorna o schema baseado no ambiente
- */
 export function getLoginSchema(isDevelopment = false) {
   return isDevelopment ? developmentSchema : productionSchema;
 }
 
-// Schema padrão
 export const loginSchema = productionSchema;
 
-// Tipos TypeScript
 export type LoginFormData = z.infer<typeof productionSchema>;
 export type LoginData = LoginFormData;
 
-/**
- * Função simples para analisar força da senha
- */
+
 export function checkPasswordStrength(password: string) {
   const checks = {
     length: password.length >= 8,
