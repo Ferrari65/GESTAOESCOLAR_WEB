@@ -2,56 +2,33 @@
 
 import React from 'react';
 
-interface WelcomeHeaderProps {
-  userRole: string;
-  onSignOut: () => void;
-  className?: string;
+interface HeaderProps {
+  title: string;
+  subtitle: string;
+  showStatus?: boolean;
 }
 
-const ROLE_TRANSLATIONS: Record<string, string> = {
-  'ROLE_SECRETARIA': 'Secretário escolar',
-  'ROLE_PROFESSOR': 'Professor',
-  'ROLE_ALUNO': 'Aluno',
-} as const;
-
-const WelcomeHeader: React.FC<WelcomeHeaderProps> = ({ 
-  userRole, 
-  onSignOut,
-  className = ''
-}) => {
-  const getUserRoleDisplay = (role: string): string => {
-    return ROLE_TRANSLATIONS[role] || role.replace('ROLE_', '').toLowerCase();
-  };
-
-  const handleSignOut = (): void => {
-    onSignOut();
-  };
-
+export default function Header({ title, subtitle, showStatus = false }: HeaderProps) {
   return (
-    <header className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 ${className}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-            Bem vindo de volta
-          </h1>
-          <p className="text-sm text-gray-500 font-medium">
-            {getUserRoleDisplay(userRole)}
-          </p>
-        </div>
-
-        <div className="flex-shrink-0 ml-4">
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-slate-600 rounded-lg hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
-            aria-label="Sair do sistema"
-          >
-            Sair
-          </button>
+    <div className="bg-white rounded-lg shadow-sm">
+      <div className="px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {title}
+            </h2>
+            <p className="text-gray-600 mt-1">
+              {subtitle}
+            </p>
+          </div>
+          {showStatus && (
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+              <span className="text-sm text-gray-600">Online</span>
+            </div>
+          )}
         </div>
       </div>
-    </header>
+    </div>
   );
-};
-
-export default WelcomeHeader;
+}

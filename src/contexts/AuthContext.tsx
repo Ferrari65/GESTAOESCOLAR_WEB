@@ -1,12 +1,17 @@
 'use client';
 
 import { createContext, useState, ReactNode, useEffect } from 'react';
-import { setCookie, parseCookies } from 'nookies';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
+interface LoginResponse {
+  id: string;
+  token: string;
+}
+
 interface User {
+  id: string;
   email: string;
   role: string;
 }
@@ -32,12 +37,9 @@ interface AuthContextData {
   isInitialized: boolean;
 }
 
-// Configurações 
 const AUTH_CONFIG = {
   baseURL: 'http://localhost:8080',
   requestTimeout: 10000,
-  cookieName: 'nextauth.token',
-  cookieMaxAge: 60 * 60 * 24, // 24 horas
 };
 
 const LOGIN_ENDPOINTS = [
@@ -52,7 +54,6 @@ const DASHBOARD_ROUTES = {
   ROLE_ALUNO: '/aluno/home',
 } as const;
 
-// ✅ Configurar Axios
 const api = axios.create({
   baseURL: AUTH_CONFIG.baseURL,
   timeout: AUTH_CONFIG.requestTimeout,
@@ -63,132 +64,93 @@ const api = axios.create({
 });
 
 /**
- * Mapeia status HTTP para mensagens de erro 
+ * Salvar token de forma simples e confiável
  */
-function getErrorMessage(status: number): string {
-  const errorMessages: Record<number, string> = {
-    400: 'Dados inválidos. Verifique email e senha.',
-    401: 'Email ou senha incorretos.',
-    403: 'Acesso negado. Sua conta pode estar bloqueada.',
-    404: 'Usuário não encontrado.',
-    422: 'Email ou senha em formato inválido.',
-    429: 'Muitas tentativas. Aguarde alguns minutos.',
-    500: 'Erro interno do servidor. Tente novamente em alguns minutos.',
-    502: 'Servidor indisponível. Tente novamente.',
-    503: 'Serviço temporariamente indisponível.',
-  };
-
-  return errorMessages[status] || `Erro inesperado (${status}). Tente novamente.`;
+function saveToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  
+  // Salvar no cookie
+  document.cookie = `nextauth.token=${token}; path=/; max-age=604800; SameSite=Lax`;
+  
+  // Salvar no localStorage como backup
+  localStorage.setItem('nextauth.token', token);
+  
+  console.log('🍪 Token salvo:', `${token.substring(0, 30)}...`);
 }
 
 /**
- * Cria objeto de erro padronizado
+ * Salvar ID da secretaria
  */
+function saveSecretariaId(id: string): void {
+  if (typeof window === 'undefined') return;
+  
+  localStorage.setItem('secretaria_id', id);
+  console.log('💾 ID da secretaria salvo:', id);
+}
+
+/**
+ * Obter token de forma confiável
+ */
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  // Tentar cookie primeiro
+  const match = document.cookie.match(/nextauth\.token=([^;]+)/);
+  if (match) return match[1];
+  
+  // Fallback para localStorage
+  return localStorage.getItem('nextauth.token');
+}
+
+/**
+ * Obter ID da secretaria
+ */
+function getSecretariaId(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  return localStorage.getItem('secretaria_id');
+}
+
+/**
+ * Remover token e dados
+ */
+function removeToken(): void {
+  if (typeof window === 'undefined') return;
+  
+  // Remover cookie
+  document.cookie = 'nextauth.token=; path=/; max-age=0';
+  
+  // Remover localStorage
+  localStorage.removeItem('nextauth.token');
+  localStorage.removeItem('secretaria_id');
+  
+  console.log('🗑️ Token e dados removidos');
+}
+
 function createError(type: AuthError['type'], message: string, statusCode?: number): AuthError {
   return { type, message, statusCode };
 }
 
-/**
- * Trata diferentes tipos de erro do Axios
- */
 function handleAxiosError(error: AxiosError): AuthError {
-  // Erro de rede ou conexão
-  if (!error.response) {
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return createError('network', 'Conexão muito lenta. Tente novamente.');
-    }
-    if (error.code === 'ERR_NETWORK') {
-      return createError('network', 'Erro de conexão. Verifique sua internet.');
-    }
-    return createError('unknown', 'Erro inesperado. Tente novamente.');
-  }
-
-  // Erro baseado no status da resposta
-  const statusCode = error.response.status;
-  const message = getErrorMessage(statusCode);
-  
-  // Categorizar tipos de erro
-  if (statusCode === 400 || statusCode === 401 || statusCode === 404 || statusCode === 422) {
-    return createError('unauthorized', message, statusCode);
+  if (error.response) {
+    const status = error.response.status;
+    const message = status === 401 ? 'Email ou senha incorretos.' : 'Erro no servidor.';
+    return createError('unauthorized', message);
   }
   
-  if (statusCode === 403) {
-    return createError('unauthorized', message, statusCode);
+  if (error.request) {
+    return createError('network', 'Erro de conexão. Verifique sua internet.');
   }
   
-  if (statusCode >= 500) {
-    return createError('server', message, statusCode);
-  }
-  
-  return createError('unknown', message, statusCode);
+  return createError('unknown', error.message);
 }
 
-/**
- * Extrai informações do token JWT
- */
-function decodeUserToken(token: string): User {
-  try {
-    interface TokenPayload {
-      role?: string;
-      email?: string;
-      sub?: string;
-      exp?: number;
-      iat?: number;
-    }
-    
-    const payload = jwtDecode<TokenPayload>(token);
-    
-    if (!payload.role) {
-      throw new Error('Role não encontrada no token');
-    }
-    
-    // Verificar se token não expirou
-    if (payload.exp && payload.exp < Date.now() / 1000) {
-      throw new Error('Token expirado');
-    }
-    
-    return {
-      email: payload.email || payload.sub || '',
-      role: payload.role
-    };
-  } catch {
-    throw new Error('Token inválido ou corrompido');
-  }
-}
-
-/**
- * Salva token de autenticação no cookie
- */
-function saveToken(token: string): void {
-  setCookie(null, AUTH_CONFIG.cookieName, token, {
-    maxAge: AUTH_CONFIG.cookieMaxAge,
-    path: '/',
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
-  });
-}
-
-/**
- * Remove token de autenticação
- */
-function removeToken(): void {
-  setCookie(null, AUTH_CONFIG.cookieName, '', { 
-    maxAge: -1, 
-    path: '/' 
-  });
-}
-
-/**
- * Determina rota de redirecionamento baseada na role do usuário
- */
 function getRedirectPath(role: string): string {
   return DASHBOARD_ROUTES[role as keyof typeof DASHBOARD_ROUTES] || '/login';
 }
 
-// Contexto de autenticação
 export const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
-// Provider do contexto
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -196,95 +158,148 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<AuthError | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // ✅ Inicializar estado do usuário ao carregar a página
+  // ✅ INICIALIZAR USUÁRIO COM ID CORRETO
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const cookies = parseCookies();
-        const token = cookies[AUTH_CONFIG.cookieName];
+        console.log('🎬 Inicializando autenticação...');
+        
+        const token = getToken();
+        
+        console.log('🔍 Token encontrado:', !!token);
         
         if (token) {
-          const userData = decodeUserToken(token);
-          setUser(userData);
+          const tokenPayload = jwtDecode<{
+            sub?: string;
+            email?: string;
+            role: string;
+            exp: number;
+          }>(token);
+
+          if (tokenPayload.role && tokenPayload.exp > Date.now() / 1000) {
+            // ✅ OBTER ID CORRETO BASEADO NA ROLE
+            let userId = '';
+            
+            if (tokenPayload.role === 'ROLE_SECRETARIA') {
+              // Para secretaria, usar o ID salvo no localStorage
+              userId = getSecretariaId() || tokenPayload.sub || '';
+              console.log('👥 Secretaria - ID obtido:', {
+                fromLocalStorage: getSecretariaId(),
+                fromToken: tokenPayload.sub,
+                final: userId
+              });
+            } else {
+              // Para outros roles, usar o sub do token
+              userId = tokenPayload.sub || '';
+              console.log('👤 Outro role - ID do token:', userId);
+            }
+
+            console.log('✅ Usuário autenticado:', {
+              role: tokenPayload.role,
+              email: tokenPayload.email,
+              id: userId
+            });
+
+            setUser({
+              email: tokenPayload.email || tokenPayload.sub || '',
+              role: tokenPayload.role,
+              id: userId
+            });
+          } else {
+            console.warn('⚠️ Token expirado ou inválido');
+            removeToken();
+          }
+        } else {
+          console.log('ℹ️ Nenhum token encontrado');
         }
       } catch (error) {
-        console.warn('Token inválido encontrado, removendo:', error);
+        console.error('❌ Erro na inicialização:', error);
         removeToken();
         setUser(null);
       } finally {
         setIsInitialized(true);
+        console.log('✅ Inicialização completa');
       }
     };
 
     initializeAuth();
   }, []);
 
-  /**
-   * Remove erro atual
-   */
   function clearError(): void {
     setError(null);
   }
 
-  /**
-   * Tenta login em múltiplos endpoints com Axios
-   */
   async function attemptLogin(credentials: LoginCredentials): Promise<AxiosResponse> {
-    let lastError: AuthError | null = null;
-
     for (const endpoint of LOGIN_ENDPOINTS) {
       try {
         const response = await api.post(endpoint, {
           email: credentials.email,
           senha: credentials.password
         });
-        
-        return response; // Sucesso!
-        
+        return response;
       } catch (error) {
         const axiosError = error as AxiosError;
-        const authError = handleAxiosError(axiosError);
-        
-        // Se é erro de credenciais, não tenta outros endpoints
-        if (axiosError.response?.status === 401 || 
-            axiosError.response?.status === 400 || 
-            axiosError.response?.status === 404) {
-          throw authError;
+        if (axiosError.response?.status === 401 || axiosError.response?.status === 400) {
+          throw handleAxiosError(axiosError);
         }
-        
-        lastError = authError;
         continue;
       }
     }
-
-    // Se chegou aqui, todos os endpoints falharam
-    throw lastError || createError('server', 'Nenhum servidor disponível no momento.');
+    throw createError('server', 'Nenhum servidor disponível.');
   }
 
-  /**
-   * Processa resposta do login bem-sucedido
-   */
   function processLoginResponse(response: AxiosResponse): User {
-    const data = response.data;
+    const data = response.data as LoginResponse;
     
-    if (!data.token) {
-      throw createError('server', 'Token não retornado pelo servidor');
+    console.log('📨 Resposta do login:', {
+      hasToken: !!data.token,
+      hasId: !!data.id,
+      id: data.id
+    });
+    
+    if (!data.token || !data.id) {
+      throw createError('server', 'Resposta inválida do servidor');
     }
 
-    const userData = decodeUserToken(data.token);
+    const tokenPayload = jwtDecode<{
+      sub?: string;
+      email?: string;
+      role: string;
+      exp: number;
+    }>(data.token);
+
+    if (!tokenPayload.role) {
+      throw new Error('Role não encontrada no token');
+    }
+
+    // ✅ SALVAR TOKEN E ID CORRETAMENTE
     saveToken(data.token);
     
-    return userData;
+    // ✅ SALVAR ID DA SECRETARIA SE FOR SECRETARIA
+    if (tokenPayload.role === 'ROLE_SECRETARIA') {
+      saveSecretariaId(data.id);
+    }
+
+    console.log('✅ Login processado:', {
+      role: tokenPayload.role,
+      email: tokenPayload.email,
+      id: data.id
+    });
+    
+    return {
+      email: tokenPayload.email || tokenPayload.sub || '',
+      role: tokenPayload.role,
+      id: data.id
+    };
   }
 
-  /**
-   * Realiza login do usuário
-   */
   async function signIn(credentials: LoginCredentials): Promise<void> {
     setIsLoading(true);
     setError(null);
 
     try {
+      removeToken();
+      
       const response = await attemptLogin(credentials);
       const userData = processLoginResponse(response);
       
@@ -294,16 +309,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push(redirectPath);
       
     } catch (authError) {
-      const errorToSet = authError as AuthError;
-      setError(errorToSet);
+      setError(authError as AuthError);
+      removeToken();
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   }
 
-  /**
-   * Realiza logout do usuário
-   */
   function signOut(): void {
     setUser(null);
     setError(null);
