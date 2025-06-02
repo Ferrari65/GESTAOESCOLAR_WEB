@@ -1,5 +1,3 @@
-// utils/validators.ts
-
 export const validateCPF = (cpf: string): boolean => {
   const cleanCPF = cpf.replace(/[^\d]/g, '');
   return cleanCPF.length === 11;
