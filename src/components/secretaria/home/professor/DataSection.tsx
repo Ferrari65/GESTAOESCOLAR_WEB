@@ -4,7 +4,7 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormInput } from '@/components/ui/FormInput';
 import { cpfValidation, phoneValidation, emailValidation } from '@/utils/validators';
-import type { ProfessorFormData } from '@/types/professor';
+import type { ProfessorFormData } from '@/types/secretariaTypes/cadastroprofessor/professor';
 
 interface PersonalDataSectionProps {
   form: UseFormReturn<ProfessorFormData>;

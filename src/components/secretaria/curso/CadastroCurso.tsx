@@ -1,15 +1,14 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
-import { useProfessorForm } from '@/hooks/secretaria/cadastroprofessor/useProfessorForm';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { SuccessMessage } from '@/components/ui/SuccessMessage';
-import { PersonalDataSection } from '@/components/professor/DataSection';
-import { AddressSection } from './AddressSection';
-import type { ProfessorFormProps } from '@/types/professor';
+import React from "react";
 
-export default function CadastroProfessor({ onSuccess, onCancel }: ProfessorFormProps) {
+import { useCursoForm } from "@/hooks/curso/useCursoForm";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { SuccessMessage } from "@/components/ui/SuccessMessage";
+import { CursoDataSection } from "./CursoDataSection";
+import type { CursoFormProps } from "@/types/secretariaTypes/cadastroCurso/curso";
+
+export default function CadastroCurso({ onSuccess, onCancel }: CursoFormProps) {
   const {
     form,
     onSubmit,
@@ -17,26 +16,21 @@ export default function CadastroProfessor({ onSuccess, onCancel }: ProfessorForm
     error,
     successMessage,
     clearMessages
-  } = useProfessorForm({ onSuccess });
+  } = useCursoForm({ onSuccess });
 
   return (
     <>
-      {/* Header */}
-      <header className="flex items-center mb-6">
-        <Image
-          src="/professor-icon.png"
-          alt="Ícone Professor"
-          width={100}
-          height={100}
-          className="mr-4"
-        />
+           <header className="flex items-center mb-6">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
         <h1 className="text-2xl font-semibold text-gray-800">
-          Cadastrar Novo Professor
+          Cadastrar Novo Curso
         </h1>
       </header>
-
-      {/* Mensagens */}
-      {successMessage && (
+     {successMessage && (
         <SuccessMessage 
           message={successMessage} 
           onClose={clearMessages}
@@ -51,12 +45,9 @@ export default function CadastroProfessor({ onSuccess, onCancel }: ProfessorForm
         />
       )}
 
-      {/* Formulário */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <PersonalDataSection form={form} />
-        <AddressSection form={form} />
-        
-        {/* Actions */}
+        <CursoDataSection form={form} />
+
         <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
           {onCancel && (
             <button

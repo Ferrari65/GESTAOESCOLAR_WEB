@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 // Tipos e interfaces
 interface MenuItem {
@@ -26,7 +26,7 @@ const SIDEBAR_COLORS = {
 
 const MENU_ITEMS: MenuItem[] = [
   {
-    id: 'cadastrar-aluno',
+    id: 'alunos',
     label: 'Cadastrar Aluno',
     path: '/secretaria/alunos',
     icon: (
@@ -36,13 +36,23 @@ const MENU_ITEMS: MenuItem[] = [
     )
   },
   {
-    id: 'professores',
+    id: 'home',
     label: 'Professores',
-    path: '/secretaria/home',
+    path: '/secretaria/professor/home',
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
       </svg>
+    )
+  },
+    {
+    id: 'curso',
+    label: 'Cursos',
+    path: '/secretaria/curso',
+    icon: (
+    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/>
+    </svg>
     )
   },
   {
@@ -77,23 +87,79 @@ const MENU_ITEMS: MenuItem[] = [
   }
 ];
 
+// Função para determinar item ativo baseado na URL
+const getActiveItemFromPath = (pathname: string): string => {
+  // Ordem importa - rotas mais específicas primeiro
+  const pathMappings = [
+    { path: '/secretaria/alunos', id: 'alunos' },
+    { path: '/secretaria/turmas', id: 'turmas' },
+    { path: '/secretaria/curso', id: 'curso' },
+    { path: '/secretaria/calendario', id: 'calendario' },
+    { path: '/secretaria/boletim', id: 'boletim' },
+    { path: '/secretaria/professor/home', id: 'home' },
+    { path: '/secretaria', id: 'home' }, // fallback para rota raiz
+  ];
+
+  const match = pathMappings.find(mapping => 
+    pathname.startsWith(mapping.path)
+  );
+  
+  return match?.id || 'home';
+};
+
+// Hook personalizado para gerenciar navegação do sidebar
+const useSidebarNavigation = (onMenuItemClick?: (itemId: string) => void) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  const [activeItem, setActiveItem] = useState<string>(() => 
+    getActiveItemFromPath(pathname)
+  );
+
+  // Sincronizar estado com mudanças de URL
+  useEffect(() => {
+    const newActiveItem = getActiveItemFromPath(pathname);
+    if (newActiveItem !== activeItem) {
+      setActiveItem(newActiveItem);
+    }
+  }, [pathname, activeItem]);
+
+  // Função de navegação com tratamento de erros
+  const navigate = async (itemId: string): Promise<void> => {
+    const selectedItem = MENU_ITEMS.find(item => item.id === itemId);
+    if (!selectedItem) {
+      console.warn(`Item de menu não encontrado: ${itemId}`);
+      return;
+    }
+
+    try {
+      // Atualiza estado imediatamente para feedback visual rápido
+      setActiveItem(itemId);
+      
+      // Navega para a rota
+      await router.push(selectedItem.path);
+      
+      // Chama callback se fornecido
+      onMenuItemClick?.(itemId);
+    } catch (error) {
+      console.error('Erro na navegação:', error);
+      // Reverte o estado se a navegação falhou
+      setActiveItem(getActiveItemFromPath(pathname));
+    }
+  };
+
+  return { activeItem, navigate };
+};
+
 // Componente Principal da Sidebar
 const UFEMSidebar: React.FC<SidebarProps> = ({ 
   className = '', 
   onMenuItemClick 
 }) => {
-  const router = useRouter();
-  const [activeItem, setActiveItem] = useState<string>('professores');
+  const { activeItem, navigate } = useSidebarNavigation(onMenuItemClick);
 
   const handleItemClick = (itemId: string): void => {
-    const selectedItem = MENU_ITEMS.find(item => item.id === itemId);
-    if (selectedItem) {
-      setActiveItem(itemId);
-      router.push(selectedItem.path);
-      if (onMenuItemClick) {
-        onMenuItemClick(itemId);
-      }
-    }
+    navigate(itemId);
   };
 
   return (
@@ -101,6 +167,7 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
       className={`w-60 min-h-screen text-white shadow-2xl ${className}`} 
       style={{ backgroundColor: SIDEBAR_COLORS.primary }}
     >
+      {/* Header com logo e título */}
       <div className="p-6" style={{ backgroundColor: SIDEBAR_COLORS.header }}>
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
@@ -126,6 +193,7 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
+      {/* Menu de navegação */}
       <nav className="mt-20 px-4">
         <ul className="space-y-1">
           {MENU_ITEMS.map((item) => (
@@ -140,7 +208,10 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
                 style={{
                   backgroundColor: activeItem === item.id ? SIDEBAR_COLORS.active : 'transparent'
                 }}
+                aria-current={activeItem === item.id ? 'page' : undefined}
+                title={`Navegar para ${item.label}`}
               >
+                {/* Ícone do item */}
                 <div className={`flex-shrink-0 mr-3 relative z-10 transition-colors duration-200 ${
                   activeItem === item.id 
                     ? 'text-cyan-400' 
@@ -149,14 +220,19 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
                   {item.icon}
                 </div>
                 
+                {/* Label do item */}
                 <span className={`font-medium text-sm relative z-10 transition-colors duration-200 ${
                   activeItem === item.id ? 'text-white' : 'group-hover:text-white'
                 }`}>
                   {item.label}
                 </span>
 
+                {/* Indicador visual para item ativo */}
                 {activeItem === item.id && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-cyan-400 rounded-full" />
+                  <div 
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-cyan-400 rounded-full"
+                    aria-hidden="true"
+                  />
                 )}
               </button>
             </li>
@@ -164,6 +240,7 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
         </ul>
       </nav>
 
+      {/* Footer informativo */}
       <div className="absolute bottom-4 left-4 right-4">
         <div className="text-xs text-blue-300 text-center">
           <p>Tela inicial secretaria</p>

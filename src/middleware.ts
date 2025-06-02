@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const TOKEN_COOKIE_NAME = 'nextauth.token';
 
 const ROLE_DASHBOARD_MAP = {
-  'ROLE_SECRETARIA': '/secretaria/home',
+  'ROLE_SECRETARIA': '/secretaria/alunos',
   'ROLE_PROFESSOR': '/professor/home',  
   'ROLE_ALUNO': '/aluno/home'
 } as const;

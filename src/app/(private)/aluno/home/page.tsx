@@ -2,7 +2,7 @@
 
 import React, { useContext, useMemo } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
-import UFEMSidebar from '@/components/login/secretaria/home/UFEMSidebar'
+import UFEMSidebar from '@/components/secretaria/home/UFEMSidebar'
 
 // Interfaces para tipagem
 interface StatCard {

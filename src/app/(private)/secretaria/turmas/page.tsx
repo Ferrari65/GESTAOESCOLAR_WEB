@@ -3,11 +3,11 @@
 import React, { useContext, useCallback } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useSecretariaData } from '@/hooks/secretaria/SecretariaData';
-import UFEMSidebar from '@/components/login/secretaria/home/UFEMSidebar';
-import CadastroProfessor from '@/components/professor/CadastroProfessor';
+import UFEMSidebar from '@/components/secretaria/home/UFEMSidebar';
+// import CadastroProfessor from '@/components/login/secretaria/professor/CadastroProfessor';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-
+import Header from '@/components/secretaria/header';
 export default function SecretariaHomePage(): React.JSX.Element {
   const { user, signOut } = useContext(AuthContext);
   const { secretariaData, loading, error } = useSecretariaData();
@@ -22,10 +22,9 @@ export default function SecretariaHomePage(): React.JSX.Element {
     }
   }, [signOut]);
 
-  const handleProfessorSuccess = useCallback(() => {
-    // Feedback visual de sucesso
-    console.log('Professor cadastrado com sucesso!');
-  }, []);
+//   const handleProfessorSuccess = useCallback(() => {
+//     console.log('Professor cadastrado com sucesso!');
+//   }, []); FUTURO CADASTRO ALUNO COMPONENT
 
   // Loading state
   if (loading || !user) {
@@ -57,34 +56,13 @@ export default function SecretariaHomePage(): React.JSX.Element {
       <main className="flex-1 ml-64 p-8" role="main">
         <div className="max-w-5xl mx-auto space-y-8">
           
-          {/* Header Section */}
-          <header className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Dashboard - Secretaria
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  Bem-vindo(a), <span className="font-medium">
-                    {secretariaData?.nome || 'Carregando...'}
-                  </span>
-                </p>
-                <p className="text-sm text-gray-500">
-                  Email: <span className="font-medium">
-                    {secretariaData?.email || user.email}
-                  </span>
-                </p>
-              </div>
-              
-              <button
-                onClick={handleSignOut}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                aria-label="Sair do sistema"
-              >
-                Sair
-              </button>
-            </div>
-          </header>
+          <Header 
+            title="Gerenciamento de Turmas"
+            subtitle="Bem-vindo(a),"
+            secretariaData={secretariaData}
+            user={user}
+            onSignOut={handleSignOut}
+          />
 
           {/* Área Principal - Cadastro de Professor */}
           <div className="bg-white rounded-lg shadow-sm">
@@ -92,10 +70,10 @@ export default function SecretariaHomePage(): React.JSX.Element {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
-                    Cadastro de Professores
+                    Cadastro de Turmas
                   </h2>
                   <p className="text-gray-600 mt-1">
-                    Adicione novos professores ao sistema acadêmico
+                    Adicione novas Turmas ao sistema acadêmico
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -106,7 +84,8 @@ export default function SecretariaHomePage(): React.JSX.Element {
             </div>
             
             <div className="p-6">
-              <CadastroProfessor onSuccess={handleProfessorSuccess} />
+              {/* <CadastroProfessor onSuccess={handleProfessorSuccess} /> */}
+              {/* futuro cadastro alunos */}
             </div>
           </div>
           

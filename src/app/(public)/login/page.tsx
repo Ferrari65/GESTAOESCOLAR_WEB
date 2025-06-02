@@ -31,7 +31,7 @@ export default function LoginPage(): JSX.Element {
   useEffect(() => {
     if (isInitialized && user) {
       const dashboardRoutes = {
-        'ROLE_SECRETARIA': '/secretaria/home',
+        'ROLE_SECRETARIA': '/secretaria/alunos',
         'ROLE_PROFESSOR': '/professor/home',
         'ROLE_ALUNO': '/aluno/home',
       };
