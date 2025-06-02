@@ -1,5 +1,3 @@
-// utils/dataTransformers.ts
-
 import type { ProfessorFormData, ProfessorDTO } from '@/types/secretariaTypes/cadastroprofessor/professor';
 
 export const cleanCPF = (cpf: string): string => {
