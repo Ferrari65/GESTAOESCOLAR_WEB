@@ -1,7 +1,7 @@
 import { NextConfig } from 'next';
 
 const config: NextConfig = {
-  // Performance
+
   reactStrictMode: true,
   swcMinify: true,
   
@@ -31,7 +31,6 @@ const config: NextConfig = {
     ];
   },
   
-  // Experimental features
   experimental: {
     optimizeCss: true,
   },
