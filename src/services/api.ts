@@ -82,36 +82,24 @@ function getRoleFromToken(token: string): string | null {
   }
 }
 
-/**
- * Limpa tokens 
- */
 function clearTokens(): void {
   if (ENV.isServer) return;
   
   try {
-    // Remove cookie com múltiplos paths para garantir
     const paths = ['/', '/secretaria', '/professor', '/aluno'];
     paths.forEach(path => {
       document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=${path}; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     });
     
-    // Remove localStorage
     localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
     localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
-    
-    // Remove sessionStorage se existir
+
     sessionStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
     
   } catch (error) {
     console.error('Erro crítico ao limpar tokens:', error);
   }
 }
-
-// ===== ERROR HANDLING MELHORADO =====
-
-/**
- * Classifica erro para tratamento inteligente
- */
 function classifyError(error: AxiosError): ApiErrorResponse {
   const status = error.response?.status;
   const data = error.response?.data as any;
@@ -125,7 +113,6 @@ function classifyError(error: AxiosError): ApiErrorResponse {
     };
   }
   
-  // Erro com resposta do servidor
   if (status) {
     const baseResponse = {
       status,
@@ -232,7 +219,7 @@ export function getAPIClient(): AxiosInstance {
   const api = axios.create({
     ...API_CONFIG,
     
-    validateStatus: (status) => status < 500, // Não rejeita 4xx automaticamente
+    validateStatus: (status) => status < 500, 
   });
 
   // ========================
