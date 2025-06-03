@@ -131,6 +131,47 @@ export const cursoResponseSchema = z.object({
   data_alteracao: z.string()
 });
 
+/**
+ * Schema para disciplina
+ */
+
+  export const disciplinaDTO = z.object({
+    nome: z.string().min(1, 'Nome é obrigatório'),
+    ementa: z.string().min(1, 'Ementa é obrigatória'),
+    cargaHoraria: z.number().int().positive().min(1, 'Carga horária é obrigatória'),
+    id_secretaria: z.string()
+  });
+
+  export const disciplinaResponse = z.object({
+  idDisciplina: z.string(),
+  nome: z.string(),
+  ementa: z.string(),
+  cargaHoraria: z.number().int().positive(),
+  idSecretaria: z.string(),
+  situacao: z.enum(['ATIVO', 'INATIVO']),
+});
+
+export const disciplinaFormSchema = z.object({
+  nome: z
+    .string()
+    .min(1, 'Nome é obrigatório')
+    .max(100, 'Nome deve ter no máximo 100 caracteres')
+    .trim(),
+
+  ementa: z
+    .string()
+    .min(1, 'Ementa é obrigatória')
+    .max(500, 'Ementa deve ter no máximo 500 caracteres'),
+
+  cargaHoraria: z
+    .number()
+    .int()
+    .positive()
+    .min(1, 'Carga horária é obrigatória')
+    .max(200, 'Carga horária deve ser no máximo 200 horas'),
+});
+
+
 // ===== TIPOS DERIVADOS =====
 
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -141,6 +182,10 @@ export type CursoFormData = z.infer<typeof cursoFormSchema>;
 export type CursoDTO = z.infer<typeof cursoDTOSchema>;
 export type CursoResponse = z.infer<typeof cursoResponseSchema>;
 
+export type DisciplinaFormData = z.infer<typeof disciplinaFormSchema>;
+export type DisciplinaDTO = z.infer<typeof disciplinaDTO>;
+export type DisciplinaResponse = z.infer<typeof disciplinaResponse>;
+
 // ===== FUNÇÕES DE VALIDAÇÃO =====
 
 
@@ -148,11 +193,17 @@ export const validateCursoForm = (data: unknown) => {
   return cursoFormSchema.safeParse(data);
 };
 
-
 export const validateCursoDTO = (data: unknown) => {
   return cursoDTOSchema.safeParse(data);
 };
 
+export const validateDisciplinaForm = (data: unknown) => {
+  return disciplinaFormSchema.safeParse(data);
+};
+
+export const validateDisciplinaDTO = (data: unknown) => {
+  return disciplinaDTO.safeParse(data);
+};
 
 export function checkPasswordStrength(password: string) {
   const checks = {

@@ -6,6 +6,7 @@ import type {
   CursoFormData, 
   CursoDTO 
 } from '@/schemas/secretaria/curso/cursoValidations';
+import { DisciplinaDTO, DisciplinaFormData } from '@/schemas';
 
 // ===== UTILITÁRIOS BASE
 
@@ -97,6 +98,23 @@ export const formDataToCursoDTO = (
     id_secretaria: secretariaId,
     situacao: 'ATIVO', 
     data_alteracao: generateDataAlteracao()
+  };
+
+
+  return dto;
+};
+
+export const formDataToDisciplinaDTO = (
+  data: DisciplinaFormData, 
+  secretariaId: string
+): DisciplinaDTO => {
+  
+
+  const dto: DisciplinaDTO = {
+    nome: data.nome.trim(),
+    ementa: data.ementa,
+    cargaHoraria: data.cargaHoraria,
+    id_secretaria: secretariaId
   };
 
 

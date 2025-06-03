@@ -15,6 +15,7 @@ export const useCursoAPI = (): UseCursoAPIReturn => {
     const createCurso = useCallback(async (data: CursoDTO): Promise<Curso> => {
         setLoading(true);
         setError(null);
+        
         try {
             const validation = validateCursoDTO(data);
             if (!validation.success) {
