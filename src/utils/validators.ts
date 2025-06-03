@@ -79,6 +79,18 @@ export const nameSchema = z
   .regex(/^[a-zA-ZÀ-ÿ\s]+$/, 'Nome deve conter apenas letras e espaços')
   .transform(val => val.trim());
 
+// SCHEMA PARA NÚMEROS QUE PERMANECEM COMO STRING
+export const numeroStringSchema = z
+  .string()
+  .min(1, 'Número é obrigatório')
+  .regex(/^\d+$/, 'Número deve conter apenas dígitos')
+  .refine(val => {
+    const num = parseInt(val, 10);
+    return num > 0 && num <= 99999;
+  }, 'Número deve ser entre 1 e 99999')
+  .transform(val => val.trim());
+
+// SCHEMA PARA NÚMEROS QUE VIRAM NUMBER (para outros usos)
 export const numberSchema = z
   .string()
   .min(1, 'Número é obrigatório')
@@ -113,7 +125,7 @@ export const sexoSchema = z
 export const enderecoSchema = z.object({
   logradouro: z.string().min(1, 'Logradouro é obrigatório').transform(val => val.trim()),
   bairro: z.string().min(1, 'Bairro é obrigatório').transform(val => val.trim()),
-  numero: numberSchema,
+  numero: numeroStringSchema, // <- MUDANÇA AQUI: usa o schema que mantém string
   cidade: z.string().min(1, 'Cidade é obrigatória').transform(val => val.trim()),
   uf: ufSchema
 });
@@ -192,7 +204,6 @@ export function validateSchema<T>(schema: z.ZodSchema<T>, data: unknown): {
   }
 }
 
-
 export const validateProfessorForm = (data: unknown) => {
   return validateSchema(professorFormSchema, data);
 };
@@ -204,3 +215,27 @@ export const validateProfessorDTO = (data: unknown) => {
 // ===== EXPORTS DE CONVENIÊNCIA =====
 
 export { validateCPF, validatePhone };
+
+// ===== CONSTANTES DE VALIDAÇÃO PARA REACT HOOK FORM =====
+
+export const cpfValidation = {
+  required: 'CPF é obrigatório',
+  validate: (value: string) => validateCPF(value) || 'CPF inválido'
+};
+
+export const phoneValidation = {
+  required: 'Telefone é obrigatório',
+  validate: (value: string) => validatePhone(value) || 'Telefone deve ter 10 ou 11 dígitos e ser válido'
+};
+
+export const emailValidation = {
+  required: 'E-mail é obrigatório',
+  pattern: {
+    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    message: 'E-mail inválido'
+  },
+  maxLength: {
+    value: 254,
+    message: 'E-mail muito longo'
+  }
+};

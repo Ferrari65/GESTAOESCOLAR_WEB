@@ -37,7 +37,7 @@ export const formDataToDTO = (
     numero: numeroInt,
     cidade: data.cidade.trim(),
     UF: data.uf.toUpperCase(),
-    sexo: data.sexo.toUpperCase(),
+    sexo: data.sexo.toUpperCase()as 'M' | 'F',
     telefone: telefoneLimpo,
     data_nasc: dataNasc,
     situacao: 'ATIVO' as const,
