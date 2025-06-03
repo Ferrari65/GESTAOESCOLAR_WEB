@@ -3,5 +3,5 @@ export {
   type ResetPasswordFormData
 } from '@/schemas';
 
-
-export type ResetPasswordData = ResetPasswordFormData;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ResetPasswordData = any;

@@ -29,11 +29,15 @@ export const useCursoAPI = (): UseCursoAPIReturn => {
             return response.data;
         } catch (err: unknown) {
 
+            
             const { message } = handleApiError(err, 'CreateCurso');
             
             let errorMessage = message;
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if ((err as any)?.response?.status === 400 && 
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 typeof (err as any)?.response?.data === 'string' && 
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (err as any)?.response?.data.toLowerCase().includes('curso já cadastrado')) {
                 errorMessage = 'Este curso já está cadastrado no sistema.';
             }
@@ -52,5 +56,3 @@ export const useCursoAPI = (): UseCursoAPIReturn => {
         clearError
     };
 };
-
-// ✅ REMOVIDA: Função getErrorMessage duplicada (agora usando handleApiError do api.ts)

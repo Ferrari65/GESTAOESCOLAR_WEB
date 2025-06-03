@@ -4,7 +4,6 @@ import React from 'react';
 
 interface User {
   email: string;
-  // outras propriedades do user se necessário
 }
 
 interface SecretariaData {
@@ -47,14 +46,15 @@ export default function Header({
             </span>
           </p>
         </div>
-        
+                
         {showSignOutButton && (
           <button
             onClick={onSignOut}
-            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="relative px-6 py-2 text-slate-600 font-medium transition-colors duration-300 group focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md"
             aria-label="Sair do sistema"
           >
-            Sair
+            <span className="relative z-10">Sair</span>
+            <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-slate-600 transition-all duration-300 group-hover:w-full"></div>
           </button>
         )}
       </div>

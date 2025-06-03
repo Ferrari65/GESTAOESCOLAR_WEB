@@ -35,12 +35,12 @@ export interface ProfessorFormData {
 
 export interface ProfessorDTO {
   nome: string;
-  CPF: string; // Backend espera maiúsculo
+  CPF: string; 
   logradouro: string;
   bairro: string;
-  numero: number; // Convertido de string para number
+  numero: number; 
   cidade: string;
-  UF: string; // Backend espera maiúsculo
+  UF: string; 
   email: string;
   senha: string;
   sexo: 'M' | 'F';

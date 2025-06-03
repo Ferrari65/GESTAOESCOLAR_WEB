@@ -68,10 +68,10 @@ export default function SecretariaHomePage(): React.JSX.Element {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
-                    Cadastro de Alunos
+                    Cadastro de Disciplina
                   </h2>
                   <p className="text-gray-600 mt-1">
-                    Adicione novos Alunos ao sistema acadêmico
+                    Adicione novas discilinas ao sistema acadêmico
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -82,8 +82,7 @@ export default function SecretariaHomePage(): React.JSX.Element {
             </div>
             
             <div className="p-6">
-              {/* <CadastroProfessor onSuccess={handleProfessorSuccess} /> */}
-              {/* futuro cadastro alunos */}
+              
             </div>
           </div>
           

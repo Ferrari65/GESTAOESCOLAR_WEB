@@ -106,13 +106,6 @@ export const cursoFormSchema = z.object({
 
   duracao: duracaoValidator,
     
-  turno: z
-    .string()
-    .min(1, 'Turno é obrigatório')
-    .refine((val) => 
-      val === 'DIURNO' || val === 'NOTURNO', 
-      'Turno deve ser DIURNO ou NOTURNO'
-    )
 });
 
 /**
@@ -122,7 +115,6 @@ export const cursoDTOSchema = z.object({
   nome: z.string().min(1).max(100),
   duracao: z.number().int().positive().max(60),  
   id_secretaria: z.string().min(1, 'ID da secretaria é obrigatório'),
-  turno: z.string().min(1),
   situacao: z.string().default('ATIVO'),
   data_alteracao: z.string()
 });
@@ -135,7 +127,6 @@ export const cursoResponseSchema = z.object({
   nome: z.string(),
   duracao: z.number(),  
   id_secretaria: z.string(), 
-  turno: z.string(), 
   situacao: z.string(), 
   data_alteracao: z.string()
 });

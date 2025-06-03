@@ -26,8 +26,10 @@ export const useCursosList = (): UseCursosListReturn => {
       
       const api = getAPIClient();
       const response = await api.get(`/curso/${user.id}/secretaria`);
+    
       
       setCursos(response.data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
 
       const { message } = handleApiError(err, 'FetchCursos');
@@ -51,6 +53,7 @@ export const useCursosList = (): UseCursosListReturn => {
       await api.delete(`/curso/${cursoId}`);
 
       setCursos(prev => prev.filter(curso => curso.id_curso !== cursoId));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const { message } = handleApiError(err, 'DeleteCurso');
       throw new Error(message);
@@ -69,5 +72,3 @@ export const useCursosList = (): UseCursosListReturn => {
     deleteCurso
   };
 };
-
-// ✅ REMOVIDA: Função getErrorMessage duplicada (agora usando handleApiError do api.ts)

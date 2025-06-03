@@ -127,7 +127,7 @@ export default function LoginPage(): JSX.Element {
               {/* Campo Email */}
               <fieldset className="space-y-1">
                 <div className="relative">
-                  <label htmlFor="email" className="sr-only">Matrícula</label>
+                  <label htmlFor="email" className="sr-only">Email</label>
                   <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -136,7 +136,7 @@ export default function LoginPage(): JSX.Element {
                   <input
                     id="email"
                     type="email"
-                    placeholder="Digite sua matrícula"
+                    placeholder="Digite seu email"
                     autoComplete="username"
                     aria-invalid={!!errors.email}
                     aria-describedby={errors.email ? 'email-error' : undefined}

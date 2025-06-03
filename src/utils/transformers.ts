@@ -95,7 +95,6 @@ export const formDataToCursoDTO = (
     nome: data.nome.trim(),
     duracao: duracao, 
     id_secretaria: secretariaId,
-    turno: data.turno, 
     situacao: 'ATIVO', 
     data_alteracao: generateDataAlteracao()
   };
@@ -105,17 +104,16 @@ export const formDataToCursoDTO = (
 };
 
 export const validateCursoFormData = (data: unknown): string[] => {
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cursoData = data as any;
   const errors: string[] = [];
 
   if (!cursoData?.nome?.trim()) errors.push('Nome do curso é obrigatório');
   if (!cursoData?.duracao) errors.push('Duração é obrigatória');
-  if (!cursoData?.turno) errors.push('Turno é obrigatório');
 
   return errors;
 };
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const formatZodErrors = (errors: any[]): Record<string, string> => {
   const formatted: Record<string, string> = {};
   
@@ -149,6 +147,5 @@ export const cursoDtoToFormData = (dto: CursoDTO): Partial<CursoFormData> => {
   return {
     nome: dto.nome,
     duracao: dto.duracao.toString(),
-    turno: dto.turno
   };
 };

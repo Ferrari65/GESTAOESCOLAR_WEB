@@ -24,7 +24,7 @@ export default function ListarCursos() {
         const response = await api.get(`/curso/${user.id}/secretaria`);
         
         setCursos(response.data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError(getErrorMessage(err));
       } finally {
         setLoading(false);
@@ -34,6 +34,7 @@ export default function ListarCursos() {
     fetchCursos();
   }, [user?.id]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getErrorMessage = (err: any): string => {
     if (err.response) {
       const { status, data } = err.response;
@@ -120,43 +121,35 @@ export default function ListarCursos() {
                   Duração
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Turno
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {cursos.map((curso) => (
-                <tr key={curso.id_curso} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{curso.nome}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{curso.duracao} meses</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      curso.turno === 'DIURNO' 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {curso.turno}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      curso.situacao === 'ATIVO' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {curso.situacao}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                {cursos.map((curso, index) => (
+                  <tr 
+                    key={curso.id_curso || `curso-${index}`} 
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{curso.nome}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{curso.duracao} meses</div>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        curso.situacao === 'ATIVO' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {curso.situacao}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
           </table>
         </div>
       </div>

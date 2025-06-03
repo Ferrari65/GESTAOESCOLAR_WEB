@@ -56,6 +56,16 @@ const MENU_ITEMS: MenuItem[] = [
     )
   },
   {
+    id: 'disciplina',
+    label: 'Disciplina',
+    path: '/secretaria/disciplina',
+    icon: (
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+      </svg>
+    )
+  },
+  {
     id: 'turmas',
     label: 'Turmas',
     path: '/secretaria/turmas',
@@ -87,17 +97,17 @@ const MENU_ITEMS: MenuItem[] = [
   }
 ];
 
-// Função para determinar item ativo baseado na URL
 const getActiveItemFromPath = (pathname: string): string => {
-  // Ordem importa - rotas mais específicas primeiro
+
   const pathMappings = [
     { path: '/secretaria/alunos', id: 'alunos' },
     { path: '/secretaria/turmas', id: 'turmas' },
     { path: '/secretaria/curso', id: 'curso' },
+    { path: '/secretaria/disciplina', id: 'disciplina' },
     { path: '/secretaria/calendario', id: 'calendario' },
     { path: '/secretaria/boletim', id: 'boletim' },
     { path: '/secretaria/professor/home', id: 'home' },
-    { path: '/secretaria', id: 'home' }, // fallback para rota raiz
+    { path: '/secretaria', id: 'home' }, 
   ];
 
   const match = pathMappings.find(mapping => 
@@ -107,7 +117,7 @@ const getActiveItemFromPath = (pathname: string): string => {
   return match?.id || 'home';
 };
 
-// Hook personalizado para gerenciar navegação do sidebar
+
 const useSidebarNavigation = (onMenuItemClick?: (itemId: string) => void) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -116,7 +126,6 @@ const useSidebarNavigation = (onMenuItemClick?: (itemId: string) => void) => {
     getActiveItemFromPath(pathname)
   );
 
-  // Sincronizar estado com mudanças de URL
   useEffect(() => {
     const newActiveItem = getActiveItemFromPath(pathname);
     if (newActiveItem !== activeItem) {
@@ -124,7 +133,6 @@ const useSidebarNavigation = (onMenuItemClick?: (itemId: string) => void) => {
     }
   }, [pathname, activeItem]);
 
-  // Função de navegação com tratamento de erros
   const navigate = async (itemId: string): Promise<void> => {
     const selectedItem = MENU_ITEMS.find(item => item.id === itemId);
     if (!selectedItem) {
@@ -133,17 +141,14 @@ const useSidebarNavigation = (onMenuItemClick?: (itemId: string) => void) => {
     }
 
     try {
-      // Atualiza estado imediatamente para feedback visual rápido
       setActiveItem(itemId);
-      
-      // Navega para a rota
+
       await router.push(selectedItem.path);
       
-      // Chama callback se fornecido
       onMenuItemClick?.(itemId);
     } catch (error) {
       console.error('Erro na navegação:', error);
-      // Reverte o estado se a navegação falhou
+  
       setActiveItem(getActiveItemFromPath(pathname));
     }
   };
@@ -170,13 +175,12 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
       {/* Header com logo e título */}
       <div className="p-6" style={{ backgroundColor: SIDEBAR_COLORS.header }}>
         <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
+        <div className="flex-shrink-0 w-12 h-12 relative">
             <Image 
               src="/image.png" 
-              alt="UFEM - Logotipo da instituição" 
-              width={48} 
-              height={48}
+              fill 
               className="object-contain"
+              alt="UFEM - Logotipo da instituição"
               priority
             />
           </div>

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useCursoAPI } from './useCursoAPI';
-import { formDataToCursoDTO } from '@/utils/transformers'; // ✅ IMPORT UNIFICADO
+import { formDataToCursoDTO } from '@/utils/transformers'; 
 import { cursoFormSchema } from '@/schemas/secretaria/curso/cursoValidations';
 import type { UseCursoFormReturn, CursoFormData } from '@/types/secretariaTypes/cadastroCurso/curso';
 
@@ -22,7 +22,6 @@ export const useCursoForm = ({ onSuccess }: UseCursoFormOptions = {}): UseCursoF
     defaultValues: {
       nome: '',
       duracao: '',
-      turno: 'DIURNO'
     }
   });
 

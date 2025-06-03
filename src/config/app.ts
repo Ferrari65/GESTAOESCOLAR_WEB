@@ -28,7 +28,7 @@ export const AUTH_CONFIG = {
   ],
   
   dashboardRoutes: {
-    ROLE_SECRETARIA: '/secretaria/home',  
+    ROLE_SECRETARIA: '/secretaria/alunos',  
     ROLE_PROFESSOR: '/professor/home',
     ROLE_ALUNO: '/aluno/home',
   }
@@ -37,10 +37,11 @@ export const AUTH_CONFIG = {
 // ========================
 // MIDDLEWARE CONFIG - SIMPLIFICADO
 // ========================
+
+
 export const MIDDLEWARE_CONFIG = {
   publicPaths: ['/login'],
-  
-  // mesmas rotas do AUTH_CONFIG
+
   protectedRoutes: {
     '/secretaria': 'ROLE_SECRETARIA',
     '/professor': 'ROLE_PROFESSOR', 
@@ -60,8 +61,7 @@ export const MIDDLEWARE_CONFIG = {
 export const SCHEMA_PATHS = {
 
   curso: '@/schemas/secretaria/curso/cursoValidations',
-  professor: '@/schemas/secretaria/professor/professorValidations', // ✅ Sugestão
-  aluno: '@/schemas/secretaria/aluno/alunoValidations',
+  professor: '@/schemas/secretaria/professor/professorValidations', 
 } as const;
 
 // ========================
@@ -110,7 +110,7 @@ export function getDashboardRoute(role: string): string {
 export function isDev(): boolean {
   return ENV.isDevelopment;
 }
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function devLog(message: string, data?: any): void {
   if (ENV.isDevelopment) {
     console.log(message, data || '');
