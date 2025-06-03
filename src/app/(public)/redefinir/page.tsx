@@ -6,24 +6,23 @@ import Image from "next/image";
 import { User, Lock } from "lucide-react";
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { resetPasswordSchema, ResetPasswordData } from '@/schemas/redefinirsenha/page';
+import { resetPasswordSchema, type ResetPasswordFormData } from '@/schemas/redefinirsenha/page'; 
 
 export default function ResetPasswordPage() {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ResetPasswordData>({
+  } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  const handleResetPassword: SubmitHandler<ResetPasswordData> = async (data: ResetPasswordData): Promise<void> => {
+  const handleResetPassword: SubmitHandler<ResetPasswordFormData> = async (data: ResetPasswordFormData): Promise<void> => {
     try {
-      console.log('Reset password data:', data);
-      // Aqui você implementa a lógica de redefinir senha
-      // Exemplo: await resetPassword(data);
+
     } catch (error) {
-      console.error('Erro ao redefinir senha:', error);
+
+      console.error(' Erro ao redefinir senha:', error);
     }
   };
 
@@ -61,7 +60,7 @@ export default function ResetPasswordPage() {
         </h1>
 
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit(handleResetPassword)} className="space-y-8">
           {/* Email */}
           <div className="space-y-1">
             <div className="relative">
@@ -75,10 +74,16 @@ export default function ResetPasswordPage() {
                 id="email"
                 type="email"
                 placeholder="Digite seu email"
-                required
+                {...register('email')}
+                aria-invalid={!!errors.email}
                 className="w-full pl-8 pr-4 py-4 border-0 border-b border-gray-300 focus:border-gray-400 outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400 bg-transparent text-base"
               />
             </div>
+            {errors.email && (
+              <div className="text-sm text-red-500 ml-1" role="alert">
+                {errors.email.message}
+              </div>
+            )}
           </div>
 
           {/* Nova Senha */}
@@ -87,17 +92,23 @@ export default function ResetPasswordPage() {
               <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-gray-400 ml-1" />
               </div>
-              <label htmlFor="new-password" className="sr-only">
+              <label htmlFor="password" className="sr-only">
                 Digite nova senha
               </label>
               <input
-                id="new-password"
+                id="password"
                 type="password"
                 placeholder="Digite nova senha"
-                required
+                {...register('password')}
+                aria-invalid={!!errors.password}
                 className="w-full pl-8 pr-4 py-4 border-0 border-b border-gray-300 focus:border-gray-400 outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400 bg-transparent text-base"
               />
             </div>
+            {errors.password && (
+              <div className="text-sm text-red-500 ml-1" role="alert">
+                {errors.password.message}
+              </div>
+            )}
           </div>
 
           {/* Confirmar Senha */}
@@ -106,35 +117,42 @@ export default function ResetPasswordPage() {
               <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-gray-400 ml-1" />
               </div>
-              <label htmlFor="confirm-password" className="sr-only">
+              <label htmlFor="confirmPassword" className="sr-only">
                 Confirmar senha
               </label>
               <input
-                id="confirm-password"
+                id="confirmPassword"
                 type="password"
                 placeholder="Confirmar senha"
-                required
+                {...register('confirmPassword')}
+                aria-invalid={!!errors.confirmPassword}
                 className="w-full pl-8 pr-4 py-4 border-0 border-b border-gray-300 focus:border-gray-400 outline-none transition-colors duration-200 text-gray-700 placeholder-gray-400 bg-transparent text-base"
               />
             </div>
+            {errors.confirmPassword && (
+              <div className="text-sm text-red-500 ml-1" role="alert">
+                {errors.confirmPassword.message}
+              </div>
+            )}
           </div>
 
           {/* Botão Enviar */}
           <div className="pt-8">
             <button
               type="submit"
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium py-4 rounded-xl transition-colors duration-200 text-base"
+              disabled={isSubmitting}
+              className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-70 disabled:cursor-not-allowed text-gray-900 font-medium py-4 rounded-xl transition-colors duration-200 text-base focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2"
             >
-              Enviar
+              {isSubmitting ? 'Enviando...' : 'Enviar'}
             </button>
           </div>
         </form>
 
-        {/* Link Cancelar (se necessário) */}
+        {/* Link Cancelar */}
         <div className="text-center mt-6">
           <Link
             href="/login"
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            className="text-sm text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 rounded"
           >
             Voltar ao login
           </Link>

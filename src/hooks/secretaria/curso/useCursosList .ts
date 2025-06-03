@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
-import { getAPIClient } from '@/services/api';
+import { getAPIClient, handleApiError } from '@/services/api';
 import type { CursoResponse } from '@/schemas/secretaria/curso/cursoValidations';
 
 interface UseCursosListReturn {
@@ -29,7 +29,17 @@ export const useCursosList = (): UseCursosListReturn => {
       
       setCursos(response.data);
     } catch (err: any) {
-      setError(getErrorMessage(err));
+
+      const { message } = handleApiError(err, 'FetchCursos');
+      
+      let errorMessage = message;
+      if (err.response?.status === 404) {
+        errorMessage = 'Nenhum curso encontrado.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Sem permissão para visualizar cursos.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -39,11 +49,11 @@ export const useCursosList = (): UseCursosListReturn => {
     try {
       const api = getAPIClient();
       await api.delete(`/curso/${cursoId}`);
-      
-      // Remove o curso da lista local
+
       setCursos(prev => prev.filter(curso => curso.id_curso !== cursoId));
     } catch (err: any) {
-      throw new Error(getErrorMessage(err));
+      const { message } = handleApiError(err, 'DeleteCurso');
+      throw new Error(message);
     }
   }, []);
 
@@ -60,20 +70,4 @@ export const useCursosList = (): UseCursosListReturn => {
   };
 };
 
-const getErrorMessage = (err: any): string => {
-  if (err.response) {
-    const { status, data } = err.response;
-    
-    switch (status) {
-      case 401:
-        return 'Sessão expirada. Por favor, faça login novamente.';
-      case 403:
-        return 'Sem permissão para visualizar cursos.';
-      case 404:
-        return 'Nenhum curso encontrado.';
-      default:
-        return data?.message || 'Erro ao carregar cursos.';
-    }
-  }
-  return err.message || 'Erro de conexão';
-};
+// ✅ REMOVIDA: Função getErrorMessage duplicada (agora usando handleApiError do api.ts)

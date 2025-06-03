@@ -1,5 +1,3 @@
-// utils/cursoTransformers.ts
-
 import { 
   CursoFormData, 
   CursoDTO, 
@@ -9,7 +7,6 @@ import {
 
 const generateDataAlteracao = (): string => {
   const now = new Date();
-
   return now.toISOString().split('T')[0];
 };
 
@@ -35,10 +32,7 @@ export const formDataToCursoDTO = (
     data_alteracao: generateDataAlteracao()
   };
 
-  console.log(' Data de alteração gerada automaticamente:', dto.data_alteracao);
-  console.log(' DTO criado conforme estrutura do banco:', dto);
 
-  // Validar DTO antes de retornar
   const dtoValidation = validateCursoDTO(dto);
   if (!dtoValidation.success) {
     throw new Error('DTO inválido: ' + dtoValidation.error.issues[0].message);

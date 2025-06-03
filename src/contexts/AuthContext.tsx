@@ -38,7 +38,7 @@ interface AuthContextData {
 }
 
 const AUTH_CONFIG = {
-  baseURL: 'http://localhost:8080',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   requestTimeout: 10000,
 };
 
@@ -63,19 +63,23 @@ const api = axios.create({
   }
 });
 
-/**
- * Salvar token de forma simples e confiável
- */
+function devLog(message: string, data?: any): void {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(message, data || '');
+  }
+}
+
+
 function saveToken(token: string): void {
   if (typeof window === 'undefined') return;
   
   // Salvar no cookie
   document.cookie = `nextauth.token=${token}; path=/; max-age=604800; SameSite=Lax`;
   
-  // Salvar no localStorage como backup
+  // Salvar no localStorage como {backup}
   localStorage.setItem('nextauth.token', token);
   
-  console.log('🍪 Token salvo:', `${token.substring(0, 30)}...`);
+  devLog(' Token salvo:', `${token.substring(0, 30)}...`);
 }
 
 /**
@@ -85,16 +89,17 @@ function saveSecretariaId(id: string): void {
   if (typeof window === 'undefined') return;
   
   localStorage.setItem('secretaria_id', id);
-  console.log('💾 ID da secretaria salvo:', id);
+  devLog(' ID da secretaria salvo:', id);
 }
 
 /**
- * Obter token de forma confiável
+ * Obter token 
  */
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   
-  // Tentar cookie primeiro
+  //logica:
+  // Tentar buscar token primeiro pelo cookie caso nao escontre, executa
   const match = document.cookie.match(/nextauth\.token=([^;]+)/);
   if (match) return match[1];
   
@@ -102,29 +107,22 @@ function getToken(): string | null {
   return localStorage.getItem('nextauth.token');
 }
 
-/**
- * Obter ID da secretaria
- */
+
 function getSecretariaId(): string | null {
   if (typeof window === 'undefined') return null;
   
   return localStorage.getItem('secretaria_id');
 }
 
-/**
- * Remover token e dados
- */
 function removeToken(): void {
   if (typeof window === 'undefined') return;
   
-  // Remover cookie
   document.cookie = 'nextauth.token=; path=/; max-age=0';
   
-  // Remover localStorage
   localStorage.removeItem('nextauth.token');
   localStorage.removeItem('secretaria_id');
   
-  console.log('🗑️ Token e dados removidos');
+  devLog(' Token e dados removidos');
 }
 
 function createError(type: AuthError['type'], message: string, statusCode?: number): AuthError {
@@ -158,15 +156,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<AuthError | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // ✅ INICIALIZAR USUÁRIO COM ID CORRETO
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        console.log('🎬 Inicializando autenticação...');
+        devLog(' Inicializando autenticação...');
         
         const token = getToken();
         
-        console.log('🔍 Token encontrado:', !!token);
+        devLog(' Token encontrado:', !!token);
         
         if (token) {
           const tokenPayload = jwtDecode<{
@@ -177,13 +174,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }>(token);
 
           if (tokenPayload.role && tokenPayload.exp > Date.now() / 1000) {
-            // ✅ OBTER ID CORRETO BASEADO NA ROLE
+            // Obtendo ID por Role
             let userId = '';
             
             if (tokenPayload.role === 'ROLE_SECRETARIA') {
+
               // Para secretaria, usar o ID salvo no localStorage
               userId = getSecretariaId() || tokenPayload.sub || '';
-              console.log('👥 Secretaria - ID obtido:', {
+              devLog('👥 Secretaria - ID obtido:', {
                 fromLocalStorage: getSecretariaId(),
                 fromToken: tokenPayload.sub,
                 final: userId
@@ -191,10 +189,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
               // Para outros roles, usar o sub do token
               userId = tokenPayload.sub || '';
-              console.log('👤 Outro role - ID do token:', userId);
+              devLog(' Outro role - ID do token:', userId);
             }
 
-            console.log('✅ Usuário autenticado:', {
+            devLog(' Usuário autenticado:', {
               role: tokenPayload.role,
               email: tokenPayload.email,
               id: userId
@@ -206,19 +204,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               id: userId
             });
           } else {
-            console.warn('⚠️ Token expirado ou inválido');
+            devLog(' Token expirado ou inválido');
             removeToken();
           }
         } else {
-          console.log('ℹ️ Nenhum token encontrado');
+          devLog('ℹ Nenhum token encontrado');
         }
       } catch (error) {
-        console.error('❌ Erro na inicialização:', error);
+        devLog(' Erro na inicialização:', error);
         removeToken();
         setUser(null);
       } finally {
         setIsInitialized(true);
-        console.log('✅ Inicialização completa');
+        devLog(' Inicialização completa');
       }
     };
 
@@ -251,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function processLoginResponse(response: AxiosResponse): User {
     const data = response.data as LoginResponse;
     
-    console.log('📨 Resposta do login:', {
+    devLog(' Resposta do login:', {
       hasToken: !!data.token,
       hasId: !!data.id,
       id: data.id
@@ -272,15 +270,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Role não encontrada no token');
     }
 
-    // ✅ SALVAR TOKEN E ID CORRETAMENTE
     saveToken(data.token);
     
-    // ✅ SALVAR ID DA SECRETARIA SE FOR SECRETARIA
+  
     if (tokenPayload.role === 'ROLE_SECRETARIA') {
       saveSecretariaId(data.id);
     }
 
-    console.log('✅ Login processado:', {
+    devLog(' Login processado:', {
       role: tokenPayload.role,
       email: tokenPayload.email,
       id: data.id

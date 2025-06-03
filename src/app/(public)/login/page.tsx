@@ -4,7 +4,7 @@ import type { JSX } from 'react';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginFormData } from '@/schemas/login/loginSchema';
+import { loginSchema, type LoginFormData } from '@/schemas/login/loginSchema'; 
 import { useContext, useEffect } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';

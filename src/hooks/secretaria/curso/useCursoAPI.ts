@@ -1,5 +1,5 @@
-import {useState, useCallback} from 'react';
-import { getAPIClient } from '@/services/api';
+import { useState, useCallback } from 'react';
+import { getAPIClient, handleApiError } from '@/services/api';
 import { validateCursoDTO } from '@/schemas/secretaria/curso/cursoValidations';
 import type { Curso, UseCursoAPIReturn } from '@/types/secretariaTypes/cadastroCurso/curso';
 import type { CursoDTO } from '@/schemas/secretaria/curso/cursoValidations';
@@ -28,7 +28,16 @@ export const useCursoAPI = (): UseCursoAPIReturn => {
 
             return response.data;
         } catch (err: unknown) {
-            const errorMessage = getErrorMessage(err);
+
+            const { message } = handleApiError(err, 'CreateCurso');
+            
+            let errorMessage = message;
+            if ((err as any)?.response?.status === 400 && 
+                typeof (err as any)?.response?.data === 'string' && 
+                (err as any)?.response?.data.toLowerCase().includes('curso já cadastrado')) {
+                errorMessage = 'Este curso já está cadastrado no sistema.';
+            }
+            
             setError(errorMessage);
             throw new Error(errorMessage);
         } finally {
@@ -44,29 +53,4 @@ export const useCursoAPI = (): UseCursoAPIReturn => {
     };
 };
 
-const getErrorMessage = (err: any): string => {
-    if (err.response) {
-        const {status, data} = err.response;
-
-        switch (status) {
-            case 400:
-                if (typeof data === 'string' && data.toLowerCase().includes('curso já cadastrado')) {
-                    return 'Este curso já está cadastrado no sistema.';
-                }
-                return data?.message || 'Dados inválidos. Verifique os campos.';
-        
-            case 401:
-                return 'Sessão expirada. Por favor, faça login novamente.';
-        
-            case 403:
-                return 'Sem permissão para cadastrar curso.';
-        
-            case 404:
-                return 'Secretaria não encontrada.';
-        
-            default:
-                return data?.message || 'Erro desconhecido ao processar solicitação.';
-        }
-    }
-    return err.message || 'Erro de conexão';
-};
+// ✅ REMOVIDA: Função getErrorMessage duplicada (agora usando handleApiError do api.ts)
