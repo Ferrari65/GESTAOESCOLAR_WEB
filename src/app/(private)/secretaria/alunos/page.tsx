@@ -5,7 +5,7 @@ import { AuthContext } from '@/contexts/AuthContext';
 import { useSecretariaData } from '@/hooks/secretaria/SecretariaData';
 import UFEMSidebar from '@/components/secretaria/home/UFEMSidebar';
 // import CadastroProfessor from '@/components/login/secretaria/professor/CadastroProfessor';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import Header from '@/components/secretaria/header';
 

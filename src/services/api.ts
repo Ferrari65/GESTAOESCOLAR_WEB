@@ -1,173 +1,144 @@
-import axios, { AxiosHeaders, AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
-
-//  configuração
-const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
-  TIMEOUT: 10000,
-  TOKEN_COOKIE_NAME: 'nextauth.token',
-  TOKEN_STORAGE_KEY: 'nextauth.token',
-  LOGIN_PATH: '/login'
-} as const;
+import axios, { AxiosInstance, AxiosHeaders } from 'axios';
 
 /**
- *  configuração personalizada  cliente API
+ * Função para obter token de diferentes fontes
  */
-interface APIClientConfig {
-  baseURL?: string;
-  timeout?: number;
-  enableAutoRedirect?: boolean;
-}
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
 
-const isClientSide = (): boolean => typeof window !== 'undefined';
+  // Método 1: Cookies (mais seguro para tokens)
+  const cookieMatch = document.cookie.match(/(?:^|;\s*)nextauth\.token=([^;]+)/);
+  if (cookieMatch) {
+    try {
+      return decodeURIComponent(cookieMatch[1]);
+    } catch {
+      // Se falhar ao decodificar, continua para próximo método
+    }
+  }
 
-/**
- * Extrai token de autenticação dos cookies do navegador
- * @param cookieName - Nome do cookie que contém o token
- * @returns Token extraído ou null se não encontrado
- */
-function getTokenFromCookie(cookieName: string): string | null {
-  if (!isClientSide()) return null;
-  
-  const cookieMatch = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`));
-  return cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
-}
-
-/**
- * Recupera token de autenticação do localStorage
- * @param storageKey - Chave do localStorage
- * @returns Token do localStorage ou null se não encontrado/erro
- */
-function getTokenFromStorage(storageKey: string): string | null {
-  if (!isClientSide()) return null;
-  
+  // Método 2: sessionStorage (mais seguro que localStorage)
   try {
-    return localStorage.getItem(storageKey);
-  } catch (error) {
-    console.warn('Erro ao acessar localStorage:', error);
+    const sessionToken = sessionStorage.getItem('nextauth.token');
+    if (sessionToken) return sessionToken;
+  } catch {
+    // Ignora erro de acesso ao sessionStorage
+  }
+
+  // Método 3: localStorage como último recurso
+  try {
+    return localStorage.getItem('nextauth.token');
+  } catch {
     return null;
   }
 }
 
 /**
- * obter token de autenticação
- * Prioriza cookies sobre localStorage para melhor segurança
- * @returns Token de autenticação válido ou null
+ * Função para limpar tokens em caso de erro de autenticação
  */
-function getAuthToken(): string | null {
-   
-  const cookieToken = getTokenFromCookie(API_CONFIG.TOKEN_COOKIE_NAME);
-  if (cookieToken) {
-    return cookieToken;
+function clearTokens(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    // Remove do sessionStorage
+    sessionStorage.removeItem('nextauth.token');
+    // Remove do localStorage
+    localStorage.removeItem('nextauth.token');
+    // Remove cookie (definindo data de expiração no passado)
+    document.cookie = 'nextauth.token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  } catch {
+    // Ignora erros de limpeza
   }
-  
-  const storageToken = getTokenFromStorage(API_CONFIG.TOKEN_STORAGE_KEY);
-  if (storageToken) {
-    return storageToken;
-  }
-  
-  return null;
 }
 
-/**
- * Configura interceptador de requisições para injetar token de autenticação
- * @param apiInstance - Instância do axios
- */
-function setupRequestInterceptor(apiInstance: AxiosInstance): void {
-  apiInstance.interceptors.request.use(
-    (config: AxiosRequestConfig) => {
-      const currentToken = getAuthToken();
-      
+export function getAPIClient(): AxiosInstance {
+  const api = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+    timeout: 10000,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    }
+  });
+
+  // Interceptor de requisição
+  api.interceptors.request.use(
+    (config) => {
+      const currentToken = getToken();
+
       if (currentToken) {
         if (!config.headers) {
           config.headers = new AxiosHeaders();
         }
-        
-        config.headers['Authorization'] = `Bearer ${currentToken}`;
+        config.headers.set('Authorization', `Bearer ${currentToken}`);
       }
-      
+
+      // Log de debug em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      }
+
       return config;
     },
     (error) => {
-      console.error('Erro no interceptador de requisição:', error);
       return Promise.reject(error);
     }
   );
-}
-function setupResponseInterceptor(
-  apiInstance: AxiosInstance, 
-  enableAutoRedirect: boolean = true
-): void {
-  apiInstance.interceptors.response.use(
-    (response) => response,
-    (error: AxiosError) => {
-      
-      if (error.response?.status === 401) {
-        console.warn('Token de autenticação inválido ou expirado');
+
+  // Interceptor de resposta melhorado
+  api.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    (error) => {
+      const status = error.response?.status;
+
+      if (status === 401) {
+        // Token inválido ou expirado
+        clearTokens();
         
-        if (enableAutoRedirect && isClientSide()) {
-          
-          try {
-            localStorage.removeItem(API_CONFIG.TOKEN_STORAGE_KEY);
-          } catch (e) {
-            console.warn('Erro ao limpar localStorage:', e);
+        if (typeof window !== 'undefined') {
+          // Evita loop infinito se já estiver na página de login
+          if (!window.location.pathname.includes('/login')) {
+            const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = `/login?redirect=${currentPath}`;
           }
-          
-          window.location.href = API_CONFIG.LOGIN_PATH;
         }
+      } else if (status === 403) {
+        // Usuário não tem permissão
+        console.warn('Access denied:', error.response?.data?.message);
+      } else if (status >= 500) {
+        // Erro do servidor
+        console.error('Server error:', error.response?.data?.message || 'Internal server error');
       }
-      
-      if (error.response) {
-        console.error(`Erro API ${error.response.status}:`, error.response.data);
-      } else if (error.request) {
-        console.error('Erro de rede - sem resposta do servidor:', error.request);
-      } else {
-        console.error('Erro na configuração da requisição:', error.message);
+
+      // Log de debug em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        console.error('API Error:', {
+          status,
+          url: error.config?.url,
+          message: error.response?.data?.message || error.message
+        });
       }
-      
+
       return Promise.reject(error);
     }
   );
+
+  return api;
 }
 
-export function createAPIClient(config: APIClientConfig = {}): AxiosInstance {
-  const {
-    baseURL = API_CONFIG.BASE_URL,
-    timeout = API_CONFIG.TIMEOUT,
-    enableAutoRedirect = true
-  } = config;
+// Instância única da API
+export const api = getAPIClient();
 
-  const apiInstance = axios.create({
-    baseURL,
-    timeout,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest'
-    }
-  });
-
-  setupRequestInterceptor(apiInstance);
-  setupResponseInterceptor(apiInstance, enableAutoRedirect);
-
-  return apiInstance;
+// Função utilitária para verificar se o usuário está autenticado
+export function isAuthenticated(): boolean {
+  return getToken() !== null;
 }
 
-
-export const api = createAPIClient();
-
-export const authUtils = {
-
-  isAuthenticated: (): boolean => getAuthToken() !== null,
-  
-  getCurrentToken: (): string | null => getAuthToken(),
-  
-  clearAuth: (): void => {
-    if (!isClientSide()) return;
-    
-    try {
-      localStorage.removeItem(API_CONFIG.TOKEN_STORAGE_KEY);
-    } catch (error) {
-      console.warn('Erro ao limpar autenticação:', error);
-    }
+// Função utilitária para logout
+export function logout(): void {
+  clearTokens();
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login';
   }
-} as const;
+}

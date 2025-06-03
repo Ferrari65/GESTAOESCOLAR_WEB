@@ -3,7 +3,7 @@ import { NextConfig } from 'next';
 const config: NextConfig = {
 
   reactStrictMode: true,
-  swcMinify: true,
+
   
   // Otimizações de imagem
   images: {

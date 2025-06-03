@@ -35,9 +35,8 @@ export const cursoFormSchema = z.object({
 
 export const cursoDTOSchema = z.object({
   nome: z.string().min(1).max(100),
-  duracao: z.number().int().positive().max(60),
-  data_alteracao: z.string(),
-  idsecretaria: z.string().min(1, 'ID da secretaria é obrigatório'),
+  duracao: z.number().int().positive().max(60),  
+  id_secretaria: z.string().min(1, 'ID da secretaria é obrigatório'),
   turno: z.string().min(1),
   situacao: z.string().default('ATIVO'),
   data_alteracao: z.string()
@@ -50,8 +49,9 @@ export const cursoResponseSchema = z.object({
   id_secretaria: z.string(), 
   turno: z.string(), 
   situacao: z.string(), 
- data_alteracao: z.string()
+  data_alteracao: z.string()
 });
+
 export type CursoFormData = z.infer<typeof cursoFormSchema>;
 export type CursoDTO = z.infer<typeof cursoDTOSchema>;
 export type CursoResponse = z.infer<typeof cursoResponseSchema>;

@@ -35,7 +35,7 @@ export const CursoDataSection: React.FC<CursoDataSectionProps> = ({ form }) => {
           {errors.nome && (
             <span className="text-sm text-red-600">{errors.nome.message}</span>
           )}
-          <span className="text-xs text-gray-500">Mínimo 3 caracteres, máximo 255</span>
+          <span className="text-xs text-gray-500">Mínimo 3 caracteres, máximo 100</span>
         </div>
 
         {/* Duração */}

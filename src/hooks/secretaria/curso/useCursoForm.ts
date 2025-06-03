@@ -22,7 +22,6 @@ export const useCursoForm = ({ onSuccess }: UseCursoFormOptions = {}): UseCursoF
     defaultValues: {
       nome: '',
       duracao: '',
-      data_alteracao: '',
       turno: 'DIURNO'
     }
   });
@@ -34,17 +33,11 @@ export const useCursoForm = ({ onSuccess }: UseCursoFormOptions = {}): UseCursoF
 
   const onSubmit = useCallback(async (data: CursoFormData) => {
     try {
-      console.log('📝 Dados validados pelo Zod:', data);
-
       if (!user?.id) {
         throw new Error('ID da secretaria não encontrado. Por favor, faça login novamente.');
       }
 
-      console.log('👤 ID da secretaria encontrado:', user.id);
-
       const cursoDTO = formDataToCursoDTO(data, user.id);
-
-      console.log('🔄 DTO validado:', cursoDTO);
 
       await createCurso(cursoDTO);
 
@@ -56,11 +49,6 @@ export const useCursoForm = ({ onSuccess }: UseCursoFormOptions = {}): UseCursoF
       }
 
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error('❌ Erro no formulário:', err.message);
-      } else {
-        console.error('❌ Erro desconhecido no formulário:', err);
-      }
     }
   }, [user?.id, createCurso, form, onSuccess]);
 

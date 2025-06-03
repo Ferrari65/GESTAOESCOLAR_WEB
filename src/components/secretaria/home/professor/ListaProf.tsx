@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useProfessorList } from '@/hooks/secretaria/cadastroprofessor/useProfessorList';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { ProfessorTable } from '@/components/professor/ProfessorTable';
 
