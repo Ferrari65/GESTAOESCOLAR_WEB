@@ -71,6 +71,7 @@ export default function SecretariaHomePage(): React.JSX.Element {
             
             <div className="p-6">
               <CadastroCurso onSuccess={handleCursoSuccess} />
+              
             </div>
           </div>
         </div> 

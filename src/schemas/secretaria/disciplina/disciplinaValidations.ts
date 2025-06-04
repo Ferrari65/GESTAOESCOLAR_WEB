@@ -1,6 +1,7 @@
 export {
     disciplinaDTO,
     disciplinaResponse,
+    disciplinaFormSchema,
     validateDisciplinaDTO,
     validateDisciplinaForm,
     type DisciplinaFormData,

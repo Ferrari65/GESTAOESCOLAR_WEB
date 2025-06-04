@@ -30,7 +30,7 @@ export interface UseDisciplinaAPIReturn {
 }
 
 export interface DisciplinaListResponse {
-  disciplinas: Disciplina[];
+  disciplinas: DisciplinaDTO[];
   total: number;
   page: number;
   limit: number;
@@ -44,7 +44,7 @@ export interface DisciplinaFilters {
 }
 
 export interface UseDisciplinaListReturn {
-  disciplinas: Disciplina[];
+  disciplinas: DisciplinaDTO[];
   loading: boolean;
   error: string | null;
   refetch: () => void;

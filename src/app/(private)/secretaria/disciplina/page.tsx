@@ -8,6 +8,7 @@ import UFEMSidebar from '@/components/secretaria/home/UFEMSidebar';
 import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import Header from '@/components/secretaria/header';
+import CadastroDisciplina from '@/components/secretaria/home/disciplina/CadastrarDisciplina';
 
 export default function SecretariaHomePage(): React.JSX.Element {
   const { user, signOut } = useContext(AuthContext);
@@ -23,6 +24,9 @@ export default function SecretariaHomePage(): React.JSX.Element {
     }
   }, [signOut]);
 
+  const handleDisciplinaSuccess = useCallback(() => {
+    // Lógica a ser executada em caso de sucesso no cadastro da disciplina
+  }, []);
 
   // Loading state
   if (loading || !user) {
@@ -82,6 +86,7 @@ export default function SecretariaHomePage(): React.JSX.Element {
             </div>
             
             <div className="p-6">
+              <CadastroDisciplina onSuccess={handleDisciplinaSuccess} />
               
             </div>
           </div>

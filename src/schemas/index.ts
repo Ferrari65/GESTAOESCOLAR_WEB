@@ -54,6 +54,17 @@ export const duracaoValidator = z
     return !isNaN(num) && num > 0 && num <= 60;
   }, 'Duração deve ser um número entre 1 e 60 meses');
 
+  /*
+  * Validador para carga horária de disciplinas
+  */
+ export const cargaHorariaValidator = z
+  .string()
+  .min(1, 'Carga horária é obrigatória')
+  .refine((val) => {
+    const num = parseInt(val, 10);
+    return !isNaN(num) && num > 0;
+  }, 'Carga horária deve ser um número positivo');
+
 // ===== SCHEMAS DE AUTENTICAÇÃO =====
 
 /**
@@ -163,12 +174,7 @@ export const disciplinaFormSchema = z.object({
     .min(1, 'Ementa é obrigatória')
     .max(500, 'Ementa deve ter no máximo 500 caracteres'),
 
-  cargaHoraria: z
-    .number()
-    .int()
-    .positive()
-    .min(1, 'Carga horária é obrigatória')
-    .max(200, 'Carga horária deve ser no máximo 200 horas'),
+  cargaHoraria: cargaHorariaValidator
 });
 
 

@@ -109,11 +109,12 @@ export const formDataToDisciplinaDTO = (
   secretariaId: string
 ): DisciplinaDTO => {
   
+  const cargaHoraria = parseInt(data.cargaHoraria, 10);
 
   const dto: DisciplinaDTO = {
     nome: data.nome.trim(),
     ementa: data.ementa,
-    cargaHoraria: data.cargaHoraria,
+    cargaHoraria: cargaHoraria,
     id_secretaria: secretariaId
   };
 
