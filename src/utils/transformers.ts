@@ -1,12 +1,18 @@
 import type { 
   ProfessorFormData, 
   ProfessorDTO 
-} from '@/types/secretariaTypes/cadastroprofessor/professor';
+} from '@/schemas/professor';
 import type { 
   CursoFormData, 
   CursoDTO 
-} from '@/schemas/secretaria/curso/cursoValidations';
+} from '@/schemas/index';
 import { DisciplinaDTO, DisciplinaFormData } from '@/schemas';
+
+interface TurmaDTO {
+  nome: string;
+  ano: string;
+  turno: 'DIURNO' | 'NOTURNO';
+}
 
 // ===== UTILITÁRIOS BASE
 
@@ -111,14 +117,11 @@ export const transformCursoFormToDTO = (
 
   return {
     nome: data.nome.trim(),
-    duracao: duracao, 
+    duracao: duracao,
     id_secretaria: secretariaId,
-    situacao: 'ATIVO', 
-    data_alteracao: generateDataAlteracao()
+    situacao: 'ATIVO' as const,
+    data_alteracao: new Date().toISOString().split('T')[0]
   };
-
-
-  return dto;
 };
 
 export const formDataToDisciplinaDTO = (

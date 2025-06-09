@@ -44,7 +44,6 @@ export default function CadastroCurso({ onSuccess, onCancel }: CursoFormProps) {
 
   return (
     <div className="space-y-8">
-*/}
       <section 
         className="bg-white rounded-lg shadow-sm border border-gray-200"
         aria-labelledby="cadastro-heading"

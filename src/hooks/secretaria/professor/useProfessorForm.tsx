@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
 import { 
-  professorFormSchema,
+  professorFormSchema, // Use o schema correto
   type ProfessorFormData,
   type ProfessorResponse,
   cleanCPF,
@@ -179,10 +179,11 @@ function handleProfessorError(error: unknown, context: string): string {
 }
 
 
-interface UseProfessorFormOptions {
-  onSuccess?: () => void;
+export interface UseProfessorFormOptions {
+  modo?: 'cadastro' | 'edicao';
+  onSucesso?: () => void;
   professorId?: string;
-  originalData?: ProfessorResponse; 
+  dadosIniciais?: ProfessorResponse;
 }
 
 export interface UseProfessorFormReturn {
@@ -196,9 +197,10 @@ export interface UseProfessorFormReturn {
 }
 
 export const useProfessorForm = ({ 
-  onSuccess, 
+  modo = 'cadastro',
+  onSucesso, 
   professorId,
-  originalData
+  dadosIniciais
 }: UseProfessorFormOptions = {}): UseProfessorFormReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -208,21 +210,21 @@ export const useProfessorForm = ({
   const modoEdicao = Boolean(professorId);
 
   const form = useForm<ProfessorFormData>({
-    resolver: zodResolver(professorFormSchema),
+    resolver: zodResolver(professorFormSchema), // Use o schema simples
     mode: 'onBlur',
     defaultValues: {
-      nome: '',
-      cpf: '',
-      email: '',
+      nome: dadosIniciais?.nome || '',
+      cpf: dadosIniciais?.cpf || '',
+      email: dadosIniciais?.email || '',
       senha: '',
-      telefone: '',
-      data_nasc: '',
-      sexo: 'M',
-      logradouro: '',
-      bairro: '',
-      numero: '',
-      cidade: '',
-      uf: ''
+      telefone: dadosIniciais?.telefone || '',
+      data_nasc: dadosIniciais?.data_nasc || '',
+      sexo: (dadosIniciais?.sexo as 'M' | 'F') || 'M',
+      logradouro: dadosIniciais?.logradouro || '',
+      bairro: dadosIniciais?.bairro || '',
+      numero: dadosIniciais?.numero?.toString() || '',
+      cidade: dadosIniciais?.cidade || '',
+      uf: dadosIniciais?.uf || ''
     }
   });
 

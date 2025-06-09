@@ -31,29 +31,24 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
   const modo = professorEditando ? 'edicao' : 'cadastro';
   
   const {
-    form,
-    enviarFormulario,
-    carregando,
-    erro,
-    mensagemSucesso,
-    limparMensagens
-  } = useProfessorForm({
-    modo,
-    professorId: professorEditando?.id_professor,
-    dadosIniciais: professorEditando || undefined,
-    onSucesso: useCallback(() => {
-      console.log('✅ Professor processado com sucesso!');
-      
-      setProfessorEditando(null);
-      
-
-      setAbaSelecionada('lista');
-      setMostrarFormulario(false);
-      
-
-      onSuccess?.();
-    }, [onSuccess])
-  });
+  form,
+  enviarFormulario,
+  carregando,
+  erro,
+  mensagemSucesso,
+  limparMensagens
+} = useProfessorForm({
+  modo: professorEditando ? 'edicao' : 'cadastro',
+  professorId: professorEditando?.id_professor,
+  dadosIniciais: professorEditando || undefined,
+  onSucesso: useCallback(() => {
+    console.log('✅ Professor processado com sucesso!');
+    setProfessorEditando(null);
+    setAbaSelecionada('lista');
+    setMostrarFormulario(false);
+    onSuccess?.();
+  }, [onSuccess])
+});
 
 
   const { buscarProfessorPorId } = useProfessorActions();
