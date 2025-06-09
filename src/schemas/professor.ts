@@ -91,9 +91,7 @@ export const professorCadastroSchema = z.object({
 
 export const professorEdicaoSchema = z.object({
   ...professorBaseFields,
-
   cpf: z.string().optional(),
-
   senha: z.string()
     .min(6, 'Senha deve ter pelo menos 6 caracteres')
     .max(50, 'Senha muito longa')
@@ -101,41 +99,40 @@ export const professorEdicaoSchema = z.object({
     .or(z.literal('')), 
 });
 
-export const professorFormSchema = (modoEdicao: boolean = false) => {
-  return modoEdicao ? professorEdicaoSchema : professorCadastroSchema;
-};
-
-export const professorDTOSchema = z.object({
+// ===== SCHEMAS PARA DTOs DO BACKEND JAVA =====
+export const professorCreateDTOSchema = z.object({
   nome: z.string(),
   CPF: z.string(),
+  situacao: SituacaoTypeEnum,           //
+  logradouro: z.string(),
+  bairro: z.string(),
+  numero: z.number().positive(),
+  cidade: z.string(),
+  UF: z.string(),
   email: z.string(),
   senha: z.string(),
   telefone: z.string(),
-  data_nasc: z.string(),
   sexo: z.string(),
-  logradouro: z.string(),
-  bairro: z.string(),
-  numero: z.number().positive('Número deve ser positivo'),
-  cidade: z.string(),
-  UF: z.string(),
-  situacao: z.literal('ATIVO'),
+  data_nasc: z.string(),             
   id_secretaria: z.string(),
 });
 
-export const professorEditarDTOSchema = z.object({
+// DTO para EDITAR professor (campos opcionais)
+export const professorUpdateDTOSchema = z.object({
   nome: z.string().optional(),
-
-  email: z.string().optional(),
-  senha: z.string().optional(), 
-  telefone: z.string().optional(),
+  // CPF: não incluímos - não pode ser alterado
+  situacao: SituacaoTypeEnum.optional(),
   logradouro: z.string().optional(),
   bairro: z.string().optional(),
   numero: z.number().optional(),
   cidade: z.string().optional(),
-  UF: z.string().optional(), 
+  UF: z.string().optional(),
+  email: z.string().optional(),
+  senha: z.string().optional(),
+  telefone: z.string().optional(),
   sexo: z.string().optional(),
-  data_nasc: z.string().optional(),
-  situacao: SituacaoTypeEnum.optional(),
+  data_nasc: z.string().optional(),  
+  id_secretaria: z.string().optional(),
 });
 
 export const professorResponseSchema = z.object({
@@ -154,14 +151,18 @@ export const professorResponseSchema = z.object({
   data_nasc: z.string(),
 });
 
-// ===== TIPOS  =====
+// ===== TIPOS =====
 export type ProfessorCadastroData = z.infer<typeof professorCadastroSchema>;
 export type ProfessorEdicaoData = z.infer<typeof professorEdicaoSchema>;
 export type ProfessorFormData = ProfessorCadastroData | ProfessorEdicaoData;
-export type ProfessorDTO = z.infer<typeof professorDTOSchema>;
-export type ProfessorEditarDTO = z.infer<typeof professorEditarDTOSchema>;
+
+export type ProfessorCreateDTO = z.infer<typeof professorCreateDTOSchema>;
+export type ProfessorUpdateDTO = z.infer<typeof professorUpdateDTOSchema>;
 export type ProfessorResponse = z.infer<typeof professorResponseSchema>;
 export type SituacaoType = z.infer<typeof SituacaoTypeEnum>;
+
+export type ProfessorDTO = ProfessorCreateDTO;     
+export type ProfessorEditarDTO = ProfessorUpdateDTO; 
 
 // ===== FUNÇÕES UTILITÁRIAS =====
 export const cleanCPF = (cpf: string): string => {
@@ -190,4 +191,13 @@ export const formatPhone = (phone: string): string => {
     return clean.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
   }
   return phone;
+};
+
+// ===== FUNÇÕES DE VALIDAÇÃO =====
+export const validateProfessorCreateDTO = (data: unknown) => {
+  return professorCreateDTOSchema.safeParse(data);
+};
+
+export const validateProfessorUpdateDTO = (data: unknown) => {
+  return professorUpdateDTOSchema.safeParse(data);
 };

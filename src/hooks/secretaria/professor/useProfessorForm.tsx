@@ -8,48 +8,17 @@ import {
   professorEdicaoSchema,
   type ProfessorCadastroData,
   type ProfessorEdicaoData,
+  type ProfessorCreateDTO,
+  type ProfessorUpdateDTO,
   type ProfessorResponse,
   cleanCPF,
   cleanPhone
 } from '@/schemas/professor';
 
-// =====  BACKEND =====
-interface ProfessorCreateDTO {
-  nome: string;
-  CPF: string;
-  situacao: 'ATIVO';
-  logradouro: string;
-  bairro: string;
-  numero: number;
-  cidade: string;
-  UF: string;
-  email: string;
-  senha: string;
-  telefone: string;
-  sexo: string;
-  data_nasc: string;
-  id_secretaria: string;
-}
-
-interface ProfessorUpdateDTO {
-  nome?: string;
-  CPF?: string;
-  situacao?: 'ATIVO' | 'INATIVO';
-  logradouro?: string;
-  bairro?: string;
-  numero?: number;
-  cidade?: string;
-  UF?: string;
-  email?: string;
-  senha?: string;
-  telefone?: string;
-  sexo?: string;
-  data_nasc?: string;
-  id_secretaria?: string;
-}
-
+// ===== TIPOS =====
 type ProfessorFormData = ProfessorCadastroData | ProfessorEdicaoData;
 
+// ===== FUNÇÃO PARA CRIAR PROFESSOR =====
 function transformFormToCreateDTO(data: ProfessorCadastroData, secretariaId: string): ProfessorCreateDTO {
   const cpfLimpo = cleanCPF(data.cpf);
   const telefoneLimpo = cleanPhone(data.telefone);
@@ -59,41 +28,49 @@ function transformFormToCreateDTO(data: ProfessorCadastroData, secretariaId: str
     throw new Error('Número deve ser um valor válido maior que zero');
   }
 
+  if (cpfLimpo.length !== 11) {
+    throw new Error('CPF deve ter 11 dígitos');
+  }
+
+  if (telefoneLimpo.length !== 10 && telefoneLimpo.length !== 11) {
+    throw new Error('Telefone deve ter 10 ou 11 dígitos');
+  }
+
+  // Validar formato da data (YYYY-MM-DD)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data.data_nasc)) {
+    throw new Error('Data de nascimento deve estar no formato YYYY-MM-DD');
+  }
+
+
   return {
     nome: data.nome.trim(),
     CPF: cpfLimpo,
-    email: data.email.trim().toLowerCase(),
-    senha: data.senha || '',
+    situacao: 'ATIVO',                  
     logradouro: data.logradouro.trim(),
     bairro: data.bairro.trim(),
-    numero: numeroInt,
-    cidade: data.cidade.trim(),
+    numero: numeroInt,                   
     UF: data.uf.toUpperCase(),
-    sexo: data.sexo,
+    email: data.email.trim().toLowerCase(),
+    senha: data.senha,
     telefone: telefoneLimpo,
-    data_nasc: data.data_nasc,
-    situacao: 'ATIVO',
+    sexo: data.sexo,
+    data_nasc: data.data_nasc,        
     id_secretaria: secretariaId
   };
 }
 
+// =====  EDITAR PROFESSOR =====
 function transformFormToUpdateDTO(
   data: ProfessorFormData, 
   dadosOriginais: ProfessorResponse
 ): ProfessorUpdateDTO {
   const updateDTO: ProfessorUpdateDTO = {};
   
-  const cpfLimpo = cleanCPF((data as any).cpf || '');
   const telefoneLimpo = cleanPhone(data.telefone);
   const numeroInt = parseInt(data.numero, 10);
-
-  // Só adiciona campos que foram alterados
+  
   if (data.nome.trim() !== dadosOriginais.nome) {
     updateDTO.nome = data.nome.trim();
-  }
-
-  if (cpfLimpo && cpfLimpo !== cleanCPF(dadosOriginais.cpf)) {
-    updateDTO.CPF = cpfLimpo;
   }
 
   if (data.email.trim().toLowerCase() !== dadosOriginais.email.toLowerCase()) {
@@ -105,7 +82,11 @@ function transformFormToUpdateDTO(
   }
 
   if (data.data_nasc !== dadosOriginais.data_nasc) {
-    updateDTO.data_nasc = data.data_nasc;
+  
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.data_nasc)) {
+      throw new Error('Data de nascimento deve estar no formato YYYY-MM-DD');
+    }
+    updateDTO.data_nasc = data.data_nasc; 
   }
 
   if (data.sexo !== dadosOriginais.sexo) {
@@ -121,7 +102,7 @@ function transformFormToUpdateDTO(
   }
 
   if (numeroInt !== dadosOriginais.numero) {
-    updateDTO.numero = numeroInt;
+    updateDTO.numero = numeroInt; 
   }
 
   if (data.cidade.trim() !== dadosOriginais.cidade) {
@@ -134,16 +115,13 @@ function transformFormToUpdateDTO(
 
   const senha = (data as any).senha;
   if (senha && senha.trim() !== '') {
-    updateDTO.senha = senha;
+    updateDTO.senha = senha.trim();
   }
-
-  console.log(' [UPDATE] Campos alterados:', updateDTO);
-  console.log(' [UPDATE] Dados originais:', dadosOriginais);
-  console.log(' [UPDATE] Dados do form:', data);
 
   return updateDTO;
 }
 
+// ===== TRATAMENTO DE ERROS =====
 function handleProfessorError(error: unknown, context: string): string {
   const { message, status } = handleApiError(error, context);
   
@@ -157,6 +135,9 @@ function handleProfessorError(error: unknown, context: string): string {
       }
       if (message.toLowerCase().includes('constraint')) {
         return 'Dados duplicados: CPF ou email já existem no sistema.';
+      }
+      if (message.toLowerCase().includes('data_nasc') || message.toLowerCase().includes('date')) {
+        return 'Formato de data inválido. Use o formato YYYY-MM-DD.';
       }
       return 'Dados inválidos: ' + message;
     
@@ -262,23 +243,44 @@ export const useProfessorForm = ({
       const api = getAPIClient();
       
       if (modoEdicao && professorId && dadosIniciais) {
-
+        // ===== MODO EDIÇÃO =====
         const updateDTO = transformFormToUpdateDTO(data, dadosIniciais);
-        
+
         if (Object.keys(updateDTO).length === 0) {
           setMensagemSucesso('Nenhuma alteração detectada.');
           onSucesso?.();
           return;
         }
         
-        console.log(' [PUT] Enviando para /professor/' + professorId, updateDTO);
+        console.log(' [EDIÇÃO] Dados do formulário:', data);
+        console.log(' [EDIÇÃO] DTO para backend:', updateDTO);
+        console.log(' [EDIÇÃO] Endpoint:', `/professor/${professorId}`);
+        
         await api.put(`/professor/${professorId}`, updateDTO);
         setMensagemSucesso('Professor atualizado com sucesso!');
         
       } else {
-        
+        // ===== MODO CADASTRO =====
         const createDTO = transformFormToCreateDTO(data as ProfessorCadastroData, user.id);
-        console.log(' [POST] Enviando para /professor/' + user.id, createDTO);
+        
+
+        console.log(' [CADASTRO] Dados do formulário:', data);
+        console.log(' [CADASTRO] DTO para backend:', createDTO);
+        console.log(' [CADASTRO] Endpoint:', `/professor/${user.id}`);
+        console.log(' [CADASTRO] Validações críticas:', {
+          nomeOk: !!createDTO.nome && createDTO.nome.length > 0,
+          cpfOk: createDTO.CPF?.length === 11,
+          emailOk: createDTO.email?.includes('@'),
+          senhaOk: createDTO.senha?.length >= 6,
+          telefoneOk: createDTO.telefone?.length >= 10,
+          dataNascOk: /^\d{4}-\d{2}-\d{2}$/.test(createDTO.data_nasc),
+          sexoOk: ['M', 'F'].includes(createDTO.sexo),
+          numeroOk: !isNaN(createDTO.numero) && createDTO.numero > 0,
+          ufOk: createDTO.UF?.length === 2,
+          situacaoOk: createDTO.situacao === 'ATIVO',
+          secretariaIdOk: !!createDTO.id_secretaria
+        });
+        
         await api.post(`/professor/${user.id}`, createDTO);
         setMensagemSucesso('Professor cadastrado com sucesso!');
 
@@ -301,7 +303,14 @@ export const useProfessorForm = ({
       onSucesso?.();
       
     } catch (err: unknown) {
-      console.error(' Erro na requisição:', err);
+      console.error(' [ERRO] Detalhes completos:', err);
+ 
+      if ((err as any).response) {
+        console.error(' [ERRO] Response data:', (err as any).response.data);
+        console.error(' [ERRO] Response status:', (err as any).response.status);
+        console.error(' [ERRO] Response headers:', (err as any).response.headers);
+      }
+      
       const errorMessage = handleProfessorError(err, modoEdicao ? 'EditProfessor' : 'CreateProfessor');
       setErro(errorMessage);
     } finally {

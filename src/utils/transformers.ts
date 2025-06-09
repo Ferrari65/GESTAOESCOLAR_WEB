@@ -1,6 +1,7 @@
 import type { 
   ProfessorFormData, 
-  ProfessorDTO 
+  ProfessorCreateDTO,   
+  ProfessorUpdateDTO   
 } from '@/schemas/professor';
 import type { 
   CursoFormData, 
@@ -46,7 +47,7 @@ const generateDataAlteracao = (): string => {
 export const transformProfessorFormToDTO = (
   data: ProfessorFormData,
   secretariaId: string
-): ProfessorDTO => {
+): ProfessorCreateDTO => {  
   const cpfLimpo = cleanCPF((data as any).cpf || '');
   const telefoneLimpo = cleanPhone(data.telefone);
   const numeroInt = parseInt(data.numero, 10);
@@ -63,22 +64,87 @@ export const transformProfessorFormToDTO = (
     throw new Error('Telefone deve ter 10 ou 11 dígitos');
   }
 
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data.data_nasc)) {
+    throw new Error('Data de nascimento deve estar no formato YYYY-MM-DD');
+  }
+
   return {
     nome: data.nome.trim(),
     CPF: cpfLimpo,
-    email: data.email.trim().toLowerCase(),
-    senha: (data as any).senha || '',
+    situacao: 'ATIVO',                
     logradouro: data.logradouro.trim(),
     bairro: data.bairro.trim(),
-    numero: numeroInt,
-    cidade: data.cidade.trim(),
+    numero: numeroInt,                     
     UF: data.uf.toUpperCase(),
-    sexo: data.sexo.toUpperCase() as 'M' | 'F',
+    email: data.email.trim().toLowerCase(),
+    senha: (data as any).senha || '',
     telefone: telefoneLimpo,
-    data_nasc: data.data_nasc,
-    situacao: 'ATIVO',
+    sexo: data.sexo,                      
+    data_nasc: data.data_nasc,          
     id_secretaria: secretariaId
   };
+};
+
+// ===== PROFESSOR -  EDITAR =====
+export const transformProfessorFormToUpdateDTO = (
+  data: ProfessorFormData,
+  dadosOriginais: any
+): ProfessorUpdateDTO => {  
+  const updateDTO: ProfessorUpdateDTO = {};
+  
+  const telefoneLimpo = cleanPhone(data.telefone);
+  const numeroInt = parseInt(data.numero, 10);
+  
+  if (data.nome.trim() !== dadosOriginais.nome) {
+    updateDTO.nome = data.nome.trim();
+  }
+
+  if (data.email.trim().toLowerCase() !== dadosOriginais.email.toLowerCase()) {
+    updateDTO.email = data.email.trim().toLowerCase();
+  }
+
+  if (telefoneLimpo !== cleanPhone(dadosOriginais.telefone)) {
+    updateDTO.telefone = telefoneLimpo;
+  }
+
+  if (data.data_nasc !== dadosOriginais.data_nasc) {
+    // Validar formato ISO
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.data_nasc)) {
+      throw new Error('Data de nascimento deve estar no formato YYYY-MM-DD');
+    }
+    updateDTO.data_nasc = data.data_nasc;
+  }
+
+  if (data.sexo !== dadosOriginais.sexo) {
+    updateDTO.sexo = data.sexo;
+  }
+
+  if (data.logradouro.trim() !== dadosOriginais.logradouro) {
+    updateDTO.logradouro = data.logradouro.trim();
+  }
+
+  if (data.bairro.trim() !== dadosOriginais.bairro) {
+    updateDTO.bairro = data.bairro.trim();
+  }
+
+  if (numeroInt !== dadosOriginais.numero) {
+    updateDTO.numero = numeroInt; 
+  }
+
+  if (data.cidade.trim() !== dadosOriginais.cidade) {
+    updateDTO.cidade = data.cidade.trim();
+  }
+
+  if (data.uf.toUpperCase() !== dadosOriginais.uf.toUpperCase()) {
+    updateDTO.UF = data.uf.toUpperCase();
+  }
+
+  const senha = (data as any).senha;
+  if (senha && senha.trim() !== '') {
+    updateDTO.senha = senha.trim();
+  }
+
+  return updateDTO;
 };
 
 // ===== CURSO =====
@@ -271,5 +337,13 @@ export const validators = {
 
   ano: (ano: string): boolean => {
     return /^\d{4}$/.test(ano) && parseInt(ano) >= 1900 && parseInt(ano) <= 2100;
+  },
+
+  dataISO: (data: string): boolean => {
+    return /^\d{4}-\d{2}-\d{2}$/.test(data);
+  },
+
+  numeroPositivo: (numero: number): boolean => {
+    return !isNaN(numero) && numero > 0;
   }
 };
