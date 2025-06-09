@@ -4,14 +4,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
 import { 
-  professorFormSchema, // Use o schema correto
-  type ProfessorFormData,
+  professorCadastroSchema,
+  professorEdicaoSchema,
+  type ProfessorCadastroData,
+  type ProfessorEdicaoData,
   type ProfessorResponse,
   cleanCPF,
   cleanPhone
 } from '@/schemas/professor';
 
-// ===== TIPOS PARA BACKEND =====
+// =====  BACKEND =====
 interface ProfessorCreateDTO {
   nome: string;
   CPF: string;
@@ -46,7 +48,9 @@ interface ProfessorUpdateDTO {
   id_secretaria?: string;
 }
 
-function transformFormToCreateDTO(data: ProfessorFormData, secretariaId: string): ProfessorCreateDTO {
+type ProfessorFormData = ProfessorCadastroData | ProfessorEdicaoData;
+
+function transformFormToCreateDTO(data: ProfessorCadastroData, secretariaId: string): ProfessorCreateDTO {
   const cpfLimpo = cleanCPF(data.cpf);
   const telefoneLimpo = cleanPhone(data.telefone);
   const numeroInt = parseInt(data.numero, 10);
@@ -75,65 +79,66 @@ function transformFormToCreateDTO(data: ProfessorFormData, secretariaId: string)
 
 function transformFormToUpdateDTO(
   data: ProfessorFormData, 
-  originalData: ProfessorResponse
+  dadosOriginais: ProfessorResponse
 ): ProfessorUpdateDTO {
   const updateDTO: ProfessorUpdateDTO = {};
   
-  const cpfLimpo = cleanCPF(data.cpf);
+  const cpfLimpo = cleanCPF((data as any).cpf || '');
   const telefoneLimpo = cleanPhone(data.telefone);
   const numeroInt = parseInt(data.numero, 10);
 
-  
-  if (data.nome.trim() !== originalData.nome) {
+  // Só adiciona campos que foram alterados
+  if (data.nome.trim() !== dadosOriginais.nome) {
     updateDTO.nome = data.nome.trim();
   }
 
-  if (cpfLimpo !== cleanCPF(originalData.cpf)) {
+  if (cpfLimpo && cpfLimpo !== cleanCPF(dadosOriginais.cpf)) {
     updateDTO.CPF = cpfLimpo;
   }
 
-  if (data.email.trim().toLowerCase() !== originalData.email.toLowerCase()) {
+  if (data.email.trim().toLowerCase() !== dadosOriginais.email.toLowerCase()) {
     updateDTO.email = data.email.trim().toLowerCase();
   }
 
-  if (telefoneLimpo !== cleanPhone(originalData.telefone)) {
+  if (telefoneLimpo !== cleanPhone(dadosOriginais.telefone)) {
     updateDTO.telefone = telefoneLimpo;
   }
 
-  if (data.data_nasc !== originalData.data_nasc) {
+  if (data.data_nasc !== dadosOriginais.data_nasc) {
     updateDTO.data_nasc = data.data_nasc;
   }
 
-  if (data.sexo !== originalData.sexo) {
+  if (data.sexo !== dadosOriginais.sexo) {
     updateDTO.sexo = data.sexo;
   }
 
-  if (data.logradouro.trim() !== originalData.logradouro) {
+  if (data.logradouro.trim() !== dadosOriginais.logradouro) {
     updateDTO.logradouro = data.logradouro.trim();
   }
 
-  if (data.bairro.trim() !== originalData.bairro) {
+  if (data.bairro.trim() !== dadosOriginais.bairro) {
     updateDTO.bairro = data.bairro.trim();
   }
 
-  if (numeroInt !== originalData.numero) {
+  if (numeroInt !== dadosOriginais.numero) {
     updateDTO.numero = numeroInt;
   }
 
-  if (data.cidade.trim() !== originalData.cidade) {
+  if (data.cidade.trim() !== dadosOriginais.cidade) {
     updateDTO.cidade = data.cidade.trim();
   }
 
-  if (data.uf.toUpperCase() !== originalData.uf.toUpperCase()) {
+  if (data.uf.toUpperCase() !== dadosOriginais.uf.toUpperCase()) {
     updateDTO.UF = data.uf.toUpperCase();
   }
 
-  if (data.senha && data.senha.trim() !== '') {
-    updateDTO.senha = data.senha;
+  const senha = (data as any).senha;
+  if (senha && senha.trim() !== '') {
+    updateDTO.senha = senha;
   }
 
   console.log(' [UPDATE] Campos alterados:', updateDTO);
-  console.log(' [UPDATE] Dados originais:', originalData);
+  console.log(' [UPDATE] Dados originais:', dadosOriginais);
   console.log(' [UPDATE] Dados do form:', data);
 
   return updateDTO;
@@ -178,7 +183,7 @@ function handleProfessorError(error: unknown, context: string): string {
   }
 }
 
-
+// ===== INTERFACES =====
 export interface UseProfessorFormOptions {
   modo?: 'cadastro' | 'edicao';
   onSucesso?: () => void;
@@ -188,35 +193,38 @@ export interface UseProfessorFormOptions {
 
 export interface UseProfessorFormReturn {
   form: ReturnType<typeof useForm<ProfessorFormData>>;
-  onSubmit: (data: ProfessorFormData) => Promise<void>;
-  loading: boolean;
-  error: string | null;
-  successMessage: string | null;
-  clearMessages: () => void;
+  enviarFormulario: () => Promise<void>;
+  carregando: boolean;
+  erro: string | null;
+  mensagemSucesso: string | null;
+  limparMensagens: () => void;
   modoEdicao: boolean;
 }
 
+// ===== HOOK PRINCIPAL =====
 export const useProfessorForm = ({ 
   modo = 'cadastro',
   onSucesso, 
   professorId,
   dadosIniciais
 }: UseProfessorFormOptions = {}): UseProfessorFormReturn => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const { user } = useContext(AuthContext);
   
-  const modoEdicao = Boolean(professorId);
+  const modoEdicao = modo === 'edicao' || Boolean(professorId);
+
+  const schema = modoEdicao ? professorEdicaoSchema : professorCadastroSchema;
 
   const form = useForm<ProfessorFormData>({
-    resolver: zodResolver(professorFormSchema), // Use o schema simples
+    resolver: zodResolver(schema),
     mode: 'onBlur',
     defaultValues: {
       nome: dadosIniciais?.nome || '',
       cpf: dadosIniciais?.cpf || '',
       email: dadosIniciais?.email || '',
-      senha: '',
+      senha: '', // Sempre vazio inicialmente
       telefone: dadosIniciais?.telefone || '',
       data_nasc: dadosIniciais?.data_nasc || '',
       sexo: (dadosIniciais?.sexo as 'M' | 'F') || 'M',
@@ -228,45 +236,51 @@ export const useProfessorForm = ({
     }
   });
 
-  const clearMessages = useCallback(() => {
-    setSuccessMessage(null);
-    setError(null);
+  const limparMensagens = useCallback(() => {
+    setMensagemSucesso(null);
+    setErro(null);
   }, []);
 
-  const onSubmit = useCallback(async (data: ProfessorFormData) => {
+  const enviarFormulario = useCallback(async () => {
     if (!user?.id) {
-      setError('Sessão expirada. Faça login novamente.');
+      setErro('Sessão expirada. Faça login novamente.');
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    const isValid = await form.trigger();
+    if (!isValid) {
+      setErro('Por favor, corrija os erros no formulário.');
+      return;
+    }
+
+    const data = form.getValues();
+
+    setCarregando(true);
+    setErro(null);
 
     try {
       const api = getAPIClient();
       
-      if (modoEdicao && professorId && originalData) {
+      if (modoEdicao && professorId && dadosIniciais) {
 
-        const updateDTO = transformFormToUpdateDTO(data, originalData);
+        const updateDTO = transformFormToUpdateDTO(data, dadosIniciais);
         
-
         if (Object.keys(updateDTO).length === 0) {
-          setSuccessMessage('Nenhuma alteração detectada.');
-          onSuccess?.();
+          setMensagemSucesso('Nenhuma alteração detectada.');
+          onSucesso?.();
           return;
         }
         
-        console.log('📤 [PUT] Enviando para /professor/' + professorId, updateDTO);
+        console.log(' [PUT] Enviando para /professor/' + professorId, updateDTO);
         await api.put(`/professor/${professorId}`, updateDTO);
-        setSuccessMessage('Professor atualizado com sucesso!');
+        setMensagemSucesso('Professor atualizado com sucesso!');
         
       } else {
-
-        const createDTO = transformFormToCreateDTO(data, user.id);
-        console.log('📤 [POST] Enviando para /professor/' + user.id, createDTO);
+        
+        const createDTO = transformFormToCreateDTO(data as ProfessorCadastroData, user.id);
+        console.log(' [POST] Enviando para /professor/' + user.id, createDTO);
         await api.post(`/professor/${user.id}`, createDTO);
-        setSuccessMessage('Professor cadastrado com sucesso!');
-
+        setMensagemSucesso('Professor cadastrado com sucesso!');
 
         form.reset({
           nome: '',
@@ -284,24 +298,24 @@ export const useProfessorForm = ({
         });
       }
       
-      onSuccess?.();
+      onSucesso?.();
       
     } catch (err: unknown) {
-      console.error('❌ Erro na requisição:', err);
+      console.error(' Erro na requisição:', err);
       const errorMessage = handleProfessorError(err, modoEdicao ? 'EditProfessor' : 'CreateProfessor');
-      setError(errorMessage);
+      setErro(errorMessage);
     } finally {
-      setLoading(false);
+      setCarregando(false);
     }
-  }, [user?.id, form, onSuccess, modoEdicao, professorId, originalData]);
+  }, [user?.id, form, onSucesso, modoEdicao, professorId, dadosIniciais]);
 
   return {
     form,
-    onSubmit,
-    loading,
-    error,
-    successMessage,
-    clearMessages,
+    enviarFormulario,
+    carregando,
+    erro,
+    mensagemSucesso,
+    limparMensagens,
     modoEdicao
   };
 };

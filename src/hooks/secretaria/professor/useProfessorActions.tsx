@@ -11,7 +11,7 @@ interface UseProfessorActionsReturn {
   erro: string | null;
   mensagemSucesso: string | null;
   limparMensagens: () => void;
-  processandoProfessor: string | null; 
+  processandoProfessor: string | null;
 }
 
 // ===== HOOK PRINCIPAL =====
@@ -54,6 +54,7 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
     }
   }, []);
 
+  // ===== ALTERAR SITUAÇÃO =====
   const alterarSituacao = useCallback(async (professorId: string, novaSituacao: SituacaoType): Promise<void> => {
     if (!professorId) {
       setErro('ID do professor é obrigatório');
@@ -73,7 +74,7 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
       const api = getAPIClient();
       await api.put(`/professor/${professorId}`, { situacao: novaSituacao });
       
-      console.log(` Professor ${professorId} agora está ${novaSituacao}`);
+      console.log(`Professor ${professorId} agora está ${novaSituacao}`);
       setMensagemSucesso(`Professor ${novaSituacao.toLowerCase()} com sucesso!`);
       
     } catch (err: unknown) {
@@ -95,6 +96,7 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
       setErro('ID do professor é obrigatório');
       return;
     }
+    
     setProcessandoProfessor(professorId);
     setCarregando(true);
     setErro(null);

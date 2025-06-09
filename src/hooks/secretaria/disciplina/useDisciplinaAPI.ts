@@ -28,9 +28,8 @@ export const useDisciplinaAPI = (): UseDisciplinaAPIReturn => {
 
       const response = await api.post(`/disciplina/${validData.id_secretaria}`, validData);
 
-      // Se o backend devolveu 409, tratamos como erro manualmente:
       if (response.status === 409) {
-        // ★ Ajuste a mensagem de erro conforme o padrão do seu backend:
+
         const backendMsg = 
           typeof response.data === "string" 
             ? response.data 
@@ -41,7 +40,7 @@ export const useDisciplinaAPI = (): UseDisciplinaAPIReturn => {
           : backendMsg;
         
         setError(errorMessage);
-        // “forçamos” a Promise a cair no catch de createDisciplina
+
         throw new Error(errorMessage);
       }
 
@@ -51,7 +50,6 @@ export const useDisciplinaAPI = (): UseDisciplinaAPIReturn => {
 
       let errorMessage = message;
 
-      // Validação de erro específico do backend
       if (
         ((err as any)?.response?.status === 400 || (err as any)?.response?.status === 409) &&
         typeof (err as any)?.response?.data === 'string' &&

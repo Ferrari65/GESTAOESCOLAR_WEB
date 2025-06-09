@@ -29,22 +29,22 @@ export const useDisciplinaForm = ({
     defaultValues: {
       nome: "",
       ementa: "",
-      cargaHoraria: "" // string, validado pelo Zod antes
+      cargaHoraria: "" 
     }
   });
 
   const clearMessages = useCallback(() => {
     setSuccessMessage(null);
-    clearError(); // limpa o erro do useDisciplinaAPI
+    clearError(); 
   }, [clearError]);
 
   const onSubmit = useCallback(
     async (data: DisciplinaFormData) => {
-      // Antes de submeter, limpe mensagens antigas:
+      
       clearMessages();
 
       if (!user?.id) {
-        // Se não houver user.id, exiba erro genérico:
+        
         form.setError("nome", { message: "Faça login novamente." });
         return;
       }
@@ -53,11 +53,10 @@ export const useDisciplinaForm = ({
         const disciplinaDTO = formDataToDisciplinaDTO(data, user.id);
         await createDisciplina(disciplinaDTO);
 
-        // Se chegou aqui, deu tudo certo:
+
         form.reset();
         setSuccessMessage("Disciplina cadastrada com sucesso!");
 
-        // Recarrega a lista (componente pai):
         if (onRefetch) {
           onRefetch();
         }
@@ -66,14 +65,7 @@ export const useDisciplinaForm = ({
           onSuccess();
         }
       } catch (err: any) {
-        // Se o createDisciplina lançou um erro, ele cai aqui.
-        // O hook useDisciplinaAPI já colocou uma mensagem em `apiError`.
-        // Só precisamos garantir que NÃO chamaremos setSuccessMessage.
-          console.log("↪️ createDisciplina lançou erro:", err);
-        // Se quiser: você pode setar um erro no próprio form, 
-        // mas normalmente basta exibir a mensagem vindo de apiError no componente.
-
-        // (Não fazemos nada aqui, pois `apiError` já está preenchido)
+          console.log(" createDisciplina lançou erro:", err);
         return;
       }
     },

@@ -5,7 +5,7 @@ import { SuccessMessage } from '@/components/ui/SuccessMessage';
 import { FormInput } from '@/components/ui/FormInput';
 import type { ProfessorCadastroData, ProfessorEdicaoData, ProfessorResponse } from '@/schemas/professor';
 
-// ===== ESTADOS  =====
+// ===== ESTADOS BRASIL =====
 const ESTADOS_BRASIL = [
   { value: 'AC', label: 'Acre' },
   { value: 'AL', label: 'Alagoas' },
@@ -37,8 +37,10 @@ const ESTADOS_BRASIL = [
 ];
 
 // ===== INTERFACES =====
+type ProfessorFormData = ProfessorCadastroData | ProfessorEdicaoData;
+
 interface FormularioProfessorProps {
-  form: UseFormReturn<ProfessorCadastroData | ProfessorEdicaoData>;
+  form: UseFormReturn<ProfessorFormData>;
   modo: 'cadastro' | 'edicao';
   professor?: ProfessorResponse;
   onEnviar: () => Promise<void>;
@@ -68,7 +70,7 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
 
   const handleEnvio = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    handleSubmit(onEnviar)(event);
+    onEnviar();
   };
 
   return (
@@ -101,9 +103,8 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
         </div>
       </header>
 
-
       <div className="p-6">
-
+        {/* Mensagens de Feedback */}
         <div className="space-y-4 mb-6">
           {mensagemSucesso && (
             <SuccessMessage 
@@ -120,7 +121,7 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
           )}
         </div>
 
-        {/* ALERTA PARA EDIÇÃO */}
+        {/*  EDIÇÃO */}
         {modo === 'edicao' && professor && (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
             <div className="flex items-start">
@@ -135,7 +136,7 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
                 </h3>
                 <div className="mt-2 text-sm text-orange-700">
                   <ul className="list-disc list-inside space-y-1">
-                    <li><strong>CPF:</strong>  Não pode ser alterado por segurança</li>
+                    <li><strong>CPF:</strong> Não pode ser alterado por segurança</li>
                     <li><strong>Senha:</strong> Deixe vazio para manter a senha atual</li>
                     <li><strong>Email:</strong> Pode ser alterado se necessário</li>
                     <li><strong>Outros campos:</strong> Serão atualizados conforme preenchido</li>
@@ -164,7 +165,7 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
                 )}
               </h2>
               
-              {/* GRID DE CAMPOS */}
+              {/*  CAMPOS */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-600">
                 
                 {/* NOME COMPLETO */}
@@ -188,7 +189,7 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
                   )}
                 </div>
 
-                {/* CPF - DESABILITADO NA EDIÇÃO */}
+                {/* CPF */}
                 <div>
                   <FormInput
                     label="CPF"
@@ -197,7 +198,6 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
                     error={errors.cpf?.message}
                     maxLength={14}
                     autoComplete="off"
-                    
                     required={modo === 'cadastro'}
                     disabled={modo === 'edicao'} 
                     className={modo === 'edicao' ? 'bg-gray-100 cursor-not-allowed' : ''}

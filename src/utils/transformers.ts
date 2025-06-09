@@ -14,7 +14,7 @@ interface TurmaDTO {
   turno: 'DIURNO' | 'NOTURNO';
 }
 
-// ===== UTILITÁRIOS BASE
+// ===== UTILITÁRIOS BASE =====
 
 export const cleanCPF = (cpf: string): string => {
   return cpf.replace(/[^\d]/g, '');
@@ -47,7 +47,7 @@ export const transformProfessorFormToDTO = (
   data: ProfessorFormData,
   secretariaId: string
 ): ProfessorDTO => {
-  const cpfLimpo = cleanCPF(data.cpf);
+  const cpfLimpo = cleanCPF((data as any).cpf || '');
   const telefoneLimpo = cleanPhone(data.telefone);
   const numeroInt = parseInt(data.numero, 10);
 
@@ -67,7 +67,7 @@ export const transformProfessorFormToDTO = (
     nome: data.nome.trim(),
     CPF: cpfLimpo,
     email: data.email.trim().toLowerCase(),
-    senha: data.senha,
+    senha: (data as any).senha || '',
     logradouro: data.logradouro.trim(),
     bairro: data.bairro.trim(),
     numero: numeroInt,
@@ -124,20 +124,26 @@ export const transformCursoFormToDTO = (
   };
 };
 
+// ===== DISCIPLINA =====
 export const formDataToDisciplinaDTO = (
   data: DisciplinaFormData, 
   secretariaId: string
 ): DisciplinaDTO => {
   
-  const cargaHoraria = parseInt(data.cargaHoraria, 10);
+  const cargaHoraria = typeof data.cargaHoraria === 'string' 
+    ? parseInt(data.cargaHoraria, 10) 
+    : data.cargaHoraria;
+
+  if (isNaN(cargaHoraria) || cargaHoraria <= 0) {
+    throw new Error('Carga horária deve ser um número positivo');
+  }
 
   const dto: DisciplinaDTO = {
     nome: data.nome.trim(),
-    ementa: data.ementa,
+    ementa: data.ementa.trim(),
     cargaHoraria: cargaHoraria,
     id_secretaria: secretariaId
   };
-
 
   return dto;
 };
@@ -223,8 +229,8 @@ export const formatters = {
 
   turno: (turno: string): string => {
     const turnos = {
-      'DIURNO': ' Diurno',
-      'NOTURNO': ' Noturno'
+      'DIURNO': 'Diurno',
+      'NOTURNO': 'Noturno'
     };
     return turnos[turno as keyof typeof turnos] || turno;
   }

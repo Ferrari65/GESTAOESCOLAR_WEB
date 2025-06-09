@@ -1,6 +1,3 @@
-// src/components/secretaria/home/professor/CadastroProfessor.tsx
-// COMPONENTE PRINCIPAL QUE GERENCIA TUDO
-
 import React, { useState, useCallback } from 'react';
 import { FormularioProfessor } from './FormularioProfessor';
 import { ListaProfessores } from './ListaProfessores';
@@ -16,52 +13,48 @@ interface CadastroProfessorProps {
 
 type AbaSelecionada = 'cadastro' | 'lista';
 
-// ===== COMPONENTE PRINCIPAL =====
+// =====  PRINCIPAL =====
 export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
   onSuccess,
   onCancel
 }) => {
-  // ===== ESTADOS =====
+
   const [abaSelecionada, setAbaSelecionada] = useState<AbaSelecionada>('cadastro');
   const [professorEditando, setProfessorEditando] = useState<ProfessorResponse | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(true);
 
   // ===== HOOKS =====
-
   const modo = professorEditando ? 'edicao' : 'cadastro';
   
   const {
-  form,
-  enviarFormulario,
-  carregando,
-  erro,
-  mensagemSucesso,
-  limparMensagens
-} = useProfessorForm({
-  modo: professorEditando ? 'edicao' : 'cadastro',
-  professorId: professorEditando?.id_professor,
-  dadosIniciais: professorEditando || undefined,
-  onSucesso: useCallback(() => {
-    console.log('✅ Professor processado com sucesso!');
-    setProfessorEditando(null);
-    setAbaSelecionada('lista');
-    setMostrarFormulario(false);
-    onSuccess?.();
-  }, [onSuccess])
-});
-
+    form,
+    enviarFormulario,
+    carregando,
+    erro,
+    mensagemSucesso,
+    limparMensagens
+  } = useProfessorForm({
+    modo: professorEditando ? 'edicao' : 'cadastro',
+    professorId: professorEditando?.id_professor,
+    dadosIniciais: professorEditando || undefined,
+    onSucesso: useCallback(() => {
+      console.log('✅ Professor processado com sucesso!');
+      setProfessorEditando(null);
+      setAbaSelecionada('lista');
+      setMostrarFormulario(false);
+      onSuccess?.();
+    }, [onSuccess])
+  });
 
   const { buscarProfessorPorId } = useProfessorActions();
 
-
-
+  // ===== HANDLERS =====
   const handleNovoProfessor = useCallback(() => {
     setProfessorEditando(null);
     setMostrarFormulario(true);
     setAbaSelecionada('cadastro');
     limparMensagens();
   }, [limparMensagens]);
-
 
   const handleMostrarLista = useCallback(() => {
     setProfessorEditando(null);
@@ -70,24 +63,21 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
     limparMensagens();
   }, [limparMensagens]);
 
-
   const handleEditarProfessor = useCallback(async (professor: ProfessorResponse) => {
     console.log(' Editando professor:', professor.nome);
     
     try {
-
       const professorCompleto = await buscarProfessorPorId(professor.id_professor);
       
       if (professorCompleto) {
 
         setProfessorEditando(professorCompleto);
         
-
         form.reset({
           nome: professorCompleto.nome || '',
           cpf: professorCompleto.cpf || '',
           email: professorCompleto.email || '',
-          senha: '', 
+          senha: '', // Sempre vazio para edição
           telefone: professorCompleto.telefone || '',
           data_nasc: professorCompleto.data_nasc || '',
           sexo: professorCompleto.sexo as 'M' | 'F' || 'M',
@@ -112,14 +102,12 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
     }
   }, [buscarProfessorPorId, form, limparMensagens]);
 
-
   const handleCancelarEdicao = useCallback(() => {
     setProfessorEditando(null);
     setMostrarFormulario(false);
     setAbaSelecionada('lista');
     limparMensagens();
   }, [limparMensagens]);
-
 
   const handleCancelarFormulario = useCallback(() => {
     if (professorEditando) {
@@ -133,13 +121,12 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
 
   return (
     <div className="space-y-8">
-      
-
+      {/* ===== NAVEGAÇÃO POR ABAS ===== */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
             
-
+            {/*  CADASTRO/EDIÇÃO */}
             <button
               onClick={() => {
                 setAbaSelecionada('cadastro');
@@ -163,7 +150,7 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
               </div>
             </button>
             
-
+            {/* ABA LISTA */}
             <button
               onClick={handleMostrarLista}
               className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -185,7 +172,7 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
 
         <div className="p-6">
           
-
+          {/* ===== CONTEÚDO ABA CADASTRO ===== */}
           {abaSelecionada === 'cadastro' && mostrarFormulario && (
             <div className="space-y-6">
               
@@ -221,7 +208,7 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
                 </div>
               </div>
 
-
+              {/* FORMULÁRIO */}
               <FormularioProfessor
                 form={form}
                 modo={modo}
@@ -236,11 +223,10 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
             </div>
           )}
 
-
+          {/* ===== CONTEÚDO ABA LISTA ===== */}
           {abaSelecionada === 'lista' && (
             <div className="space-y-6">
               
-
               <div className="flex justify-between items-center">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
@@ -262,7 +248,7 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
                 </button>
               </div>
 
-              {/* LISTA */}
+              {/* LISTA DE PROFESSORES */}
               <ListaProfessores 
                 onEditarProfessor={handleEditarProfessor}
               />
@@ -272,7 +258,7 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
         </div>
       </div>
 
-
+      {/* ===== CARDS DE AÇÕES RÁPIDAS ===== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* CARD: CADASTRAR */}
@@ -316,7 +302,6 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
             Ver Lista
           </button>
         </div>
-
         
       </div>
       

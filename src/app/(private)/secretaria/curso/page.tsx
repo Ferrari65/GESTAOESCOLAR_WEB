@@ -37,7 +37,7 @@ export default function SecretariaCursoPage(): React.JSX.Element {
       />
       
       <main className="flex-1 ml-64 p-8" role="main">
-        <div className="max-w-5xl mx-auto space-y-8">
+        <div className="max-w-8xl mx-auto space-y-8">
           <Header 
             title="Gerenciamento de Cursos"
             subtitle="Bem-vindo(a),"

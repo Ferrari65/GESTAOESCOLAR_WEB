@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-// ===== SENHAS COMUNS (definir antes do uso) =====
+// ===== SENHAS =====
 const COMMON_PASSWORDS = [
   '123456', 'password', '123456789', '12345678', '12345',
   '1234567', '1234567890', 'qwerty', 'abc123', '111111',
   'password1', 'admin', 'letmein', 'welcome', 'monkey'
 ];
 
-// ===== VALIDADORES AUXILIARES =====
+// ===== VALIDADORES  =====
 const validateCPF = (cpf: string): boolean => {
   if (!cpf) return false;
   const cleanCPF = cpf.replace(/[^\d]/g, '');
@@ -50,7 +50,7 @@ export const TurnoTypeEnum = z.enum(['DIURNO', 'NOTURNO'], {
   errorMap: () => ({ message: 'Turno deve ser DIURNO ou NOTURNO' }),
 });
 
-// ===== VALIDADORES REUTILIZÁVEIS =====
+// =====  REUTILIZÁVEIS =====
 export const nameValidator = z
   .string()
   .min(2, 'Nome deve ter pelo menos 2 caracteres')
@@ -100,12 +100,15 @@ export const duracaoValidator = z
 export const cargaHorariaValidator = z
   .string()
   .min(1, 'Carga horária é obrigatória')
-  .refine((val) => {
+  .transform((val) => {
     const num = parseInt(val, 10);
-    return !isNaN(num) && num > 0;
-  }, 'Carga horária deve ser um número positivo');
+    if (isNaN(num) || num <= 0) {
+      throw new Error('Carga horária deve ser um número positivo');
+    }
+    return num;
+  });
 
-// ===== SCHEMAS DE AUTENTICAÇÃO =====
+// =====  AUTENTICAÇÃO =====
 export const loginSchema = z.object({
   email: emailValidator,
   password: passwordValidator,
@@ -127,25 +130,7 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   });
 
-// ===== SCHEMAS DE PROFESSOR =====
-export const professorFormSchema = z.object({
-  nome: nameValidator,
-  cpf: cpfValidator,
-  email: emailValidator,
-  senha: passwordValidator,
-  telefone: phoneValidator,
-  data_nasc: z.string().min(1, 'Data de nascimento é obrigatória'),
-  sexo: z.enum(['M', 'F'], {
-    errorMap: () => ({ message: 'Selecione o sexo' }),
-  }),
-  logradouro: z.string().min(1, 'Logradouro é obrigatório').trim(),
-  bairro: z.string().min(1, 'Bairro é obrigatório').trim(),
-  numero: z.string().min(1, 'Número é obrigatório'),
-  cidade: z.string().min(1, 'Cidade é obrigatória').trim(),
-  uf: z.string().length(2, 'UF deve ter 2 caracteres').toUpperCase(),
-});
-
-// ===== SCHEMAS DE CURSO =====
+// =====  CURSO =====
 export const cursoFormSchema = z.object({
   nome: z
     .string()
@@ -179,7 +164,7 @@ export const cursoResponseSchema = z.object({
   data_alteracao: z.string().optional(),
 });
 
-// ===== SCHEMAS DE DISCIPLINA =====
+// ===== DISCIPLINA =====
 export const disciplinaFormSchema = z.object({
   nome: z
     .string()
@@ -209,7 +194,7 @@ export const disciplinaResponse = z.object({
   situacao: SituacaoTypeEnum,
 });
 
-// ===== SCHEMAS DE TURMA =====
+// =====  TURMA =====
 export const turmaFormSchema = z.object({
   nome: z
     .string()
@@ -236,8 +221,6 @@ export type TurnoType = z.infer<typeof TurnoTypeEnum>;
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
-
-export type ProfessorFormData = z.infer<typeof professorFormSchema>;
 
 export type CursoFormData = z.infer<typeof cursoFormSchema>;
 export type CursoDTO = z.infer<typeof cursoDTOSchema>;

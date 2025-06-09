@@ -1,6 +1,3 @@
-// src/app/(private)/secretaria/professor/home/page.tsx
-// NOVA PÁGINA PRINCIPAL - LIMPA E ORGANIZADA
-
 'use client';
 
 import React, { useContext, useCallback } from 'react';
@@ -27,7 +24,7 @@ export default function SecretariaProfessorPage(): React.JSX.Element {
   }, [signOut]);
 
   const handleProfessorSuccess = useCallback(() => {
-    console.log('✅ Professor processado com sucesso!');
+    console.log(' Professor processado com sucesso!');
   }, []);
 
   // ===== LOADING STATE =====
