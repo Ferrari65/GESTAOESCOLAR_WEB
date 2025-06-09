@@ -500,9 +500,6 @@ export const ListaProfessores: React.FC<ListaProfessoresProps> = ({ onEditarProf
                             <div className="text-sm font-medium text-gray-900">
                               {professor.nome}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              ID: #{professor.id_professor ? professor.id_professor.slice(-6) : 'N/A'}
-                            </div>
                           </div>
                         </div>
                       </td>

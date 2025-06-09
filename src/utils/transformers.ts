@@ -1,349 +1,168 @@
 import type { 
-  ProfessorFormData, 
+  ProfessorCadastroData,
+  ProfessorEdicaoData,
   ProfessorCreateDTO,   
-  ProfessorUpdateDTO   
+  ProfessorUpdateDTO,
+  ProfessorResponse
 } from '@/schemas/professor';
-import type { 
-  CursoFormData, 
-  CursoDTO 
-} from '@/schemas/index';
-import { DisciplinaDTO, DisciplinaFormData } from '@/schemas';
 
-interface TurmaDTO {
-  nome: string;
-  ano: string;
-  turno: 'DIURNO' | 'NOTURNO';
-}
+// ===== UTILITÁRIOS =====
+export const cleanCPF = (cpf: string): string => cpf.replace(/[^\d]/g, '');
+export const cleanPhone = (phone: string): string => phone.replace(/[^\d]/g, '');
 
-// ===== UTILITÁRIOS BASE =====
-
-export const cleanCPF = (cpf: string): string => {
-  return cpf.replace(/[^\d]/g, '');
-};
-
-export const cleanPhone = (phone: string): string => {
-  return phone.replace(/[^\d]/g, '');
-};
-
-export const formatCPF = (cpf: string): string => {
-  const clean = cleanCPF(cpf);
-  return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-};
-
-export const formatPhone = (phone: string): string => {
-  const clean = cleanPhone(phone);
-  if (clean.length === 11) {
-    return clean.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  }
-  return clean.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-};
-
-const generateDataAlteracao = (): string => {
-  const now = new Date();
-  return now.toISOString().split('T')[0];
-};
-
-// ===== PROFESSOR =====
-export const transformProfessorFormToDTO = (
-  data: ProfessorFormData,
+// ===== CADASTRO =====
+export const transformProfessorCadastroToDTO = (
+  data: ProfessorCadastroData,
   secretariaId: string
-): ProfessorCreateDTO => {  
-  const cpfLimpo = cleanCPF((data as any).cpf || '');
+): ProfessorCreateDTO => {
+  
+  const cpfLimpo = cleanCPF(data.cpf);
   const telefoneLimpo = cleanPhone(data.telefone);
   const numeroInt = parseInt(data.numero, 10);
 
-  if (isNaN(numeroInt) || numeroInt <= 0) {
-    throw new Error('Número deve ser um valor válido maior que zero');
-  }
-
-  if (cpfLimpo.length !== 11) {
-    throw new Error('CPF deve ter 11 dígitos');
-  }
-
-  if (telefoneLimpo.length !== 10 && telefoneLimpo.length !== 11) {
-    throw new Error('Telefone deve ter 10 ou 11 dígitos');
-  }
-
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(data.data_nasc)) {
-    throw new Error('Data de nascimento deve estar no formato YYYY-MM-DD');
-  }
+  if (cpfLimpo.length !== 11) throw new Error('CPF deve ter 11 dígitos');
+  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) throw new Error('Telefone inválido');
+  if (isNaN(numeroInt) || numeroInt <= 0) throw new Error('Número deve ser válido');
 
   return {
     nome: data.nome.trim(),
     CPF: cpfLimpo,
-    situacao: 'ATIVO',                
+    situacao: 'ATIVO',
     logradouro: data.logradouro.trim(),
     bairro: data.bairro.trim(),
-    numero: numeroInt,                     
+    numero: numeroInt,
+    cidade: data.cidade.trim(),
     UF: data.uf.toUpperCase(),
     email: data.email.trim().toLowerCase(),
-    senha: (data as any).senha || '',
+    senha: data.senha,
     telefone: telefoneLimpo,
-    sexo: data.sexo,                      
-    data_nasc: data.data_nasc,          
+    sexo: data.sexo,
+    data_nasc: data.data_nasc,
     id_secretaria: secretariaId
   };
 };
 
-// ===== PROFESSOR -  EDITAR =====
-export const transformProfessorFormToUpdateDTO = (
-  data: ProfessorFormData,
-  dadosOriginais: any
-): ProfessorUpdateDTO => {  
+// ===== EDIÇÃO  =====
+export const transformProfessorEdicaoToDTO = (
+  data: ProfessorEdicaoData
+): ProfessorUpdateDTO => {
+  
   const updateDTO: ProfessorUpdateDTO = {};
   
-  const telefoneLimpo = cleanPhone(data.telefone);
-  const numeroInt = parseInt(data.numero, 10);
-  
-  if (data.nome.trim() !== dadosOriginais.nome) {
+  console.log(' [EDIT] Dados do formulário:', data);
+
+  if (data.nome !== undefined) {
     updateDTO.nome = data.nome.trim();
   }
 
-  if (data.email.trim().toLowerCase() !== dadosOriginais.email.toLowerCase()) {
+  if (data.email !== undefined) {
     updateDTO.email = data.email.trim().toLowerCase();
   }
 
-  if (telefoneLimpo !== cleanPhone(dadosOriginais.telefone)) {
-    updateDTO.telefone = telefoneLimpo;
+  if (data.telefone !== undefined) {
+    updateDTO.telefone = cleanPhone(data.telefone);
   }
 
-  if (data.data_nasc !== dadosOriginais.data_nasc) {
-    // Validar formato ISO
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.data_nasc)) {
-      throw new Error('Data de nascimento deve estar no formato YYYY-MM-DD');
-    }
+  if (data.data_nasc !== undefined) {
     updateDTO.data_nasc = data.data_nasc;
   }
 
-  if (data.sexo !== dadosOriginais.sexo) {
+  if (data.sexo !== undefined) {
     updateDTO.sexo = data.sexo;
   }
 
-  if (data.logradouro.trim() !== dadosOriginais.logradouro) {
+  if (data.logradouro !== undefined) {
     updateDTO.logradouro = data.logradouro.trim();
   }
 
-  if (data.bairro.trim() !== dadosOriginais.bairro) {
+  if (data.bairro !== undefined) {
     updateDTO.bairro = data.bairro.trim();
   }
 
-  if (numeroInt !== dadosOriginais.numero) {
-    updateDTO.numero = numeroInt; 
+  if (data.numero !== undefined) {
+    const numeroInt = parseInt(data.numero, 10);
+    if (!isNaN(numeroInt)) {
+      updateDTO.numero = numeroInt;
+    }
   }
 
-  if (data.cidade.trim() !== dadosOriginais.cidade) {
+  if (data.cidade !== undefined) {
     updateDTO.cidade = data.cidade.trim();
   }
 
-  if (data.uf.toUpperCase() !== dadosOriginais.uf.toUpperCase()) {
+  if (data.uf !== undefined) {
     updateDTO.UF = data.uf.toUpperCase();
   }
 
-  const senha = (data as any).senha;
-  if (senha && senha.trim() !== '') {
-    updateDTO.senha = senha.trim();
+  if (data.senha !== undefined) {
+    updateDTO.senha = data.senha.trim();
   }
 
+  console.log(' [EDIT] DTO final (só campos alterados):', updateDTO);
+  console.log(' [EDIT] Total de campos que serão atualizados:', Object.keys(updateDTO).length);
+  
   return updateDTO;
 };
 
-// ===== CURSO =====
-export const transformCursoFormToDTO = (
-  data: CursoFormData,
-  secretariaId: string
-): CursoDTO => {
-  if (!data.nome || data.nome.trim() === '') {
-    throw new Error('Nome do curso é obrigatório');
-  }
-
-  if (data.nome.trim().length < 3) {
-    throw new Error('Nome do curso deve ter pelo menos 3 caracteres');
-  }
-
-  if (data.nome.trim().length > 100) {
-    throw new Error('Nome do curso deve ter no máximo 100 caracteres');
-  }
-
-  let duracao: number;
-  if (typeof data.duracao === 'string') {
-    duracao = parseInt(data.duracao, 10);
-    if (isNaN(duracao) || duracao <= 0 || duracao > 60) {
-      throw new Error('Duração deve ser um número entre 1 e 60 meses');
-    }
-  } else {
-    duracao = data.duracao;
-    if (duracao <= 0 || duracao > 60) {
-      throw new Error('Duração deve ser um número entre 1 e 60 meses');
-    }
-  }
-
-  if (!secretariaId || secretariaId.trim() === '') {
-    throw new Error('ID da secretaria é obrigatório');
-  }
-
+export const prepareEmptyFormForEdit = (): ProfessorEdicaoData => {
   return {
-    nome: data.nome.trim(),
-    duracao: duracao,
-    id_secretaria: secretariaId,
-    situacao: 'ATIVO' as const,
-    data_alteracao: new Date().toISOString().split('T')[0]
+    
+    nome: '',
+    email: '',
+    telefone: '',
+    data_nasc: '',
+    sexo: undefined,
+    logradouro: '',
+    bairro: '',
+    numero: '',
+    cidade: '',
+    uf: '',
+    senha: '',
+    cpf: '', 
   };
 };
 
-// ===== DISCIPLINA =====
-export const formDataToDisciplinaDTO = (
-  data: DisciplinaFormData, 
-  secretariaId: string
-): DisciplinaDTO => {
-  
-  const cargaHoraria = typeof data.cargaHoraria === 'string' 
-    ? parseInt(data.cargaHoraria, 10) 
-    : data.cargaHoraria;
 
-  if (isNaN(cargaHoraria) || cargaHoraria <= 0) {
-    throw new Error('Carga horária deve ser um número positivo');
-  }
+export const hasChangesToUpdate = (data: ProfessorEdicaoData): boolean => {
+  const fieldsToCheck = [
+    'nome', 'email', 'telefone', 'data_nasc', 'sexo',
+    'logradouro', 'bairro', 'numero', 'cidade', 'uf', 'senha'
+  ] as const;
 
-  const dto: DisciplinaDTO = {
-    nome: data.nome.trim(),
-    ementa: data.ementa.trim(),
-    cargaHoraria: cargaHoraria,
-    id_secretaria: secretariaId
+  return fieldsToCheck.some(field => {
+    const value = data[field];
+    return value !== undefined && value !== '';
+  });
+};
+
+export const countFieldsToUpdate = (data: ProfessorEdicaoData): number => {
+  const fieldsToCheck = [
+    'nome', 'email', 'telefone', 'data_nasc', 'sexo',
+    'logradouro', 'bairro', 'numero', 'cidade', 'uf', 'senha'
+  ] as const;
+
+  return fieldsToCheck.filter(field => {
+    const value = data[field];
+    return value !== undefined && value !== '';
+  }).length;
+};
+
+export const getFieldsToUpdate = (data: ProfessorEdicaoData): string[] => {
+  const fieldNames: Record<string, string> = {
+    nome: 'Nome',
+    email: 'Email', 
+    telefone: 'Telefone',
+    data_nasc: 'Data de Nascimento',
+    sexo: 'Sexo',
+    logradouro: 'Logradouro',
+    bairro: 'Bairro',
+    numero: 'Número',
+    cidade: 'Cidade',
+    uf: 'UF',
+    senha: 'Senha'
   };
 
-  return dto;
-};
-
-// ===== TURMA =====
-export const transformTurmaFormToDTO = (
-  data: TurmaFormData
-): TurmaDTO => {
-  if (!data.nome || data.nome.trim() === '') {
-    throw new Error('Nome da turma é obrigatório');
-  }
-
-  if (data.nome.trim().length < 3) {
-    throw new Error('Nome da turma deve ter pelo menos 3 caracteres');
-  }
-
-  if (data.nome.trim().length > 100) {
-    throw new Error('Nome da turma deve ter no máximo 100 caracteres');
-  }
-
-  if (!data.ano || !/^\d{4}$/.test(data.ano)) {
-    throw new Error('Ano deve ter 4 dígitos (ex: 2024)');
-  }
-
-  if (!data.turno) {
-    throw new Error('Turno é obrigatório');
-  }
-
-  const turnosValidos = ['DIURNO', 'NOTURNO'];
-  if (!turnosValidos.includes(data.turno)) {
-    throw new Error('Turno deve ser DIURNO ou NOTURNO');
-  }
-
-  return {
-    nome: data.nome.trim(),
-    ano: data.ano,
-    turno: data.turno as 'DIURNO' | 'NOTURNO'
-  };
-};
-
-// ===== FORMATADORES =====
-export const formatters = {
-  cpf: (cpf: string): string => {
-    const clean = cleanCPF(cpf);
-    if (clean.length !== 11) return cpf;
-    return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  },
-
-  phone: (phone: string): string => {
-    const clean = cleanPhone(phone);
-    if (clean.length === 11) {
-      return clean.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    } else if (clean.length === 10) {
-      return clean.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-    }
-    return phone;
-  },
-
-  duracao: (duracao: number): string => {
-    return `${duracao} ${duracao === 1 ? 'mês' : 'meses'}`;
-  },
-
-  situacao: (situacao: string): string => {
-    const situacoes = {
-      'ATIVO': 'Ativo',
-      'INATIVO': 'Inativo'
-    };
-    return situacoes[situacao as keyof typeof situacoes] || situacao;
-  },
-
-  currency: (value: number): string => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  },
-
-  date: (date: string | Date): string => {
-    if (!date) return '';
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('pt-BR');
-  },
-
-  turno: (turno: string): string => {
-    const turnos = {
-      'DIURNO': 'Diurno',
-      'NOTURNO': 'Noturno'
-    };
-    return turnos[turno as keyof typeof turnos] || turno;
-  }
-};
-
-// ===== VALIDADORES =====
-export const validators = {
-  secretariaId: (id: string): boolean => {
-    return id !== undefined && id !== null && id.trim() !== '';
-  },
-
-  cursoId: (id: string): boolean => {
-    const numId = parseInt(id, 10);
-    return !isNaN(numId) && numId > 0;
-  },
-
-  duracao: (duracao: number | string): boolean => {
-    const num = typeof duracao === 'string' ? parseInt(duracao, 10) : duracao;
-    return !isNaN(num) && num >= 1 && num <= 60;
-  },
-
-  situacao: (situacao: string): boolean => {
-    return ['ATIVO', 'INATIVO'].includes(situacao);
-  },
-
-  uf: (uf: string): boolean => {
-    const validUFs = [
-      'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-      'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-      'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-    ];
-    return validUFs.includes(uf.toUpperCase());
-  },
-
-  turno: (turno: string): boolean => {
-    return ['DIURNO', 'NOTURNO'].includes(turno);
-  },
-
-  ano: (ano: string): boolean => {
-    return /^\d{4}$/.test(ano) && parseInt(ano) >= 1900 && parseInt(ano) <= 2100;
-  },
-
-  dataISO: (data: string): boolean => {
-    return /^\d{4}-\d{2}-\d{2}$/.test(data);
-  },
-
-  numeroPositivo: (numero: number): boolean => {
-    return !isNaN(numero) && numero > 0;
-  }
+  return Object.entries(data)
+    .filter(([key, value]) => value !== undefined && value !== '' && key !== 'cpf')
+    .map(([key]) => fieldNames[key] || key);
 };
