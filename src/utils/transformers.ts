@@ -1,15 +1,40 @@
-import {
-  ProfessorFormData,
-  ProfessorDTO,
-  CursoFormData,
-  CursoDTO,
-  CursoEditarDTO,
-  TurmaFormData,
-  TurmaDTO,
-  cleanCPF,
-  cleanPhone,
-  SituacaoType
-} from '@/schemas';
+import type { 
+  ProfessorFormData, 
+  ProfessorDTO 
+} from '@/types/secretariaTypes/cadastroprofessor/professor';
+import type { 
+  CursoFormData, 
+  CursoDTO 
+} from '@/schemas/secretaria/curso/cursoValidations';
+import { DisciplinaDTO, DisciplinaFormData } from '@/schemas';
+
+// ===== UTILITÁRIOS BASE
+
+export const cleanCPF = (cpf: string): string => {
+  return cpf.replace(/[^\d]/g, '');
+};
+
+export const cleanPhone = (phone: string): string => {
+  return phone.replace(/[^\d]/g, '');
+};
+
+export const formatCPF = (cpf: string): string => {
+  const clean = cleanCPF(cpf);
+  return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+};
+
+export const formatPhone = (phone: string): string => {
+  const clean = cleanPhone(phone);
+  if (clean.length === 11) {
+    return clean.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  }
+  return clean.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+};
+
+const generateDataAlteracao = (): string => {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+};
 
 // ===== PROFESSOR =====
 export const transformProfessorFormToDTO = (
@@ -86,19 +111,32 @@ export const transformCursoFormToDTO = (
 
   return {
     nome: data.nome.trim(),
-    duracao,
-    id_secretaria: secretariaId.trim()
+    duracao: duracao, 
+    id_secretaria: secretariaId,
+    situacao: 'ATIVO', 
+    data_alteracao: generateDataAlteracao()
   };
+
+
+  return dto;
 };
 
-export const transformCursoSituacaoUpdate = (
-  situacao: SituacaoType
-): CursoEditarDTO => {
-  if (!situacao || !['ATIVO', 'INATIVO'].includes(situacao)) {
-    throw new Error('Situação deve ser ATIVO ou INATIVO');
-  }
+export const formDataToDisciplinaDTO = (
+  data: DisciplinaFormData, 
+  secretariaId: string
+): DisciplinaDTO => {
+  
+  const cargaHoraria = parseInt(data.cargaHoraria, 10);
 
-  return { situacao };
+  const dto: DisciplinaDTO = {
+    nome: data.nome.trim(),
+    ementa: data.ementa,
+    cargaHoraria: cargaHoraria,
+    id_secretaria: secretariaId
+  };
+
+
+  return dto;
 };
 
 // ===== TURMA =====

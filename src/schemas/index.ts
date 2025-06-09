@@ -46,32 +46,50 @@ export const emailValidator = z
 export const passwordValidator = z
   .string()
   .min(6, 'Senha deve ter pelo menos 6 caracteres')
-  .max(50, 'Senha muito longa');
+  .max(50, 'Senha muito longa')
+  .refine(
+    (password) => !COMMON_PASSWORDS.includes(password.toLowerCase()),
+    'Esta senha é muito comum, escolha outra'
+  );
 
-export const cpfValidator = z
+/**
+ * Validador de senha rigoroso - para desenvolvimento e cadastros
+ */
+export const strictPasswordValidator = z
   .string()
-  .min(1, 'CPF é obrigatório')
-  .refine(validateCPF, 'CPF inválido');
+  .min(1, 'Senha é obrigatória')
+  .min(8, 'Senha deve ter pelo menos 8 caracteres')
+  .max(100, 'Senha muito longa')
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    'A senha deve conter pelo menos: 1 letra minúscula, 1 maiúscula e 1 número'
+  )
+  .refine(
+    (password) => !COMMON_PASSWORDS.includes(password.toLowerCase()),
+    'Esta senha é muito comum, escolha outra'
+  );
 
-export const phoneValidator = z
+/**
+ * Validador de duração para cursos
+ */
+export const duracaoValidator = z
   .string()
-  .min(1, 'Telefone é obrigatório')
-  .refine(validatePhone, 'Telefone inválido');
+  .min(1, 'Duração é obrigatória')
+  .refine((val) => {
+    const num = parseInt(val, 10);
+    return !isNaN(num) && num > 0 && num <= 60;
+  }, 'Duração deve ser um número entre 1 e 60 meses');
 
-export const nameValidator = z
+  /*
+  * Validador para carga horária de disciplinas
+  */
+ export const cargaHorariaValidator = z
   .string()
-  .min(2, 'Nome deve ter pelo menos 2 caracteres')
-  .max(100, 'Nome muito longo')
-  .trim();
-
-
-export const SituacaoTypeEnum = z.enum(['ATIVO', 'INATIVO'], {
-  errorMap: () => ({ message: 'Situação deve ser ATIVO ou INATIVO' }),
-});
-
-export const TurnoTypeEnum = z.enum(['DIURNO', 'NOTURNO'], {
-  errorMap: () => ({ message: 'Turno deve ser DIURNO ou NOTURNO' }),
-});
+  .min(1, 'Carga horária é obrigatória')
+  .refine((val) => {
+    const num = parseInt(val, 10);
+    return !isNaN(num) && num > 0;
+  }, 'Carga horária deve ser um número positivo');
 
 // ===== SCHEMAS DE AUTENTICAÇÃO =====
 export const loginSchema = z.object({
@@ -162,48 +180,50 @@ export const cursoEditarDTOSchema = z.object({
 export const cursoResponseSchema = z.object({
   idCurso: z.string(),
   nome: z.string(),
-  duracao: z.number(),
-  situacao: SituacaoTypeEnum,
-  id_secretaria: z.string(),
+  duracao: z.number(),  
+  id_secretaria: z.string(), 
+  situacao: z.string(), 
+  data_alteracao: z.string()
 });
 
-export const turmaFormSchema = z.object({
-  nome: z.string()
-    .min(1, 'Nome da turma é obrigatório')
-    .min(3, 'Nome da turma deve ter pelo menos 3 caracteres')
-    .max(100, 'Nome da turma deve ter no máximo 100 caracteres')
-    .trim(),
-  id_curso: z.string().min(1, 'Curso é obrigatório'),
-  ano: z
-    .string()
-    .min(1, 'Ano é obrigatório')
-    .regex(/^\d{4}$/, 'Ano deve ter 4 dígitos'),
-  turno: TurnoTypeEnum, 
-});
+/**
+ * Schema para disciplina
+ */
 
-export const turmaDTOSchema = z.object({
+  export const disciplinaDTO = z.object({
+    nome: z.string().min(1, 'Nome é obrigatório'),
+    ementa: z.string().min(1, 'Ementa é obrigatória'),
+    cargaHoraria: z.number().int().positive().min(1, 'Carga horária é obrigatória'),
+    id_secretaria: z.string()
+  });
+
+  export const disciplinaResponse = z.object({
+  idDisciplina: z.string(),
   nome: z.string(),
-  ano: z.string().regex(/^\d{4}$/, 'Ano deve ter 4 dígitos'),
-  turno: TurnoTypeEnum, 
-});
-
-export const turmaResponseSchema = z.object({
-  idTurma: z.string(),
-  nome: z.string(),
-  ano: z.string(),
-  idCurso: z.string(),
+  ementa: z.string(),
+  cargaHoraria: z.number().int().positive(),
   idSecretaria: z.string(),
-
-  alunos: z.array(z.object({
-    idAluno: z.string(),
-    nome: z.string(),
-    matricula: z.string(),
-    email: z.string(),
-    situacao: z.string(),
-  })).optional().default([]),
+  situacao: z.enum(['ATIVO', 'INATIVO']),
 });
 
-// ===== TIPOS  =====
+export const disciplinaFormSchema = z.object({
+  nome: z
+    .string()
+    .min(1, 'Nome é obrigatório')
+    .max(100, 'Nome deve ter no máximo 100 caracteres')
+    .trim(),
+
+  ementa: z
+    .string()
+    .min(1, 'Ementa é obrigatória')
+    .max(500, 'Ementa deve ter no máximo 500 caracteres'),
+
+  cargaHoraria: cargaHorariaValidator
+});
+
+
+// ===== TIPOS DERIVADOS =====
+
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type ProfessorFormData = z.infer<typeof professorFormSchema>;
@@ -213,29 +233,81 @@ export type CursoFormData = z.infer<typeof cursoFormSchema>;
 export type CursoDTO = z.infer<typeof cursoDTOSchema>;
 export type CursoEditarDTO = z.infer<typeof cursoEditarDTOSchema>;
 export type CursoResponse = z.infer<typeof cursoResponseSchema>;
-export type SituacaoType = z.infer<typeof SituacaoTypeEnum>;
+
+export type DisciplinaFormData = z.infer<typeof disciplinaFormSchema>;
+export type DisciplinaDTO = z.infer<typeof disciplinaDTO>;
+export type DisciplinaResponse = z.infer<typeof disciplinaResponse>;
+
+// ===== FUNÇÕES DE VALIDAÇÃO =====
 
 
-export type TurmaFormData = z.infer<typeof turmaFormSchema>;
-export type TurmaDTO = z.infer<typeof turmaDTOSchema>;
-export type TurmaResponse = z.infer<typeof turmaResponseSchema>;
-export type TurnoType = z.infer<typeof TurnoTypeEnum>;
-
-// ===== VALIDAÇÃO =====
-export const validateLoginForm = (data: unknown) => loginSchema.safeParse(data);
-export const validateProfessorForm = (data: unknown) => professorFormSchema.safeParse(data);
-export const validateTurmaForm = (data: unknown) => turmaFormSchema.safeParse(data);
-export const validateTurmaDTO = (data: unknown) => turmaDTOSchema.safeParse(data);
-export const validateCursoForm = (data: unknown) => cursoFormSchema.safeParse(data);
-export const validateCursoDTO = (data: unknown) => cursoDTOSchema.safeParse(data);
-export const validateCursoEditarDTO = (data: unknown) => cursoEditarDTOSchema.safeParse(data);
-export const validateCursoResponse = (data: unknown) => cursoResponseSchema.safeParse(data);
-
-// ===== UTILITÁRIOS DE FORMATAÇÃO =====
-export const cleanCPF = (cpf: string): string => cpf.replace(/[^\d]/g, '');
-export const cleanPhone = (phone: string): string => phone.replace(/[^\d]/g, '');
-
-export const formatCPF = (cpf: string): string => {
-  const clean = cleanCPF(cpf);
-  return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+export const validateCursoForm = (data: unknown) => {
+  return cursoFormSchema.safeParse(data);
 };
+
+export const validateCursoDTO = (data: unknown) => {
+  return cursoDTOSchema.safeParse(data);
+};
+
+export const validateDisciplinaForm = (data: unknown) => {
+  return disciplinaFormSchema.safeParse(data);
+};
+
+export const validateDisciplinaDTO = (data: unknown) => {
+  return disciplinaDTO.safeParse(data);
+};
+
+export function checkPasswordStrength(password: string) {
+  const checks = {
+    length: password.length >= 8,
+    hasLower: /[a-z]/.test(password),
+    hasUpper: /[A-Z]/.test(password),
+    hasNumber: /\d/.test(password),
+    notCommon: !COMMON_PASSWORDS.includes(password.toLowerCase()),
+  };
+
+  const score = Object.values(checks).filter(Boolean).length;
+  
+  let level: 'fraca' | 'média' | 'forte';
+  if (score <= 2) level = 'fraca';
+  else if (score <= 4) level = 'média';
+  else level = 'forte';
+
+  return { score, level, isStrong: score >= 4 };
+}
+
+export function validateSchema<T>(schema: z.ZodSchema<T>, data: unknown): {
+  success: boolean;
+  data?: T;
+  errors?: string[];
+} {
+  try {
+    const result = schema.parse(data);
+    return { success: true, data: result };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        errors: error.errors.map(err => err.message)
+      };
+    }
+    return {
+      success: false,
+      errors: ['Erro de validação desconhecido']
+    };
+  }
+}
+
+// ===== CONFIGURAÇÕES DE SEGURANÇA =====
+
+export const securitySettings = {
+  maxLoginAttempts: 5,
+  lockoutTime: 15 * 60 * 1000, 
+  sessionDuration: 24 * 60 * 60 * 1000, 
+} as const;
+
+// ===== EXPORTS DE COMPATIBILIDADE =====
+
+
+export const productionSchema = loginSchema;
+export const developmentSchema = developmentLoginSchema;
