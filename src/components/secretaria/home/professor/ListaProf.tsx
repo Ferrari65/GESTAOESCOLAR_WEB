@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { useProfessorList } from '@/hooks/secretaria/cadastroprofessor/useProfessorList';
+import { useProfessorList } from '@/hooks/secretaria/professor'; 
 import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { ProfessorTable } from '@/components/professor/ProfessorTable';
 
 export default function ListaProfessor() {
   const { professores, loading, error, refetch, clearError } = useProfessorList();
@@ -62,7 +61,50 @@ export default function ListaProfessor() {
           </p>
         </div>
       ) : (
-        <ProfessorTable professores={professores} />
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nome
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Telefone
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {professores.map((professor) => (
+                <tr key={professor.id_professor} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{professor.nome}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{professor.email}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{professor.telefone}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      professor.situacao === 'ATIVO' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {professor.situacao}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

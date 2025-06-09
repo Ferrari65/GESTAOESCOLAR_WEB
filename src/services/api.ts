@@ -1,82 +1,51 @@
+// src/services/api.ts - VERSÃO FINAL CORRIGIDA
+
 import axios, { AxiosInstance, AxiosHeaders, AxiosError } from 'axios';
-import { 
-  API_CONFIG, 
-  AUTH_CONFIG, 
-  ERROR_MESSAGES,
-  ENV,
-  getDashboardRoute
-} from '@/config/app';
 
-// ===== INTERFACES =====
+// ===== CONFIGURAÇÕES DIRETAS (sem import problemático) =====
+const API_CONFIG = {
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+} as const;
 
-interface ApiErrorResponse {
-  message: string;
-  status?: number;
-  code?: string;
-  isRetryable?: boolean;
-}
+const AUTH_CONFIG = {
+  tokenCookieName: 'nextauth.token',
+  tokenLocalStorageKey: 'nextauth.token',
+  secretariaIdKey: 'secretaria_id'
+} as const;
 
-interface TokenInfo {
-  token: string | null;
-  source: 'cookie' | 'localStorage' | null;
-}
+const ERROR_MESSAGES = {
+  INVALID_CREDENTIALS: 'Email ou senha incorretos.',
+  UNAUTHORIZED: 'Sem permissão para acessar esta área.',
+  NETWORK_ERROR: 'Erro de conexão. Verifique sua internet.',
+  SERVER_ERROR: 'Erro no servidor. Tente novamente.',
+  UNKNOWN: 'Erro desconhecido. Contate o suporte.'
+} as const;
 
-// ===== GERENCIAMENTO DE TOKEN MELHORADO =====
+const ENV = {
+  isServer: typeof window === 'undefined'
+} as const;
 
-function getToken(): TokenInfo {
-  if (ENV.isServer) return { token: null, source: null };
+// ===== TOKEN MANAGER =====
+function getToken(): string | null {
+  if (ENV.isServer) return null;
   
   try {
-    // 1. Prioridade: Cookie (mais seguro)
-    const cookieMatch = document.cookie.match(
-      new RegExp(`${AUTH_CONFIG.tokenCookieName}=([^;]+)`)
-    );
+    const cookieMatch = document.cookie.match(new RegExp(`${AUTH_CONFIG.tokenCookieName}=([^;]+)`));
     if (cookieMatch?.[1]) {
-      return { token: cookieMatch[1], source: 'cookie' };
+      return cookieMatch[1];
     }
     
-    // 2. Fallback: localStorage
     const localToken = localStorage.getItem(AUTH_CONFIG.tokenLocalStorageKey);
     if (localToken) {
-      return { token: localToken, source: 'localStorage' };
+      return localToken;
     }
-    
-    return { token: null, source: null };
-  } catch (error) {
-    console.warn(' Erro ao obter token:', error);
-    return { token: null, source: null };
-  }
-}
 
-/**
- * Verifica se o token é válido (não expirado)
- */
-function isTokenValid(token: string): boolean {
-  try {
-    // Decodifica o payload do JWT
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    
-    const payload = JSON.parse(atob(parts[1]));
-    const now = Math.floor(Date.now() / 1000);
-    
-    // Verifica se não expirou
-    return payload.exp && payload.exp > now;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Obtém role do token JWT
- */
-function getRoleFromToken(token: string): string | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    
-    const payload = JSON.parse(atob(parts[1]));
-    return payload.role || payload.authorities?.[0] || payload.scope || null;
+    return null;
   } catch {
     return null;
   }
@@ -86,221 +55,108 @@ function clearTokens(): void {
   if (ENV.isServer) return;
   
   try {
-    const paths = ['/', '/secretaria', '/professor', '/aluno'];
-    paths.forEach(path => {
-      document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=${path}; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-    });
-    
+    document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=/; max-age=0`;
     localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
     localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
-
-    sessionStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
-    
   } catch (error) {
-    console.error('Erro crítico ao limpar tokens:', error);
+    console.error('Erro ao limpar tokens:', error);
   }
 }
-function classifyError(error: AxiosError): ApiErrorResponse {
-  const status = error.response?.status;
-  const data = error.response?.data as any;
 
-  if (error.request && !error.response) {
-    return {
-      message: ERROR_MESSAGES.NETWORK_ERROR,
-      status: 0,
-      code: 'NETWORK_ERROR',
-      isRetryable: true
-    };
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp <= now;
+  } catch {
+    return true;
   }
-  
-  if (status) {
-    const baseResponse = {
-      status,
-      code: data?.code || `HTTP_${status}`,
-      isRetryable: false
-    };
+}
+
+// ===== ERROR HANDLER =====
+function getErrorMessage(error: AxiosError): string {
+  if (error.response) {
+    const { status, data } = error.response;
+    const serverMessage = (data as any)?.message || (data as any)?.error;
     
     switch (status) {
       case 400:
-        return {
-          ...baseResponse,
-          message: data?.message || 'Dados inválidos fornecidos.'
-        };
-        
+        return serverMessage || 'Dados inválidos fornecidos.';
       case 401:
-        return {
-          ...baseResponse,
-          message: ERROR_MESSAGES.INVALID_CREDENTIALS,
-          code: 'UNAUTHORIZED'
-        };
-        
+        return ERROR_MESSAGES.INVALID_CREDENTIALS;
       case 403:
-        return {
-          ...baseResponse,
-          message: ERROR_MESSAGES.UNAUTHORIZED,
-          code: 'FORBIDDEN'
-        };
-        
+        return ERROR_MESSAGES.UNAUTHORIZED;
       case 404:
-        return {
-          ...baseResponse,
-          message: data?.message || 'Recurso não encontrado.'
-        };
-        
+        return 'Recurso não encontrado no servidor.';
       case 422:
-        return {
-          ...baseResponse,
-          message: data?.message || 'Dados inconsistentes.'
-        };
-        
+        return serverMessage || 'Dados inconsistentes ou já existem.';
       case 429:
-        return {
-          ...baseResponse,
-          message: 'Muitas tentativas. Aguarde alguns minutos.',
-          isRetryable: true
-        };
-        
+        return 'Muitas tentativas. Aguarde alguns minutos.';
       case 500:
-        return {
-          ...baseResponse,
-          message: ERROR_MESSAGES.SERVER_ERROR,
-          code: 'INTERNAL_SERVER_ERROR',
-          isRetryable: true
-        };
-        
+        return ERROR_MESSAGES.SERVER_ERROR;
       case 502:
       case 503:
       case 504:
-        return {
-          ...baseResponse,
-          message: 'Serviço temporariamente indisponível.',
-          code: 'SERVICE_UNAVAILABLE',
-          isRetryable: true
-        };
-        
+        return 'Serviço temporariamente indisponível.';
       default:
-        return {
-          ...baseResponse,
-          message: data?.message || ERROR_MESSAGES.UNKNOWN,
-          isRetryable: status >= 500
-        };
+        return serverMessage || `Erro ${status}: ${error.response.statusText}`;
     }
   }
   
-
-  return {
-    message: error.message || ERROR_MESSAGES.UNKNOWN,
-    code: 'UNKNOWN_ERROR',
-    isRetryable: false
-  };
-}
-
-function performLogout(redirectToLogin = true): void {
-  clearTokens();
-  
-  if (!ENV.isServer && redirectToLogin) {
-    const currentPath = window.location.pathname + window.location.search;
-    const shouldPreserveRedirect = !currentPath.includes('/login') && 
-                                   currentPath !== '/' && 
-                                   !currentPath.includes('/logout');
-    
-    if (shouldPreserveRedirect) {
-      const redirect = encodeURIComponent(currentPath);
-      window.location.href = `/login?redirect=${redirect}`;
-    } else {
-      window.location.href = '/login';
-    }
+  if (error.request) {
+    return ERROR_MESSAGES.NETWORK_ERROR;
   }
+  
+  return error.message || ERROR_MESSAGES.UNKNOWN;
 }
 
-// ===== AXIOS CONFIGURADO =====
-
+// ===== AXIOS INSTANCE =====
 export function getAPIClient(): AxiosInstance {
   const api = axios.create({
-    ...API_CONFIG,
-    
-    validateStatus: (status) => status < 500, 
+    baseURL: API_CONFIG.baseURL,
+    timeout: API_CONFIG.timeout,
+    headers: API_CONFIG.headers,
   });
 
-  // ========================
-  // REQUEST INTERCEPTOR
-  // ========================
+  // ===== REQUEST INTERCEPTOR =====
   api.interceptors.request.use(
     (config) => {
-      const { token } = getToken();
+      const currentToken = getToken();
 
-      if (token && isTokenValid(token)) {
+      if (currentToken && !isTokenExpired(currentToken)) {
         if (!config.headers) {
           config.headers = new AxiosHeaders();
         }
-        config.headers.set('Authorization', `Bearer ${token}`);
-      }
-
-      if (ENV.isDevelopment) {
-        config.headers.set('X-Request-ID', crypto.randomUUID());
-        config.headers.set('X-Timestamp', Date.now().toString());
+        config.headers.set('Authorization', `Bearer ${currentToken}`);
+      } else if (currentToken && isTokenExpired(currentToken)) {
+        clearTokens();
       }
 
       return config;
     },
     (error) => {
-      console.error(' Request Error:', error);
       return Promise.reject(error);
     }
   );
 
-  // ========================
-  // RESPONSE INTERCEPTOR
-  // ========================
+  // ===== RESPONSE INTERCEPTOR =====
   api.interceptors.response.use(
     (response) => {
-
-      if (ENV.isDevelopment) {
-        console.log(`API Success: ${response.config.method?.toUpperCase()} ${response.config.url} (${response.status})`);
-      }
       return response;
     },
     (error: AxiosError) => {
-      const errorInfo = classifyError(error);
       const status = error.response?.status;
 
-      if (errorInfo.isRetryable || status && status >= 500) {
-        console.error(' API Error:', {
-          status: errorInfo.status,
-          code: errorInfo.code,
-          url: error.config?.url,
-          method: error.config?.method?.toUpperCase(),
-          message: errorInfo.message,
-          isRetryable: errorInfo.isRetryable
-        });
-      }
-
-
       switch (status) {
-        case 401: {
-
-          const { token } = getToken();
-          if (!token || !isTokenValid(token)) {
-            clearTokens();
-            performLogout();
-          }
-          break;
-        }
+        case 401:
+          clearTokens();
           
-        case 403: {
-
-          const { token } = getToken();
-          if (token && isTokenValid(token)) {
-            const role = getRoleFromToken(token);
-            if (role && !ENV.isServer) {
-              const dashboard = getDashboardRoute(role);
-              if (window.location.pathname !== dashboard) {
-                window.location.href = dashboard;
-              }
-            }
+          if (!ENV.isServer && !window.location.pathname.includes('/login')) {
+            const currentPath = window.location.pathname + window.location.search;
+            const redirectParam = encodeURIComponent(currentPath);
+            window.location.href = `/login?redirect=${redirectParam}`;
           }
           break;
-        }
       }
 
       return Promise.reject(error);
@@ -310,56 +166,50 @@ export function getAPIClient(): AxiosInstance {
   return api;
 }
 
-// ===== EXPORTS PÚBLICOS =====
-
+// ===== SINGLETON INSTANCE =====
 export const api = getAPIClient();
 
+// ===== UTILITY FUNCTIONS =====
 export function isAuthenticated(): boolean {
-  const { token } = getToken();
-  return token !== null && isTokenValid(token);
+  const token = getToken();
+  return token !== null && !isTokenExpired(token);
 }
 
 export function logout(): void {
-  performLogout(true);
+  clearTokens();
+  if (!ENV.isServer) {
+    window.location.href = '/login';
+  }
 }
 
 export function getAuthHeaders(): Record<string, string> {
-  const { token } = getToken();
-  return token && isTokenValid(token) ? { Authorization: `Bearer ${token}` } : {};
+  const token = getToken();
+  if (token && !isTokenExpired(token)) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
 }
 
-
-export function getCurrentUser(): { role: string | null; isValid: boolean } | null {
-  const { token } = getToken();
-  if (!token) return null;
-  
-  const isValid = isTokenValid(token);
-  const role = isValid ? getRoleFromToken(token) : null;
-  
-  return { role, isValid };
-}
-
-
+// ===== ERROR HANDLER PRINCIPAL =====
 export function handleApiError(
-  error: any, 
+  error: AxiosError | Error | unknown, 
   context?: string
-): ApiErrorResponse {
-  const errorInfo = classifyError(error);
-
-  if (errorInfo.isRetryable || (errorInfo.status && errorInfo.status >= 500)) {
-    console.error(`❌ ${context || 'API'} Error:`, {
-      context,
-      ...errorInfo
-    });
+): { message: string; status?: number } {
+  if (axios.isAxiosError(error)) {
+    const message = getErrorMessage(error);
+    const status = error.response?.status;
+    
+    return { message, status };
   }
   
-  return errorInfo;
+  const message = error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN;
+  
+  return { message };
 }
 
-
-/**
- * @deprecated Use handleApiError instead
- */
-export function getErrorMessage(error: any): string {
-  return classifyError(error).message;
+// ===== FUNÇÕES DE VERIFICAÇÃO =====
+export function checkAPIHealth(): Promise<boolean> {
+  return api.get('/health')
+    .then(() => true)
+    .catch(() => false);
 }

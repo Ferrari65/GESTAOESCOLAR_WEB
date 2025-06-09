@@ -2,18 +2,17 @@
 
 import React, { useContext, useCallback } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
-import { useSecretariaData } from '@/hooks/secretaria/SecretariaData';
-import UFEMSidebar from '@/components/secretaria/home/UFEMSidebar';
+import { useSecretariaData } from '@/hooks/shared';
+import UFEMSidebar from '@/components/secretaria/UFEMSidebar';
 import Header from '@/components/secretaria/header';
 import CadastroCurso from '@/components/secretaria/home/curso/CadastroCurso';
-import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 
-export default function SecretariaHomePage(): React.JSX.Element {
+export default function SecretariaCursoPage(): React.JSX.Element {
   const { user, signOut } = useContext(AuthContext);
-  const { secretariaData, loading, error } = useSecretariaData();
+  const { secretariaData } = useSecretariaData(); 
 
   const handleMenuClick = useCallback((itemId: string): void => {
-    console.log('Menu clicado:', itemId);
+    // Callback opcional para menu
   }, []);
 
   const handleSignOut = useCallback((): void => {
@@ -23,14 +22,12 @@ export default function SecretariaHomePage(): React.JSX.Element {
   }, [signOut]);
 
   const handleCursoSuccess = useCallback(() => {
+    // Callback de sucesso
   }, []);
 
-  if (loading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+  // Se não tem usuário, não renderizar
+  if (!user) {
+    return <div></div>;
   }
 
   return (
@@ -43,20 +40,19 @@ export default function SecretariaHomePage(): React.JSX.Element {
       <main className="flex-1 ml-64 p-8" role="main">
         <div className="max-w-5xl mx-auto space-y-8">
           <Header 
-            title="Gerenciamento de Turmas"
+            title="Gerenciamento de Cursos"
             subtitle="Bem-vindo(a),"
             secretariaData={secretariaData}
             user={user}
             onSignOut={handleSignOut}
           />
 
-          {/* Área Principal - Cadastro de Professor */}
           <div className="bg-white rounded-lg shadow-sm">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
-                    Cadastro de curso
+                    Cadastro de Curso
                   </h2>
                   <p className="text-gray-600 mt-1">
                     Adicione novos cursos ao sistema acadêmico

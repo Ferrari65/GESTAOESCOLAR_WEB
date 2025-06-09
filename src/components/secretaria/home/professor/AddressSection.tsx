@@ -3,8 +3,7 @@
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormInput } from '@/components/ui/FormInput';
-import { numberValidation } from '@/utils/validators';
-import type { ProfessorFormData } from '@/types/secretariaTypes/cadastroprofessor/professor';
+import type { ProfessorFormData } from '@/schemas'; // ✅ CORRIGIDO
 
 interface AddressSectionProps {
   form: UseFormReturn<ProfessorFormData>;
@@ -50,32 +49,32 @@ export const AddressSection: React.FC<AddressSectionProps> = ({ form }) => {
         
         <FormInput
           label="Logradouro"
-          {...register('logradouro', { required: 'Logradouro é obrigatório' })}
-          error={errors.logradouro?.message}
+          {...register('logradouro')} // ✅ Zod já valida
+          error={errors.logradouro?.message || ''}
         />
 
         <FormInput
           label="Número"
-          {...register('numero', numberValidation)}
-          error={errors.numero?.message}
+          {...register('numero')} // ✅ Zod já valida
+          error={errors.numero?.message || ''}
         />
 
         <FormInput
           label="Bairro"
-          {...register('bairro', { required: 'Bairro é obrigatório' })}
-          error={errors.bairro?.message}
+          {...register('bairro')} // ✅ Zod já valida
+          error={errors.bairro?.message || ''}
         />
 
         <FormInput
           label="Cidade"
-          {...register('cidade', { required: 'Cidade é obrigatória' })}
-          error={errors.cidade?.message}
+          {...register('cidade')} // ✅ Zod já valida
+          error={errors.cidade?.message || ''}
         />
 
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Estado (UF)</label>
           <select
-            {...register('uf', { required: 'UF é obrigatória' })}
+            {...register('uf')} // ✅ Zod já valida
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-yellow-500 focus:outline-none focus:ring-1 focus:ring-yellow-500"
           >
             <option value="">Selecione o estado</option>

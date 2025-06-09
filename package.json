@@ -9,11 +9,13 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
+    "imports": "find src/ -name '*.ts' -o -name '*.tsx' | xargs sed -i.bak 's|@/schemas/login/loginSchema|@/schemas|g' && find src/ -name '*.ts' -o -name '*.tsx' | xargs sed -i.bak 's|@/schemas/secretaria/curso/cursoValidations|@/schemas|g' && find src/ -name '*.bak' -delete",
     "clean": "rm -rf .next out node_modules/.cache"
   },
   "dependencies": {
     "@heroicons/react": "^2.1.0",
     "@hookform/resolvers": "^5.0.1",
+    "@lottiefiles/dotlottie-react": "^0.14.0",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.10",
     "axios": "^1.9.0",

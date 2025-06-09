@@ -6,7 +6,7 @@ import Image from "next/image";
 import { User, Lock } from "lucide-react";
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { resetPasswordSchema, type ResetPasswordFormData } from '@/schemas/redefinirsenha/page'; 
+import { resetPasswordSchema, type ResetPasswordFormData } from '@/schemas';
 
 export default function ResetPasswordPage() {
   const {
@@ -20,9 +20,10 @@ export default function ResetPasswordPage() {
   const handleResetPassword: SubmitHandler<ResetPasswordFormData> = async (data: ResetPasswordFormData): Promise<void> => {
     try {
 
+      console.log('Dados do formulário:', data);
+      
     } catch (error) {
-
-      console.error(' Erro ao redefinir senha:', error);
+      console.error('Erro ao redefinir senha:', error);
     }
   };
 

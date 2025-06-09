@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export default function LogoutPage(): React.JSX.Element {
+export default function ProfessorHomePage(): React.JSX.Element {
   const handleLogout = (): void => {
     localStorage.removeItem('nextauth.token');
 

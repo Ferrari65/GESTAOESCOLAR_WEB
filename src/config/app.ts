@@ -1,3 +1,5 @@
+// src/config/app.ts - VERSÃO CORRIGIDA COM EXPORTS
+
 // ========================
 // API CONFIGURATION
 // ========================
@@ -11,16 +13,14 @@ export const API_CONFIG = {
 } as const;
 
 // ========================
-// AUTH CONFIGURATION - UNIFICADO
+// AUTH CONFIGURATION
 // ========================
 export const AUTH_CONFIG = {
-  // Token storage
   tokenCookieName: 'nextauth.token',
   tokenLocalStorageKey: 'nextauth.token', 
   secretariaIdKey: 'secretaria_id',
   maxAge: 604800, 
 
-  // API endpoints
   loginEndpoints: [
     '/secretaria/auth/login',
     '/professor/auth/login', 
@@ -28,20 +28,18 @@ export const AUTH_CONFIG = {
   ],
   
   dashboardRoutes: {
-    ROLE_SECRETARIA: '/secretaria/alunos',  
+    ROLE_SECRETARIA: '/secretaria/alunos',
     ROLE_PROFESSOR: '/professor/home',
     ROLE_ALUNO: '/aluno/home',
   }
 } as const;
 
 // ========================
-// MIDDLEWARE CONFIG - SIMPLIFICADO
+// MIDDLEWARE CONFIG
 // ========================
-
-
 export const MIDDLEWARE_CONFIG = {
-  publicPaths: ['/login'],
-
+  publicPaths: ['/login', '/redefinir'],
+  
   protectedRoutes: {
     '/secretaria': 'ROLE_SECRETARIA',
     '/professor': 'ROLE_PROFESSOR', 
@@ -56,15 +54,6 @@ export const MIDDLEWARE_CONFIG = {
 } as const;
 
 // ========================
-// PATHS PADRONIZADOS
-// ========================
-export const SCHEMA_PATHS = {
-
-  curso: '@/schemas/secretaria/curso/cursoValidations',
-  professor: '@/schemas/secretaria/professor/professorValidations', 
-} as const;
-
-// ========================
 // ENVIRONMENT & UTILS
 // ========================
 export const ENV = {
@@ -74,7 +63,7 @@ export const ENV = {
 } as const;
 
 // ========================
-// ERROR MESSAGES CENTRALIZADOS
+// ERROR MESSAGES
 // ========================
 export const ERROR_MESSAGES = {
   // Auth
@@ -99,19 +88,18 @@ export const SUCCESS_MESSAGES = {
   LOGIN: 'Login realizado com sucesso!',
 } as const;
 
-/**
- *  obter dashboard route
- */
+// ========================
+// UTILITY FUNCTIONS
+// ========================
 export function getDashboardRoute(role: string): string {
   return AUTH_CONFIG.dashboardRoutes[role as keyof typeof AUTH_CONFIG.dashboardRoutes] || '/login';
 }
 
-
 export function isDev(): boolean {
   return ENV.isDevelopment;
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function devLog(message: string, data?: any): void {
+
+export function devLog(message: string, data?: unknown): void {
   if (ENV.isDevelopment) {
     console.log(message, data || '');
   }

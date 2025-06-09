@@ -4,10 +4,11 @@ import type { JSX } from 'react';
 import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginFormData } from '@/schemas/login/loginSchema'; 
+import { loginSchema, type LoginFormData } from '@/schemas'; 
 import { useContext, useEffect } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { WelcomeAnimation } from '@/components/ui/WelcomeAnimation';
 
 export default function LoginPage(): JSX.Element {
   const authContext = useContext(AuthContext);
@@ -17,7 +18,15 @@ export default function LoginPage(): JSX.Element {
     throw new Error('LoginPage deve ser usado dentro de um AuthProvider');
   }
 
-  const { signIn, isLoading, error, clearError, user, isInitialized } = authContext;
+  const { 
+    signIn, 
+    isLoading, 
+    error, 
+    clearError, 
+    user, 
+    isInitialized, 
+    showWelcome 
+  } = authContext;
 
   const {
     register,
@@ -28,8 +37,9 @@ export default function LoginPage(): JSX.Element {
     mode: 'onBlur',
   });
 
+  // Redirecionar se já estiver logado
   useEffect(() => {
-    if (isInitialized && user) {
+    if (isInitialized && user && !showWelcome) {
       const dashboardRoutes = {
         'ROLE_SECRETARIA': '/secretaria/alunos',
         'ROLE_PROFESSOR': '/professor/home',
@@ -39,21 +49,32 @@ export default function LoginPage(): JSX.Element {
       const redirectPath = dashboardRoutes[user.role as keyof typeof dashboardRoutes] || '/login';
       router.push(redirectPath);
     }
-  }, [isInitialized, user, router]);
+  }, [isInitialized, user, router, showWelcome]);
 
   const handleSignIn: SubmitHandler<LoginFormData> = async (data: LoginFormData): Promise<void> => {
     clearError(); 
     await signIn(data);
   };
 
-  if (!isInitialized || user) {
+  // Mostrar animação de boas-vindas
+  if (showWelcome && user) {
+    return (
+      <WelcomeAnimation 
+        userName={user.email} 
+        onComplete={() => {
+          // Será redirecionado automaticamente pelo useEffect do AuthContext
+        }}
+      />
+    );
+  }
+
+  // Loading inicial
+  if (!isInitialized) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600 text-lg">
-            {!isInitialized ? 'Carregando...' : 'Redirecionando...'}
-          </p>
+          <p className="mt-4 text-gray-600 text-lg">Carregando...</p>
         </div>
       </main>
     );
@@ -127,7 +148,7 @@ export default function LoginPage(): JSX.Element {
               {/* Campo Email */}
               <fieldset className="space-y-1">
                 <div className="relative">
-                  <label htmlFor="email" className="sr-only">Email</label>
+                  <label htmlFor="email" className="sr-only">Matrícula</label>
                   <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -136,7 +157,7 @@ export default function LoginPage(): JSX.Element {
                   <input
                     id="email"
                     type="email"
-                    placeholder="Digite seu email"
+                    placeholder="Digite sua matrícula"
                     autoComplete="username"
                     aria-invalid={!!errors.email}
                     aria-describedby={errors.email ? 'email-error' : undefined}

@@ -2,8 +2,8 @@
 
 import React, { useContext, useCallback } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
-import { useSecretariaData } from '@/hooks/secretaria/SecretariaData';
-import UFEMSidebar from '@/components/secretaria/home/UFEMSidebar';
+import { useSecretariaData } from '@/hooks/shared';
+import UFEMSidebar from '@/components/secretaria/UFEMSidebar';
 // import CadastroProfessor from '@/components/login/secretaria/professor/CadastroProfessor';
 import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -23,6 +23,9 @@ export default function SecretariaHomePage(): React.JSX.Element {
     }
   }, [signOut]);
 
+//   const handleProfessorSuccess = useCallback(() => {
+//     console.log('Professor cadastrado com sucesso!');
+//   }, []); FUTURO CADASTRO ALUNO COMPONENT
 
   // Loading state
   if (loading || !user) {
@@ -68,7 +71,7 @@ export default function SecretariaHomePage(): React.JSX.Element {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
-                    Cadastro de Alunos
+                    Cadastro de alunos
                   </h2>
                   <p className="text-gray-600 mt-1">
                     Adicione novos Alunos ao sistema acadêmico
