@@ -1,8 +1,5 @@
-// src/schemas/professor.ts - VERSÃO CORRIGIDA
-
 import { z } from 'zod';
 
-// ===== VALIDADORES BASE =====
 const validateCPF = (cpf: string): boolean => {
   if (!cpf || typeof cpf !== 'string') return false;
   const cleanCPF = cpf.replace(/[^\d]/g, '');
@@ -36,7 +33,6 @@ const validatePhone = (phone: string): boolean => {
   return true;
 };
 
-// ✅ VALIDADOR DE DATA MELHORADO
 const validateBirthDate = (dateString: string): boolean => {
   if (!dateString || typeof dateString !== 'string') return false;
   
@@ -50,7 +46,6 @@ const validateBirthDate = (dateString: string): boolean => {
   return date >= minAge && date <= maxAge;
 };
 
-// ===== ENUMS =====
 export const SituacaoTypeEnum = z.enum(['ATIVO', 'INATIVO'], {
   errorMap: () => ({ message: 'Situação deve ser ATIVO ou INATIVO' }),
 });
@@ -59,15 +54,11 @@ export const SexoEnum = z.enum(['M', 'F'], {
   errorMap: () => ({ message: 'Selecione o sexo' }),
 });
 
-// ===== ✅ SCHEMA BASE PARA CAMPOS COMUNS =====
 const professorBaseFields = {
   nome: z.string()
     .min(2, 'Nome deve ter pelo menos 2 caracteres')
     .max(100, 'Nome muito longo')
     .trim(),
-  cpf: z.string()
-    .min(1, 'CPF é obrigatório')
-    .refine(validateCPF, 'CPF inválido'),
   email: z.string()
     .trim()
     .min(1, 'Email é obrigatório')
@@ -88,30 +79,32 @@ const professorBaseFields = {
   uf: z.string().length(2, 'UF deve ter 2 caracteres').toUpperCase(),
 };
 
-// ===== ✅ SCHEMA PARA CADASTRO (senha obrigatória) =====
 export const professorCadastroSchema = z.object({
   ...professorBaseFields,
+  cpf: z.string()
+    .min(1, 'CPF é obrigatório')
+    .refine(validateCPF, 'CPF inválido'),
   senha: z.string()
     .min(6, 'Senha deve ter pelo menos 6 caracteres')
     .max(50, 'Senha muito longa'),
 });
 
-// ===== ✅ SCHEMA PARA EDIÇÃO (senha opcional) =====
 export const professorEdicaoSchema = z.object({
   ...professorBaseFields,
+
+  cpf: z.string().optional(),
+
   senha: z.string()
     .min(6, 'Senha deve ter pelo menos 6 caracteres')
     .max(50, 'Senha muito longa')
     .optional()
-    .or(z.literal('')), // Permite string vazia
+    .or(z.literal('')), 
 });
 
-// ===== ✅ SCHEMA DINÂMICO QUE ESCOLHE BASEADO NO MODO =====
 export const professorFormSchema = (modoEdicao: boolean = false) => {
   return modoEdicao ? professorEdicaoSchema : professorCadastroSchema;
 };
 
-// ===== SCHEMA PARA ENVIO (DTO) =====
 export const professorDTOSchema = z.object({
   nome: z.string(),
   CPF: z.string(),
@@ -129,25 +122,22 @@ export const professorDTOSchema = z.object({
   id_secretaria: z.string(),
 });
 
-// ===== SCHEMA PARA EDIÇÃO (ProfessorEditarDTO) =====
 export const professorEditarDTOSchema = z.object({
   nome: z.string().optional(),
-  CPF: z.string().optional(),
-  situacao: SituacaoTypeEnum.optional(),
+
+  email: z.string().optional(),
+  senha: z.string().optional(), 
+  telefone: z.string().optional(),
   logradouro: z.string().optional(),
   bairro: z.string().optional(),
   numero: z.number().optional(),
   cidade: z.string().optional(),
-  UF: z.string().optional(),
-  email: z.string().optional(),
-  senha: z.string().optional(), // ✅ Opcional na edição
-  telefone: z.string().optional(),
+  UF: z.string().optional(), 
   sexo: z.string().optional(),
   data_nasc: z.string().optional(),
-  id_secretaria: z.string().optional(),
+  situacao: SituacaoTypeEnum.optional(),
 });
 
-// ===== SCHEMA DE RESPOSTA (como vem do backend) =====
 export const professorResponseSchema = z.object({
   id_professor: z.string(),
   nome: z.string(),
@@ -164,7 +154,7 @@ export const professorResponseSchema = z.object({
   data_nasc: z.string(),
 });
 
-// ===== ✅ TIPOS DERIVADOS CORRIGIDOS =====
+// ===== TIPOS  =====
 export type ProfessorCadastroData = z.infer<typeof professorCadastroSchema>;
 export type ProfessorEdicaoData = z.infer<typeof professorEdicaoSchema>;
 export type ProfessorFormData = ProfessorCadastroData | ProfessorEdicaoData;

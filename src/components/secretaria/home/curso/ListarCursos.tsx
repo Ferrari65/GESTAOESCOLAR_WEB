@@ -1,5 +1,3 @@
-// src/components/secretaria/home/curso/ListarCursos.tsx - COM ATUALIZAÇÃO OTIMISTA
-
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -120,7 +118,7 @@ const Pagination: React.FC<PaginationProps> = ({
 };
 
 export default function ListarCursos() {
-  // ✅ USAR OS NOVOS MÉTODOS DE ATUALIZAÇÃO OTIMISTA
+
   const { 
     cursos, 
     loading, 
@@ -143,7 +141,7 @@ export default function ListarCursos() {
   const [sortField, setSortField] = useState<'nome' | 'duracao' | 'situacao'>('nome');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Função de ordenação
+
   const sortedCursos = useMemo(() => {
     if (!cursos || cursos.length === 0) return [];
 
@@ -205,25 +203,22 @@ export default function ListarCursos() {
     setCurrentPage(1);
   }, [sortField]);
 
-  // ✅ TOGGLE COM ATUALIZAÇÃO OTIMISTA
+
   const handleToggleSituacao = useCallback(async (curso: CursoResponse) => {
     const novaSituacao: SituacaoType = curso.situacao === 'ATIVO' ? 'INATIVO' : 'ATIVO';
     
-    // 🚀 1. ATUALIZAR IMEDIATAMENTE NA TELA (OTIMISTA)
-    const dadosOriginais = { ...curso }; // Salvar dados originais
+    const dadosOriginais = { ...curso }; 
     updateCursoOptimistic(curso.idCurso, { situacao: novaSituacao });
     
     try {
-      // 📤 2. ENVIAR PARA API EM BACKGROUND
+
       await updateSituacao(curso.idCurso, novaSituacao);
       
-      // ✅ 3. SE DEU CERTO: não precisa fazer nada, já está atualizado!
-      
+
     } catch (error) {
-      // ❌ 4. SE DEU ERRO: REVERTER PARA O ESTADO ORIGINAL
+
       revertCursoOptimistic(curso.idCurso, dadosOriginais);
-      
-      // 🔔 5. MOSTRAR MENSAGEM DE ERRO (já é tratada no hook)
+
     }
   }, [updateSituacao, updateCursoOptimistic, revertCursoOptimistic]);
 
@@ -514,7 +509,7 @@ export default function ListarCursos() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end">
-                      {/* ✅ TOGGLE SWITCH COM ATUALIZAÇÃO INSTANTÂNEA */}
+                  
                       <div className="flex items-center space-x-3">
                         <span className="text-sm text-gray-600 transition-colors duration-200">
                           {curso.situacao === 'ATIVO' ? 'Ativo' : 'Inativo'}

@@ -1,5 +1,3 @@
-// src/components/secretaria/home/curso/CursoDataSection.tsx - VERSÃO SIMPLIFICADA
-
 'use client';
 
 import React from 'react';

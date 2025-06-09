@@ -1,8 +1,6 @@
-// src/schemas/index.ts - TURMA SCHEMAS CORRIGIDOS PARA SEU BACKEND
-
 import { z } from 'zod';
 
-// ===== VALIDADORES BASE =====
+// ===== VALIDADORES  =====
 const validateCPF = (cpf: string): boolean => {
   if (!cpf) return false;
   const cleanCPF = cpf.replace(/[^\d]/g, '');
@@ -36,7 +34,7 @@ const validatePhone = (phone: string): boolean => {
   return true;
 };
 
-// ===== SCHEMAS BASE REUTILIZÁVEIS =====
+// ===== SCHEMAS REUTILIZÁVEIS =====
 export const emailValidator = z
   .string()
   .trim()
@@ -66,12 +64,11 @@ export const nameValidator = z
   .max(100, 'Nome muito longo')
   .trim();
 
-// ===== ENUM PARA SITUAÇÃO =====
+
 export const SituacaoTypeEnum = z.enum(['ATIVO', 'INATIVO'], {
   errorMap: () => ({ message: 'Situação deve ser ATIVO ou INATIVO' }),
 });
 
-// ✅ ENUM PARA TURNO - IGUAL AO SEU BACKEND TurnoType
 export const TurnoTypeEnum = z.enum(['DIURNO', 'NOTURNO'], {
   errorMap: () => ({ message: 'Turno deve ser DIURNO ou NOTURNO' }),
 });
@@ -93,7 +90,7 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   });
 
-// ===== SCHEMAS DE PROFESSOR =====
+// =====  PROFESSOR =====
 export const professorFormSchema = z.object({
   nome: nameValidator,
   cpf: cpfValidator,
@@ -128,7 +125,7 @@ export const professorDTOSchema = z.object({
   id_secretaria: z.string(),
 });
 
-// ===== SCHEMAS DE CURSO =====
+// =====  CURSO =====
 export const cursoFormSchema = z.object({
   nome: z
     .string()
@@ -170,9 +167,6 @@ export const cursoResponseSchema = z.object({
   id_secretaria: z.string(),
 });
 
-// ===== ✅ SCHEMAS DE TURMA CORRIGIDOS PARA SEU BACKEND =====
-
-// 1. Schema do formulário (tela)
 export const turmaFormSchema = z.object({
   nome: z.string()
     .min(1, 'Nome da turma é obrigatório')
@@ -184,24 +178,22 @@ export const turmaFormSchema = z.object({
     .string()
     .min(1, 'Ano é obrigatório')
     .regex(/^\d{4}$/, 'Ano deve ter 4 dígitos'),
-  turno: TurnoTypeEnum, // ✅ Usando o enum correto
+  turno: TurnoTypeEnum, 
 });
 
-// 2. DTO que vai para o backend (apenas nome, ano, turno)
 export const turmaDTOSchema = z.object({
   nome: z.string(),
   ano: z.string().regex(/^\d{4}$/, 'Ano deve ter 4 dígitos'),
-  turno: TurnoTypeEnum, // ✅ TurnoType do backend
+  turno: TurnoTypeEnum, 
 });
 
-// 3. Response que vem do backend (sem turno!)
 export const turmaResponseSchema = z.object({
   idTurma: z.string(),
   nome: z.string(),
   ano: z.string(),
   idCurso: z.string(),
   idSecretaria: z.string(),
-  // ❌ NÃO TEM turno no response do seu backend
+
   alunos: z.array(z.object({
     idAluno: z.string(),
     nome: z.string(),
@@ -211,7 +203,7 @@ export const turmaResponseSchema = z.object({
   })).optional().default([]),
 });
 
-// ===== TIPOS DERIVADOS =====
+// ===== TIPOS  =====
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type ProfessorFormData = z.infer<typeof professorFormSchema>;
@@ -223,13 +215,13 @@ export type CursoEditarDTO = z.infer<typeof cursoEditarDTOSchema>;
 export type CursoResponse = z.infer<typeof cursoResponseSchema>;
 export type SituacaoType = z.infer<typeof SituacaoTypeEnum>;
 
-// ✅ TIPOS DE TURMA CORRIGIDOS
+
 export type TurmaFormData = z.infer<typeof turmaFormSchema>;
 export type TurmaDTO = z.infer<typeof turmaDTOSchema>;
 export type TurmaResponse = z.infer<typeof turmaResponseSchema>;
 export type TurnoType = z.infer<typeof TurnoTypeEnum>;
 
-// ===== FUNÇÕES DE VALIDAÇÃO =====
+// ===== VALIDAÇÃO =====
 export const validateLoginForm = (data: unknown) => loginSchema.safeParse(data);
 export const validateProfessorForm = (data: unknown) => professorFormSchema.safeParse(data);
 export const validateTurmaForm = (data: unknown) => turmaFormSchema.safeParse(data);

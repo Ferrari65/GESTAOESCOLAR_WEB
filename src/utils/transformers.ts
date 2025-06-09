@@ -1,5 +1,3 @@
-// src/utils/transformers.ts - VERSÃO CORRIGIDA
-
 import {
   ProfessorFormData,
   ProfessorDTO,
@@ -184,8 +182,8 @@ export const formatters = {
 
   turno: (turno: string): string => {
     const turnos = {
-      'DIURNO': '🌅 Diurno',
-      'NOTURNO': '🌙 Noturno'
+      'DIURNO': ' Diurno',
+      'NOTURNO': ' Noturno'
     };
     return turnos[turno as keyof typeof turnos] || turno;
   }

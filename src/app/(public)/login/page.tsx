@@ -37,13 +37,13 @@ export default function LoginPage(): JSX.Element {
     mode: 'onBlur',
   });
 
-  // Redirecionar se já estiver logado
+ 
   useEffect(() => {
     if (isInitialized && user && !showWelcome) {
       const dashboardRoutes = {
         'ROLE_SECRETARIA': '/secretaria/alunos',
         'ROLE_PROFESSOR': '/professor/home',
-        'ROLE_ALUNO': '/aluno/home',
+
       };
       
       const redirectPath = dashboardRoutes[user.role as keyof typeof dashboardRoutes] || '/login';
@@ -56,19 +56,17 @@ export default function LoginPage(): JSX.Element {
     await signIn(data);
   };
 
-  // Mostrar animação de boas-vindas
   if (showWelcome && user) {
     return (
       <WelcomeAnimation 
         userName={user.email} 
         onComplete={() => {
-          // Será redirecionado automaticamente pelo useEffect do AuthContext
+          
         }}
       />
     );
   }
 
-  // Loading inicial
   if (!isInitialized) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-100">

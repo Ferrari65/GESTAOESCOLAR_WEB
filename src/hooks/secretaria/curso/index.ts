@@ -1,5 +1,3 @@
-// src/hooks/secretaria/curso/index.ts - VERSÃO LIMPA
-
 import { useState, useContext, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -52,7 +50,6 @@ interface UseCursoFormOptions {
   initialData?: Partial<CursoFormData>;
 }
 
-// ===== HELPER FUNCTIONS =====
 function handleCursoError(error: unknown, context: string): string {
   const { message, status } = handleApiError(error, context);
   
@@ -266,7 +263,7 @@ export const useCursoList = (): UseCursoListReturn => {
             cursosValidos.push(cursoMapeado);
           }
         } catch {
-          // Ignorar cursos inválidos silenciosamente
+          
         }
       }
 

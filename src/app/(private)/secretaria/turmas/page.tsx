@@ -13,7 +13,7 @@ export default function SecretariaTurmasPage(): React.JSX.Element {
   const { secretariaData, error } = useSecretariaData();
 
   const handleMenuClick = useCallback((itemId: string): void => {
-    // Callback opcional para menu
+
   }, []);
 
   const handleSignOut = useCallback((): void => {
@@ -23,10 +23,10 @@ export default function SecretariaTurmasPage(): React.JSX.Element {
   }, [signOut]);
 
   const handleTurmaSuccess = useCallback(() => {
-    // Callback de sucesso
+
   }, []);
 
-  // Se não tem usuário, não renderizar
+
   if (!user) {
     return <div></div>;
   }

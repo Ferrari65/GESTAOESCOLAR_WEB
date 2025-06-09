@@ -1,8 +1,6 @@
-// src/config/app.ts - VERSÃO CORRIGIDA COM EXPORTS
 
-// ========================
-// API CONFIGURATION
-// ========================
+// API 
+
 export const API_CONFIG = {
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   timeout: 10000,
@@ -12,9 +10,9 @@ export const API_CONFIG = {
   }
 } as const;
 
-// ========================
-// AUTH CONFIGURATION
-// ========================
+
+// AUTH 
+
 export const AUTH_CONFIG = {
   tokenCookieName: 'nextauth.token',
   tokenLocalStorageKey: 'nextauth.token', 
@@ -34,9 +32,9 @@ export const AUTH_CONFIG = {
   }
 } as const;
 
-// ========================
-// MIDDLEWARE CONFIG
-// ========================
+
+// MIDDLEWARE 
+
 export const MIDDLEWARE_CONFIG = {
   publicPaths: ['/login', '/redefinir'],
   
@@ -53,30 +51,24 @@ export const MIDDLEWARE_CONFIG = {
   ]
 } as const;
 
-// ========================
-// ENVIRONMENT & UTILS
-// ========================
 export const ENV = {
   isDevelopment: process.env.NODE_ENV === 'development',
   isProduction: process.env.NODE_ENV === 'production',
   isServer: typeof window === 'undefined',
 } as const;
 
-// ========================
-// ERROR MESSAGES
-// ========================
 export const ERROR_MESSAGES = {
-  // Auth
+
   INVALID_CREDENTIALS: 'Email ou senha incorretos.',
   SESSION_EXPIRED: 'Sessão expirada. Faça login novamente.',
   UNAUTHORIZED: 'Sem permissão para acessar esta área.',
   
-  // Network
+
   NETWORK_ERROR: 'Erro de conexão. Verifique sua internet.',
   SERVER_ERROR: 'Erro no servidor. Tente novamente.',
   TIMEOUT: 'Tempo limite excedido.',
   
-  // Generic
+
   UNKNOWN: 'Erro desconhecido. Contate o suporte.',
   REQUIRED_FIELD: 'Este campo é obrigatório.',
 } as const;
@@ -88,9 +80,9 @@ export const SUCCESS_MESSAGES = {
   LOGIN: 'Login realizado com sucesso!',
 } as const;
 
-// ========================
-// UTILITY FUNCTIONS
-// ========================
+
+//  FUNCTIONS
+
 export function getDashboardRoute(role: string): string {
   return AUTH_CONFIG.dashboardRoutes[role as keyof typeof AUTH_CONFIG.dashboardRoutes] || '/login';
 }

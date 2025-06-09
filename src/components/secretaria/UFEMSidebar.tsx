@@ -64,8 +64,7 @@ const getActiveItemId = (pathname: string): string => {
   if (pathname.startsWith('/secretaria/professor')) return 'professores';
   if (pathname.startsWith('/secretaria/curso')) return 'cursos';
   if (pathname.startsWith('/secretaria/turmas')) return 'turmas';
-  
-  return 'alunos'; 
+  return 'alunos';
 };
 
 const UFEMSidebar: React.FC<SidebarProps> = ({ 
@@ -83,18 +82,10 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
 
   const handleItemClick = useCallback((itemId: string) => {
     const menuItem = MENU_ITEMS.find(item => item.id === itemId);
-    
-    if (!menuItem) {
-      return;
-    }
-
+    if (!menuItem) return;
     if (pathname === menuItem.path) return;
-
     setActiveItemId(itemId);
-    
-    // Navegação instantânea sem loading
     router.push(menuItem.path);
-
     onMenuItemClick?.(itemId);
   }, [pathname, router, onMenuItemClick]);
 
@@ -133,7 +124,6 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
         <ul className="space-y-1" role="none">
           {MENU_ITEMS.map((item) => {
             const isActive = activeItemId === item.id;
-            
             return (
               <li key={item.id} role="none">
                 <button
@@ -157,11 +147,9 @@ const UFEMSidebar: React.FC<SidebarProps> = ({
                   `}>
                     {item.icon}
                   </div>
-                  
                   <span className="font-medium text-sm">
                     {item.label}
                   </span>
-
                   {isActive && (
                     <div 
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-cyan-400 rounded-full"

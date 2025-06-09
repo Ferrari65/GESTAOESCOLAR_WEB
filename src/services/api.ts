@@ -1,8 +1,5 @@
-// src/services/api.ts - VERSÃO FINAL CORRIGIDA
-
 import axios, { AxiosInstance, AxiosHeaders, AxiosError } from 'axios';
 
-// ===== CONFIGURAÇÕES DIRETAS (sem import problemático) =====
 const API_CONFIG = {
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   timeout: 10000,
@@ -30,7 +27,7 @@ const ENV = {
   isServer: typeof window === 'undefined'
 } as const;
 
-// ===== TOKEN MANAGER =====
+// ===== TOKEN  =====
 function getToken(): string | null {
   if (ENV.isServer) return null;
   
@@ -73,7 +70,7 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-// ===== ERROR HANDLER =====
+// ===== ERROR  =====
 function getErrorMessage(error: AxiosError): string {
   if (error.response) {
     const { status, data } = error.response;
@@ -110,7 +107,7 @@ function getErrorMessage(error: AxiosError): string {
   return error.message || ERROR_MESSAGES.UNKNOWN;
 }
 
-// ===== AXIOS INSTANCE =====
+// ===== AXIOS  =====
 export function getAPIClient(): AxiosInstance {
   const api = axios.create({
     baseURL: API_CONFIG.baseURL,
@@ -118,7 +115,6 @@ export function getAPIClient(): AxiosInstance {
     headers: API_CONFIG.headers,
   });
 
-  // ===== REQUEST INTERCEPTOR =====
   api.interceptors.request.use(
     (config) => {
       const currentToken = getToken();
@@ -139,7 +135,6 @@ export function getAPIClient(): AxiosInstance {
     }
   );
 
-  // ===== RESPONSE INTERCEPTOR =====
   api.interceptors.response.use(
     (response) => {
       return response;
@@ -166,10 +161,8 @@ export function getAPIClient(): AxiosInstance {
   return api;
 }
 
-// ===== SINGLETON INSTANCE =====
 export const api = getAPIClient();
 
-// ===== UTILITY FUNCTIONS =====
 export function isAuthenticated(): boolean {
   const token = getToken();
   return token !== null && !isTokenExpired(token);
@@ -190,7 +183,6 @@ export function getAuthHeaders(): Record<string, string> {
   return {};
 }
 
-// ===== ERROR HANDLER PRINCIPAL =====
 export function handleApiError(
   error: AxiosError | Error | unknown, 
   context?: string
@@ -207,7 +199,6 @@ export function handleApiError(
   return { message };
 }
 
-// ===== FUNÇÕES DE VERIFICAÇÃO =====
 export function checkAPIHealth(): Promise<boolean> {
   return api.get('/health')
     .then(() => true)

@@ -1,14 +1,18 @@
-// src/components/secretaria/home/professor/ListaProfessorCompleta.tsx - VERSÃO CORRIGIDA
-
-'use client';
-
 import React, { useState, useMemo, useCallback } from 'react';
-import { useProfessorList, useProfessorActions, type ProfessorResponse } from '@/hooks/secretaria/professor';
+import { useProfessorList } from '@/hooks/secretaria/professor/useProfessorList';
+import { useProfessorActions } from '@/hooks/secretaria/professor/useProfessorActions';
 import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { formatCPF, formatPhone } from '@/schemas/professor';
+import { ModalDetalhesProfessor } from './ModalDetalhesProfessor';
+import { formatPhone } from '@/schemas/professor';
+import type { ProfessorResponse } from '@/schemas/professor';
 
 const PROFESSORES_POR_PAGINA = 8;
+
+// ===== INTERFACES =====
+interface ListaProfessoresProps {
+  onEditarProfessor?: (professor: ProfessorResponse) => void;
+}
 
 interface PaginationProps {
   currentPage: number;
@@ -121,163 +125,45 @@ const Pagination: React.FC<PaginationProps> = ({
   );
 };
 
-// ===== ✅ MODAL DE DETALHES CORRIGIDO (SEM CPF VISÍVEL) =====
-interface ModalDetalhesProps {
-  professor: ProfessorResponse;
-  onClose: () => void;
-  onEdit: (professor: ProfessorResponse) => void;
-}
-
-const ModalDetalhes: React.FC<ModalDetalhesProps> = ({ professor, onClose, onEdit }) => {
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        {/* Overlay */}
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
-        
-        {/* Modal */}
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-3 w-full">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  Detalhes do Professor
-                </h3>
-                
-                {/* ✅ INFORMAÇÕES SEM CPF */}
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Nome:</label>
-                    <p className="text-sm text-gray-900">{professor.nome}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">ID:</label>
-                      <p className="text-sm text-gray-900">#{professor.id_professor ? professor.id_professor.slice(-6) : 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Sexo:</label>
-                      <p className="text-sm text-gray-900">{professor.sexo === 'M' ? 'Masculino' : 'Feminino'}</p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Email:</label>
-                    <p className="text-sm text-gray-900">{professor.email}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Telefone:</label>
-                    <p className="text-sm text-gray-900">{formatPhone(professor.telefone)}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Data de Nascimento:</label>
-                    <p className="text-sm text-gray-900">
-                      {new Date(professor.data_nasc).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Endereço:</label>
-                    <p className="text-sm text-gray-900">
-                      {professor.logradouro}, {professor.numero} - {professor.bairro}
-                      <br />
-                      {professor.cidade} - {professor.uf}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Status:</label>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      professor.situacao === 'ATIVO' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {professor.situacao}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Botões */}
-          <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button
-              onClick={() => onEdit(professor)}
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Editar
-            </button>
-            <button
-              onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ===== COMPONENTE PRINCIPAL CORRIGIDO =====
-interface ListaProfessorCompletaProps {
-  onEditarProfessor?: (professor: ProfessorResponse) => void;
-}
-
-export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfessorCompletaProps) {
+// ===== COMPONENTE PRINCIPAL =====
+export const ListaProfessores: React.FC<ListaProfessoresProps> = ({ onEditarProfessor }) => {
   const { 
     professores, 
-    loading, 
-    error, 
-    refetch, 
-    clearError,
-    updateProfessorOptimistic,
-    revertProfessorOptimistic 
+    carregando, 
+    erro, 
+    recarregar, 
+    limparErro,
+    atualizarProfessor
   } = useProfessorList();
   
   const { 
-    updateSituacao, 
-    deleteProfessor,
-    loading: actionLoading, 
-    successMessage, 
-    error: actionError, 
-    clearMessages 
+    alterarSituacao, 
+    inativarProfessor,
+    carregando: actionLoading, 
+    erro: actionError, 
+    mensagemSucesso, 
+    limparMensagens,
+    processandoProfessor
   } = useProfessorActions();
   
-  // Estados locais
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<'nome' | 'email' | 'situacao'>('nome');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [professorSelecionado, setProfessorSelecionado] = useState<ProfessorResponse | null>(null);
+  const [modalAberto, setModalAberto] = useState(false);
   const [filtro, setFiltro] = useState('');
-  const [professoresProcessando, setProfessoresProcessando] = useState<Set<string>>(new Set());
 
-  // Filtrar e ordenar professores
   const professoresFiltrados = useMemo(() => {
     let resultado = professores;
 
-    // Aplicar filtro
     if (filtro.trim()) {
       resultado = resultado.filter(professor =>
         professor.nome.toLowerCase().includes(filtro.toLowerCase()) ||
         professor.email.toLowerCase().includes(filtro.toLowerCase())
-        // ✅ REMOVIDO FILTRO POR CPF
       );
     }
 
-    // Aplicar ordenação
+ 
     resultado.sort((a, b) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
@@ -308,7 +194,7 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
     return professoresFiltrados.slice(startIndex, endIndex);
   }, [professoresFiltrados, currentPage]);
 
-  // Funções auxiliares
+
   const handlePageChange = useCallback((page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -317,10 +203,10 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
 
   const handleRefetch = useCallback(() => {
     setCurrentPage(1); 
-    clearError();
-    clearMessages();
-    refetch();
-  }, [refetch, clearError, clearMessages]);
+    limparErro();
+    limparMensagens();
+    recarregar();
+  }, [recarregar, limparErro, limparMensagens]);
 
   const handleSort = useCallback((field: 'nome' | 'email' | 'situacao') => {
     if (sortField === field) {
@@ -332,83 +218,68 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
     setCurrentPage(1);
   }, [sortField]);
 
-  // ✅ TOGGLE DE SITUAÇÃO CORRIGIDO - PROCESSA APENAS UM PROFESSOR
+  // ===== AÇÕES DOS PROFESSORES =====
+  
+  
+  const handleVerDetalhes = useCallback((professor: ProfessorResponse) => {
+    setProfessorSelecionado(professor);
+    setModalAberto(true);
+  }, []);
+
+
   const handleToggleSituacao = useCallback(async (professor: ProfessorResponse) => {
-    // ✅ VERIFICAR SE JÁ ESTÁ PROCESSANDO ESTE PROFESSOR
-    if (professoresProcessando.has(professor.id_professor)) {
-      console.log('⏳ Professor já está sendo processado:', professor.nome);
+
+    if (processandoProfessor === professor.id_professor) {
+      console.log(' Professor já está sendo processado:', professor.nome);
       return;
     }
 
     const novaSituacao = professor.situacao === 'ATIVO' ? 'INATIVO' : 'ATIVO';
     
-    console.log('🔄 Alterando situação do professor:', {
+    console.log(' Alterando situação do professor:', {
       id: professor.id_professor,
       nome: professor.nome,
       situacaoAtual: professor.situacao,
       novaSituacao: novaSituacao
     });
 
-    // ✅ MARCAR COMO PROCESSANDO
-    setProfessoresProcessando(prev => new Set(prev).add(professor.id_professor));
-    
-    // ✅ ATUALIZAR IMEDIATAMENTE NA TELA (OTIMISTA)
     const dadosOriginais = { ...professor };
-    updateProfessorOptimistic(professor.id_professor, { situacao: novaSituacao });
+    atualizarProfessor(professor.id_professor, { situacao: novaSituacao });
     
     try {
-      // ✅ ENVIAR PARA API
-      await updateSituacao(professor.id_professor, novaSituacao);
-      console.log('✅ Situação alterada com sucesso:', professor.nome);
+
+      await alterarSituacao(professor.id_professor, novaSituacao);
+      console.log(' Situação alterada com sucesso:', professor.nome);
       
     } catch (error) {
-      console.error('❌ Erro ao alterar situação:', error);
-      // ✅ REVERTER SE DEU ERRO
-      revertProfessorOptimistic(professor.id_professor, dadosOriginais);
-    } finally {
-      // ✅ DESMARCAR COMO PROCESSANDO
-      setProfessoresProcessando(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(professor.id_professor);
-        return newSet;
-      });
-    }
-  }, [updateSituacao, updateProfessorOptimistic, revertProfessorOptimistic, professoresProcessando]);
+      console.error(' Erro ao alterar situação:', error);
 
-  // ✅ INATIVAR PROFESSOR CORRIGIDO
+      atualizarProfessor(professor.id_professor, dadosOriginais);
+    }
+  }, [alterarSituacao, atualizarProfessor, processandoProfessor]);
+
   const handleInativarProfessor = useCallback(async (professor: ProfessorResponse) => {
     if (!window.confirm(`Tem certeza que deseja inativar o professor ${professor.nome}?`)) {
       return;
     }
 
-    // ✅ VERIFICAR SE JÁ ESTÁ PROCESSANDO
-    if (professoresProcessando.has(professor.id_professor)) {
+    if (processandoProfessor === professor.id_professor) {
       return;
     }
 
-    console.log('🗑️ Inativando professor:', professor.nome);
+    console.log(' Inativando professor:', professor.nome);
 
-    // ✅ MARCAR COMO PROCESSANDO
-    setProfessoresProcessando(prev => new Set(prev).add(professor.id_professor));
-    
     const dadosOriginais = { ...professor };
-    updateProfessorOptimistic(professor.id_professor, { situacao: 'INATIVO' });
+    atualizarProfessor(professor.id_professor, { situacao: 'INATIVO' });
     
     try {
-      await deleteProfessor(professor.id_professor);
-      console.log('✅ Professor inativado com sucesso:', professor.nome);
+      await inativarProfessor(professor.id_professor);
+      console.log(' Professor inativado com sucesso:', professor.nome);
     } catch (error) {
-      console.error('❌ Erro ao inativar professor:', error);
-      revertProfessorOptimistic(professor.id_professor, dadosOriginais);
-    } finally {
-      // ✅ DESMARCAR COMO PROCESSANDO
-      setProfessoresProcessando(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(professor.id_professor);
-        return newSet;
-      });
+      console.error(' Erro ao inativar professor:', error);
+      atualizarProfessor(professor.id_professor, dadosOriginais);
     }
-  }, [deleteProfessor, updateProfessorOptimistic, revertProfessorOptimistic, professoresProcessando]);
+  }, [inativarProfessor, atualizarProfessor, processandoProfessor]);
 
   const getSortIcon = (field: 'nome' | 'email' | 'situacao') => {
     if (sortField !== field) {
@@ -430,7 +301,8 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
     );
   };
 
-  if (loading) {
+
+  if (carregando) {
     return (
       <div className="flex justify-center items-center p-12">
         <div className="text-center">
@@ -441,27 +313,27 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
     );
   }
 
-  if (error) {
+  if (erro) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <ErrorMessage message={error} onRetry={handleRefetch} />
+        <ErrorMessage message={erro} onRetry={handleRefetch} />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Mensagens de feedback */}
-      {(successMessage || actionError) && (
+
+      {(mensagemSucesso || actionError) && (
         <div className="space-y-2">
-          {successMessage && (
+          {mensagemSucesso && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center">
                 <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span className="text-sm text-green-700">{successMessage}</span>
-                <button onClick={clearMessages} className="ml-auto text-green-400 hover:text-green-600">
+                <span className="text-sm text-green-700">{mensagemSucesso}</span>
+                <button onClick={limparMensagens} className="ml-auto text-green-400 hover:text-green-600">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
@@ -477,7 +349,7 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
                 <span className="text-sm text-red-700">{actionError}</span>
-                <button onClick={clearMessages} className="ml-auto text-red-400 hover:text-red-600">
+                <button onClick={limparMensagens} className="ml-auto text-red-400 hover:text-red-600">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
@@ -488,7 +360,6 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
         </div>
       )}
 
-      {/* Header com controles */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
@@ -508,7 +379,7 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
         </div>
         
         <div className="flex items-center space-x-3">
-          {/* ✅ FILTRO SEM CPF */}
+
           <div className="relative">
             <input
               type="text"
@@ -527,7 +398,7 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
           
           <button 
             onClick={handleRefetch}
-            disabled={loading}
+            disabled={carregando}
             className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -538,7 +409,6 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
         </div>
       </div>
 
-      {/* Tabela de Professores */}
       {totalProfessores === 0 ? (
         <div className="text-center py-12">
           <div className="mx-auto h-24 w-24 text-gray-300 mb-4">
@@ -610,7 +480,7 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {professoresExibidos.map((professor, index) => {
-                  const isProcessando = professoresProcessando.has(professor.id_professor);
+                  const isProcessando = processandoProfessor === professor.id_professor;
                   
                   return (
                     <tr 
@@ -630,7 +500,6 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
                             <div className="text-sm font-medium text-gray-900">
                               {professor.nome}
                             </div>
-                            {/* ✅ REMOVIDO CPF - MOSTRAR APENAS ID PARCIAL */}
                             <div className="text-sm text-gray-500">
                               ID: #{professor.id_professor ? professor.id_professor.slice(-6) : 'N/A'}
                             </div>
@@ -638,10 +507,14 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{professor.email}</div>
+                        <div className="text-sm text-gray-900 break-all max-w-xs">
+                          {professor.email}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{formatPhone(professor.telefone)}</div>
+                        <div className="text-sm text-gray-900 font-mono">
+                          {formatPhone(professor.telefone)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-200 ${
@@ -663,10 +536,10 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
-                          {/* Botão Ver Detalhes */}
+                          {/* BOTÃO VER DETALHES */}
                           <button
-                            onClick={() => setProfessorSelecionado(professor)}
-                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                            onClick={() => handleVerDetalhes(professor)}
+                            className="text-blue-600 hover:text-blue-900 transition-colors p-1"
                             title="Ver detalhes"
                             disabled={isProcessando}
                           >
@@ -676,7 +549,6 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
                             </svg>
                           </button>
 
-                          {/* ✅ TOGGLE ATIVO/INATIVO CORRIGIDO */}
                           <div className="flex items-center space-x-2">
                             <span className="text-xs text-gray-600">
                               {professor.situacao === 'ATIVO' ? 'Ativo' : 'Inativo'}
@@ -711,12 +583,12 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
                             </button>
                           </div>
 
-                          {/* Botão Inativar */}
+                          {/* BOTÃO INATIVAR (SÓ PARA ATIVOS) */}
                           {professor.situacao === 'ATIVO' && (
                             <button
                               onClick={() => handleInativarProfessor(professor)}
                               disabled={isProcessando || actionLoading}
-                              className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50"
+                              className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50 p-1"
                               title="Inativar professor"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -766,17 +638,19 @@ export default function ListaProfessorCompleta({ onEditarProfessor }: ListaProfe
         </div>
       </div>
 
-      {/* Modal de Detalhes */}
-      {professorSelecionado && (
-        <ModalDetalhes
-          professor={professorSelecionado}
-          onClose={() => setProfessorSelecionado(null)}
-          onEdit={(professor) => {
-            setProfessorSelecionado(null);
-            onEditarProfessor?.(professor);
-          }}
-        />
-      )}
+      <ModalDetalhesProfessor
+        professor={professorSelecionado!}
+        aberto={modalAberto}
+        onFechar={() => {
+          setModalAberto(false);
+          setProfessorSelecionado(null);
+        }}
+        onEditar={(professor) => {
+          setModalAberto(false);
+          setProfessorSelecionado(null);
+          onEditarProfessor?.(professor);
+        }}
+      />
     </div>
   );
-}
+};

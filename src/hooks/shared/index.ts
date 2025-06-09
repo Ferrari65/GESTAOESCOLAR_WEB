@@ -1,5 +1,3 @@
-// src/hooks/shared/index.ts - VERSÃO OTIMIZADA SEM LOADING DESNECESSÁRIO
-
 import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
@@ -17,13 +15,12 @@ interface UseSecretariaDataReturn {
   refetch: () => Promise<void>;
 }
 
-// Cache simples para evitar requisições desnecessárias
 const secretariaDataCache = new Map<string, { data: SecretariaData; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const CACHE_DURATION = 5 * 60 * 1000; 
 
 export const useSecretariaData = (): UseSecretariaDataReturn => {
   const [secretariaData, setSecretariaData] = useState<SecretariaData | null>(null);
-  const [loading, setLoading] = useState(false); // Começar com false
+  const [loading, setLoading] = useState(false); 
   const [error, setError] = useState<string | null>(null);
   const { user } = useContext(AuthContext);
 
@@ -33,7 +30,6 @@ export const useSecretariaData = (): UseSecretariaDataReturn => {
       return;
     }
 
-    // Verificar cache primeiro
     if (!forceRefresh) {
       const cached = secretariaDataCache.get(user.id);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -43,7 +39,6 @@ export const useSecretariaData = (): UseSecretariaDataReturn => {
       }
     }
 
-    // Só mostrar loading se for a primeira vez
     if (!secretariaData) {
       setLoading(true);
     }
@@ -56,7 +51,7 @@ export const useSecretariaData = (): UseSecretariaDataReturn => {
       const data = response.data;
       setSecretariaData(data);
       
-      // Salvar no cache
+
       secretariaDataCache.set(user.id, {
         data,
         timestamp: Date.now()

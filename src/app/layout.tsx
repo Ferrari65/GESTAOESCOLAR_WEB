@@ -22,7 +22,6 @@ export const metadata: Metadata = {
   authors: [{ name: "UFEM" }],
 };
 
-// ===== VIEWPORT SEPARADO (correção do warning) =====
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,

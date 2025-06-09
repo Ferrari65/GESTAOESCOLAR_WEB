@@ -1,6 +1,3 @@
-// src/types/index.ts - VERSÃO LIMPA
-
-// ===== INTERFACES PRINCIPAIS =====
 export interface User {
   id: string;
   email: string;
@@ -13,7 +10,7 @@ export interface SecretariaData {
   id_secretaria: string;
 }
 
-// ===== INTERFACES UI =====
+// ===== UI =====
 export interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
@@ -38,7 +35,7 @@ export interface LoadingSpinnerProps {
   className?: string;
 }
 
-// ===== INTERFACES DE COMPONENTES =====
+// ===== COMPONENTES =====
 export interface HeaderProps {
   title?: string;
   subtitle?: string;
@@ -79,12 +76,12 @@ export interface UseSecretariaDataReturn {
   refetch: () => Promise<void>;
 }
 
-// ===== TIPOS AUXILIARES =====
+// ===== AUXILIARES =====
 export type Role = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR' ;
 export type Status = 'ATIVO' | 'INATIVO';
 export type Sexo = 'M' | 'F';
 
-// ===== RE-EXPORTS DOS SCHEMAS =====
+// ===== SCHEMAS =====
 export type { 
   ProfessorFormData, 
   ProfessorDTO, 

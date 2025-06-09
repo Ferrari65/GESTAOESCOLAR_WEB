@@ -85,7 +85,7 @@ const api = axios.create({
   }
 });
 
-// ===== HELPER FUNCTIONS =====
+
 function isAxiosError(error: unknown): error is AxiosError {
   return error !== null && 
          typeof error === 'object' && 
@@ -102,7 +102,7 @@ function getErrorMessage(error: unknown): string {
   return 'Erro desconhecido';
 }
 
-// ===== TOKEN MANAGER =====
+// ===== TOKEN  =====
 const TokenManager = {
   save: (token: string, secretariaId?: string): void => {
     if (typeof window === 'undefined') return;
@@ -177,7 +177,6 @@ const TokenManager = {
   }
 };
 
-// ===== ERROR HANDLERS =====
 const createError = (type: AuthError['type'], message: string, statusCode?: number): AuthError => ({
   type, message, statusCode
 });
@@ -335,10 +334,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       TokenManager.save(data.token, userData.role === 'ROLE_SECRETARIA' ? data.id : undefined);
       setUser({ ...userData, id: data.id });
       
-      // Mostrar animação de boas-vindas
+
       setShowWelcome(true);
-      
-      // Após 3 segundos, redirecionar
+
       setTimeout(() => {
         setShowWelcome(false);
         const redirectPath = getRedirectPath(userData.role);
@@ -369,7 +367,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   }, [router]);
 
-  // ===== INITIALIZATION =====
+
   useEffect(() => {
     const initializeAuth = async (): Promise<void> => {
       try {

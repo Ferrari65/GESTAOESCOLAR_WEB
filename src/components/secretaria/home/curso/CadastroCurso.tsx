@@ -1,5 +1,3 @@
-// src/components/secretaria/home/curso/CadastroCurso.tsx - TÍTULO ÚNICO
-
 'use client';
 
 import React, { useCallback } from "react";
@@ -25,7 +23,6 @@ export default function CadastroCurso({ onSuccess, onCancel }: CursoFormProps) {
     }, [onSuccess])
   });
 
-  // Handlers memoizados para melhor performance
   const handleClearMessages = useCallback((): void => {
     clearMessages();
   }, [clearMessages]);
@@ -36,7 +33,7 @@ export default function CadastroCurso({ onSuccess, onCancel }: CursoFormProps) {
   }, [form, onSubmit]);
 
   const handleCancel = useCallback((): void => {
-    // Limpar formulário ao cancelar
+
     form.reset({
       nome: '',
       duracao: 1,
@@ -47,7 +44,7 @@ export default function CadastroCurso({ onSuccess, onCancel }: CursoFormProps) {
 
   return (
     <div className="space-y-8">
-      {/* ===== SEÇÃO: FORMULÁRIO DE CADASTRO ===== */}
+*/}
       <section 
         className="bg-white rounded-lg shadow-sm border border-gray-200"
         aria-labelledby="cadastro-heading"
