@@ -10,7 +10,7 @@ import {
   type CursoResponse,
   type CursoEditarDTO,
   type SituacaoType,
-} from '@/schemas';
+} from '@/schemas/index';
 
 // ===== INTERFACES =====
 export interface CursoFormProps {

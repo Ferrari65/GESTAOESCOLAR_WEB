@@ -4,8 +4,6 @@ import React, { useContext, useCallback } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useSecretariaData } from '@/hooks/shared/index';
 import UFEMSidebar from '@/components/secretaria/UFEMSidebar';
-// import CadastroProfessor from '@/components/login/secretaria/professor/CadastroProfessor';
-import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import Header from '@/components/secretaria/header';
 import CadastroDisciplina from '@/components/secretaria/home/disciplina/CadastrarDisciplina';
@@ -32,7 +30,6 @@ export default function SecretariaHomePage(): React.JSX.Element {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <LoadingSpinner size="lg" />
       </div>
     );
   }

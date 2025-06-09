@@ -95,4 +95,4 @@ export type {
   TurmaResponse,
   SituacaoType,
   TurnoType
-} from '@/schemas';
+} from '@/schemas/index';

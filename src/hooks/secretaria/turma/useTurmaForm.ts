@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
 import { transformTurmaFormToDTO } from '@/utils/transformers';
-import { turmaFormSchema, type TurmaFormData } from '@/schemas';
+import { turmaFormSchema, type TurmaFormData } from '@/schemas/index';
 
 export interface TurmaFormProps {
   onSuccess?: () => void;
