@@ -207,10 +207,10 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
         Manter atual ({professor?.sexo === 'M' ? 'Masculino' : 'Feminino'})
       </option>
     ) : (
-      <option value="" className='text-gray-700'>Selecione o sexo</option>
+      <option value="" >Selecione o sexo</option>
     )}
-    <option value="M" className='text-gray-700'>Masculino</option>
-    <option value="F" className='text-gray-700'>Feminino</option>
+    <option value="M">Masculino</option>
+    <option value="F" >Feminino</option>
   </select>
   {errors.sexo && (
     <span className="text-sm text-red-600 mt-1 ">{errors.sexo.message}</span>
