@@ -79,7 +79,7 @@ export default function SecretariaProfessorPage(): React.JSX.Element {
                       Adicione novos professores ao sistema acadêmico
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
+
                   
                   </div>
                 </div>
@@ -91,7 +91,6 @@ export default function SecretariaProfessorPage(): React.JSX.Element {
             </div>
 
           </div>
-        </div>
       </main>
     </div>
   );
