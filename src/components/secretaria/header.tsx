@@ -77,10 +77,10 @@ export default function Header({
           </div>
         </div>
         
-        {/* Lado Direito - Horário e Ações */}
+        {/* Horário e Ações */}
         <div className="flex items-center gap-6">
           
-          {/* Horário com ícone dinâmico */}
+          {/* Horário ícone  */}
           <div className="flex items-center gap-2 text-gray-600">
             {getTimeIcon()}
             <span className="text-sm font-medium">{getCurrentTime()}</span>
@@ -100,7 +100,7 @@ export default function Header({
         </div>
       </div>
       
-      {/* Linha separadora sutil */}
+      {/* Linha  */}
       <div className="mt-4 h-px bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
     </header>
   );

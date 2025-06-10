@@ -12,7 +12,7 @@ export default function SecretariaCursoPage(): React.JSX.Element {
   const { secretariaData } = useSecretariaData();
 
   const handleMenuClick = useCallback((itemId: string): void => {
-    // Lógica do menu
+
   }, []);
 
   const handleSignOut = useCallback((): void => {
@@ -22,7 +22,7 @@ export default function SecretariaCursoPage(): React.JSX.Element {
   }, [signOut]);
 
   const handleCursoSuccess = useCallback(() => {
-    // Lógica de sucesso do cadastro
+
   }, []);
 
   if (!user) {
@@ -31,13 +31,12 @@ export default function SecretariaCursoPage(): React.JSX.Element {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
+
       <UFEMSidebar
         onMenuItemClick={handleMenuClick}
         className="fixed left-0 top-0 z-40 w-64 h-full"
       />
 
-      {/* Conteúdo Principal */}
       <main className="flex-1 ml-64" role="main">
         <div className="p-8">
           <div className="max-w-8xl mx-auto space-y-8">
@@ -51,7 +50,7 @@ export default function SecretariaCursoPage(): React.JSX.Element {
               onSignOut={handleSignOut}
             />
 
-            {/* Card do Cadastro */}
+            {/* Card  Cadastro */}
             <div className="bg-white rounded-lg shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">

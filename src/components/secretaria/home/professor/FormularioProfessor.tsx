@@ -33,7 +33,7 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
 }) => {
   const { register, formState: { errors }, handleSubmit, watch } = form;
 
-  // Watch para mostrar preview
+
   const watchedFields = watch();
   const fieldsToUpdate = modo === 'edicao' ? getFieldsToUpdate(watchedFields) : [];
 
@@ -63,10 +63,11 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
             <h1 className="text-xl font-semibold text-gray-900">
               {modo === 'edicao' ? 'Editar Professor' : 'Cadastrar Novo Professor'}
             </h1>
+            
             <p className="text-sm text-gray-600 mt-1">
               {modo === 'edicao' 
                 ? `Editando: ${professor?.nome || 'Professor'}`
-                : 'Preencha as informações do professor'
+                : ''
               }
             </p>
           </div>

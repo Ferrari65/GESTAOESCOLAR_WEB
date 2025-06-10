@@ -47,15 +47,15 @@ export default function SecretariaHomePage(): React.JSX.Element {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar fixo à esquerda */}
-      <UFEMSidebar 
+
+      <UFEMSidebar
         onMenuItemClick={handleMenuClick}
-        className="fixed left-0 top-0 z-40"
+        className="fixed left-0 top-0 z-40 w-64 h-full"
       />
-      
-      {/* Conteúdo principal */}
-      <main className="flex-1 ml-64 p-8" role="main">
-        <div className="max-w-5xl mx-auto space-y-8">
+
+      <main className="flex-1 ml-64" role="main">
+        <div className="p-8">
+          <div className="max-w-8xl mx-auto space-y-8">
           
           <Header 
             title="Gerenciamento de Turmas"
@@ -89,7 +89,7 @@ export default function SecretariaHomePage(): React.JSX.Element {
               {/* futuro cadastro alunos */}
             </div>
           </div>
-          
+        </div>  
         </div>
       </main>
     </div>

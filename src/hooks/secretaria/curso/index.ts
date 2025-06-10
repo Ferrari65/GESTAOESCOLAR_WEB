@@ -276,16 +276,15 @@ export const useCursoList = (): UseCursoListReturn => {
       return;
     }
 
-    // ✅ Usar cache se estiver fresco
     if (!forceRefresh && isDataFresh()) {
-      console.log('📦 [CURSO-LIST] Usando dados do cache');
+      console.log(' [CURSO-LIST] Usando dados do cache');
       setCursos(cursoCache.data);
       return;
     }
 
-    // ✅ Evitar múltiplas chamadas
+
     if (cursoCache.isLoading) {
-      console.log('⏳ [CURSO-LIST] Já está carregando...');
+      console.log(' [CURSO-LIST] Já está carregando...');
       return;
     }
 
@@ -294,7 +293,7 @@ export const useCursoList = (): UseCursoListReturn => {
     setError(null);
 
     try {
-      console.log('🔍 [CURSO-LIST] Buscando cursos do servidor...');
+      console.log(' [CURSO-LIST] Buscando cursos do servidor...');
       const api = getAPIClient();
       const response = await api.get(`/curso/${user.id}/secretaria`);
       

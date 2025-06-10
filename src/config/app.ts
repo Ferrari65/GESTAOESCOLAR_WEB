@@ -22,13 +22,11 @@ export const AUTH_CONFIG = {
   loginEndpoints: [
     '/secretaria/auth/login',
     '/professor/auth/login', 
-    '/aluno/login'
   ],
   
   dashboardRoutes: {
     ROLE_SECRETARIA: '/secretaria/alunos',
     ROLE_PROFESSOR: '/professor/home',
-    ROLE_ALUNO: '/aluno/home',
   }
 } as const;
 
@@ -41,7 +39,6 @@ export const MIDDLEWARE_CONFIG = {
   protectedRoutes: {
     '/secretaria': 'ROLE_SECRETARIA',
     '/professor': 'ROLE_PROFESSOR', 
-    '/aluno': 'ROLE_ALUNO'
   },
   
   skipPaths: [
@@ -79,9 +76,6 @@ export const SUCCESS_MESSAGES = {
   DELETE: 'Item excluído com sucesso!',
   LOGIN: 'Login realizado com sucesso!',
 } as const;
-
-
-//  FUNCTIONS
 
 export function getDashboardRoute(role: string): string {
   return AUTH_CONFIG.dashboardRoutes[role as keyof typeof AUTH_CONFIG.dashboardRoutes] || '/login';

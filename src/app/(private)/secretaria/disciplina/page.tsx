@@ -44,7 +44,7 @@ export default function SecretariaHomePage(): React.JSX.Element {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar fixo à esquerda */}
+  
       <UFEMSidebar 
         onMenuItemClick={handleMenuClick}
         className="fixed left-0 top-0 z-40 w-64 h-full"

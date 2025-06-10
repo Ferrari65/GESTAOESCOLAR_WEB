@@ -1,33 +1,12 @@
 import axios, { AxiosInstance, AxiosHeaders, AxiosError } from 'axios';
+import { 
+  API_CONFIG, 
+  AUTH_CONFIG, 
+  ERROR_MESSAGES, 
+  ENV 
+} from '@/config/app'; 
 
-const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
-} as const;
-
-const AUTH_CONFIG = {
-  tokenCookieName: 'nextauth.token',
-  tokenLocalStorageKey: 'nextauth.token',
-  secretariaIdKey: 'secretaria_id'
-} as const;
-
-const ERROR_MESSAGES = {
-  INVALID_CREDENTIALS: 'Email ou senha incorretos.',
-  UNAUTHORIZED: 'Sem permissão para acessar esta área.',
-  NETWORK_ERROR: 'Erro de conexão. Verifique sua internet.',
-  SERVER_ERROR: 'Erro no servidor. Tente novamente.',
-  UNKNOWN: 'Erro desconhecido. Contate o suporte.'
-} as const;
-
-const ENV = {
-  isServer: typeof window === 'undefined'
-} as const;
-
-// ===== TOKEN  =====
+// ===== TOKEN MANAGEMENT =====
 function getToken(): string | null {
   if (ENV.isServer) return null;
   
@@ -70,7 +49,6 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-// ===== ERROR  =====
 function getErrorMessage(error: AxiosError): string {
   if (error.response) {
     const { status, data } = error.response;
@@ -107,7 +85,6 @@ function getErrorMessage(error: AxiosError): string {
   return error.message || ERROR_MESSAGES.UNKNOWN;
 }
 
-// ===== AXIOS  =====
 export function getAPIClient(): AxiosInstance {
   const api = axios.create({
     baseURL: API_CONFIG.baseURL,
@@ -115,6 +92,7 @@ export function getAPIClient(): AxiosInstance {
     headers: API_CONFIG.headers,
   });
 
+  // Request interceptor
   api.interceptors.request.use(
     (config) => {
       const currentToken = getToken();
@@ -198,6 +176,7 @@ export function handleApiError(
   
   return { message };
 }
+
 
 export function checkAPIHealth(): Promise<boolean> {
   return api.get('/health')

@@ -198,13 +198,6 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
                       Cancelar Edição
                     </button>
                   )}
-                  
-                  <button
-                    onClick={handleMostrarLista}
-                    className="px-4 py-2 text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                  >
-                    Ver Lista de Professores
-                  </button>
                 </div>
               </div>
 
