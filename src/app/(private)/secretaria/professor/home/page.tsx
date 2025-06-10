@@ -69,21 +69,6 @@ export default function SecretariaProfessorPage(): React.JSX.Element {
 
             {/* ===== CARD DO CADASTRO ===== */}
             <div className="bg-white rounded-lg shadow-sm">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Cadastro de Professor
-                    </h2>
-                    <p className="text-gray-600 mt-1">
-                      Adicione novos professores ao sistema acadêmico
-                    </p>
-                  </div>
-
-                  
-                  </div>
-                </div>
-              </div>
 
               <div className="p-6">
                 <CadastroProfessor onSuccess={handleProfessorSuccess} />
@@ -91,6 +76,7 @@ export default function SecretariaProfessorPage(): React.JSX.Element {
             </div>
 
           </div>
+        </div>
       </main>
     </div>
   );

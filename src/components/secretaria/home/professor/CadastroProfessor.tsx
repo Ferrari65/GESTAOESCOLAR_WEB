@@ -38,7 +38,7 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
     professorId: professorEditando?.id_professor,
     dadosIniciais: professorEditando || undefined,
     onSucesso: useCallback(() => {
-      console.log('✅ Professor processado com sucesso!');
+      console.log(' Professor processado com sucesso!');
       setProfessorEditando(null);
       setAbaSelecionada('lista');
       setMostrarFormulario(false);
