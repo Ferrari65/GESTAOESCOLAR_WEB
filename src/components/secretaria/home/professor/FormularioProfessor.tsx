@@ -189,14 +189,14 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
 </div>
 
 {/* Sexo */}
-<div>
-  <label className="block text-sm font-medium  text-gray-700 ">
+<div className='text-gray-700'>
+  <label className="block text-sm font-medium ">
     Sexo {modo === 'cadastro' && <span className="text-red-500 ml-1">*</span>}
   </label>
 
   <select
     {...register('sexo')}
-    className={`mt-1 block w-full rounded-md border px-3 py-2 ${
+    className={`mt-1 block w-full rounded-md border px-3 py-2 text-gray-700${
       errors.sexo
         ? 'border-red-500 focus:ring-red-500'
         : 'border-gray-300 focus:ring-blue-500'
@@ -207,16 +207,16 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
         Manter atual ({professor?.sexo === 'M' ? 'Masculino' : 'Feminino'})
       </option>
     ) : (
-      <option value="">Selecione o sexo</option>
+      <option value="" className='text-gray-700'>Selecione o sexo</option>
     )}
-    <option value="M">Masculino</option>
-    <option value="F">Feminino</option>
+    <option value="M" className='text-gray-700'>Masculino</option>
+    <option value="F" className='text-gray-700'>Feminino</option>
   </select>
   {errors.sexo && (
-    <span className="text-sm text-red-600 mt-1">{errors.sexo.message}</span>
+    <span className="text-sm text-red-600 mt-1 ">{errors.sexo.message}</span>
   )}
   {modo === 'edicao' && (
-    <span className="text-xs text-gray-500 mt-1 block">
+    <span className="text-xs text-gray-700 mt-1 block">
       Atual: {professor?.sexo === 'M' ? 'Masculino' : 'Feminino'}
     </span>
   )}
