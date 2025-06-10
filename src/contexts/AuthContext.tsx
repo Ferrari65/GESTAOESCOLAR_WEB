@@ -67,7 +67,6 @@ const AUTH_CONFIG = {
 const LOGIN_ENDPOINTS = [
   '/secretaria/auth/login',
   '/professor/auth/login'
-
 ] as const;
 
 const DASHBOARD_ROUTES = {
@@ -85,7 +84,6 @@ const api = axios.create({
   }
 });
 
-
 function isAxiosError(error: unknown): error is AxiosError {
   return error !== null && 
          typeof error === 'object' && 
@@ -102,7 +100,7 @@ function getErrorMessage(error: unknown): string {
   return 'Erro desconhecido';
 }
 
-// ===== TOKEN  =====
+// ===== TOKEN MANAGER =====
 const TokenManager = {
   save: (token: string, secretariaId?: string): void => {
     if (typeof window === 'undefined') return;
@@ -242,12 +240,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userId = payload.sub || '';
       }
 
-      return {
+      const userData = {
         email: payload.email || payload.sub || '',
         role: payload.role,
         id: userId
       };
+
+      return userData;
     } catch (error) {
+      console.error('Erro ao processar token:', error);
       return null;
     }
   }, []);
@@ -281,6 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
+      console.error('Erro na verificação de autenticação:', error);
       TokenManager.remove();
       setUser(null);
     }
@@ -334,16 +336,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       TokenManager.save(data.token, userData.role === 'ROLE_SECRETARIA' ? data.id : undefined);
       setUser({ ...userData, id: data.id });
       
-
       setShowWelcome(true);
 
       setTimeout(() => {
         setShowWelcome(false);
         const redirectPath = getRedirectPath(userData.role);
         router.push(redirectPath);
-      }, 3000);
+      }, 2000);
       
     } catch (error: unknown) {
+      console.error('Erro no login:', error);
       if (isAxiosError(error)) {
         setError(handleAxiosError(error as AxiosError<ApiErrorResponse>));
       } else if (error && typeof error === 'object' && 'type' in error) {
@@ -367,12 +369,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   }, [router]);
 
-
+  // ===== INICIALIZAÇÃO =====
   useEffect(() => {
     const initializeAuth = async (): Promise<void> => {
       try {
-        await refreshAuth();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout de inicialização')), 5000)
+        );
+        
+        await Promise.race([refreshAuth(), timeoutPromise]);
       } catch (error) {
+        console.warn('Timeout na inicialização da autenticação:', error);
         TokenManager.remove();
         setUser(null);
       } finally {

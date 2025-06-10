@@ -24,7 +24,7 @@ export default function SecretariaProfessorPage(): React.JSX.Element {
   }, [signOut]);
 
   const handleProfessorSuccess = useCallback(() => {
-    console.log(' Professor processado com sucesso!');
+    console.log('Professor processado com sucesso!');
   }, []);
 
   // ===== LOADING STATE =====
@@ -48,29 +48,50 @@ export default function SecretariaProfessorPage(): React.JSX.Element {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* ===== SIDEBAR FIXO ===== */}
-      <UFEMSidebar 
+      <UFEMSidebar
         onMenuItemClick={handleMenuClick}
-        className="fixed left-0 top-0 z-40"
+        className="fixed left-0 top-0 z-40 w-64 h-full"
       />
-      
-      {/* ===== CONTEÚDO PRINCIPAL ===== */}
-      <main className="flex-1 ml-64 p-8" role="main">
-        <div className="max-w-7xl mx-auto space-y-8">
-          
-          {/* ===== HEADER ===== */}
-          <Header 
-            title="Gerenciamento de Professores"
-            subtitle="Bem-vindo(a),"
-            secretariaData={secretariaData}
-            user={user}
-            onSignOut={handleSignOut}
-          />
 
-          {/* ===== COMPONENTE PRINCIPAL ===== */}
-          <CadastroProfessor 
-            onSuccess={handleProfessorSuccess}
-          />
-          
+      {/* ===== CONTEÚDO PRINCIPAL ===== */}
+      <main className="flex-1 ml-64" role="main">
+        <div className="p-8">
+          <div className="max-w-8xl mx-auto space-y-8">
+            
+            {/* ===== HEADER ===== */}
+            <Header
+              title="Gerenciamento de Professores"
+              subtitle="Bem-vindo(a),"
+              secretariaData={secretariaData}
+              user={user}
+              onSignOut={handleSignOut}
+            />
+
+            {/* ===== CARD DO CADASTRO ===== */}
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Cadastro de Professor
+                    </h2>
+                    <p className="text-gray-600 mt-1">
+                      Adicione novos professores ao sistema acadêmico
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <span className="text-sm text-gray-600">Online</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <CadastroProfessor onSuccess={handleProfessorSuccess} />
+              </div>
+            </div>
+
+          </div>
         </div>
       </main>
     </div>

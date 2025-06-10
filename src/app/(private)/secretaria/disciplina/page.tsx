@@ -23,10 +23,10 @@ export default function SecretariaHomePage(): React.JSX.Element {
   }, [signOut]);
 
   const handleDisciplinaSuccess = useCallback(() => {
-    // Lógica a ser executada em caso de sucesso no cadastro da disciplina
+  
   }, []);
 
-  // Loading state
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -34,7 +34,6 @@ export default function SecretariaHomePage(): React.JSX.Element {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
@@ -48,46 +47,47 @@ export default function SecretariaHomePage(): React.JSX.Element {
       {/* Sidebar fixo à esquerda */}
       <UFEMSidebar 
         onMenuItemClick={handleMenuClick}
-        className="fixed left-0 top-0 z-40"
+        className="fixed left-0 top-0 z-40 w-64 h-full"
       />
       
       {/* Conteúdo principal */}
-      <main className="flex-1 ml-64 p-8" role="main">
-        <div className="max-w-5xl mx-auto space-y-8">
-          
-          <Header 
-            title="Gerenciamento de Turmas"
-            subtitle="Bem-vindo(a),"
-            secretariaData={secretariaData}
-            user={user}
-            onSignOut={handleSignOut}
-          />
+      <main className="flex-1 ml-64" role="main">
+        <div className="p-8">
+          <div className="max-w-8xl mx-auto space-y-8">
+            
+            <Header 
+              title="Gerenciamento de Disciplinas"
+              subtitle="Bem-vindo(a),"
+              secretariaData={secretariaData}
+              user={user}
+              onSignOut={handleSignOut}
+            />
 
-          {/* Área Principal - Cadastro de Professor */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Cadastro de Disciplina
-                  </h2>
-                  <p className="text-gray-600 mt-1">
-                    Adicione novas discilinas ao sistema acadêmico
-                  </p>
+            {/* Card do Cadastro */}
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Cadastro de Disciplina
+                    </h2>
+                    <p className="text-gray-600 mt-1">
+                      Adicione novas disciplinas ao sistema acadêmico
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <span className="text-sm text-gray-600">Online</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-gray-600">Online</span>
-                </div>
+              </div>
+              
+              <div className="p-6">
+                <CadastroDisciplina onSuccess={handleDisciplinaSuccess} />
               </div>
             </div>
             
-            <div className="p-6">
-              <CadastroDisciplina onSuccess={handleDisciplinaSuccess} />
-              
-            </div>
           </div>
-          
         </div>
       </main>
     </div>

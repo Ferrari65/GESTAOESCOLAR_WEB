@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginFormData } from '@/schemas'; 
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { WelcomeAnimation } from '@/components/ui/WelcomeAnimation';
@@ -13,6 +13,7 @@ import { WelcomeAnimation } from '@/components/ui/WelcomeAnimation';
 export default function LoginPage(): JSX.Element {
   const authContext = useContext(AuthContext);
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   
   if (!authContext) {
     throw new Error('LoginPage deve ser usado dentro de um AuthProvider');
@@ -37,19 +38,24 @@ export default function LoginPage(): JSX.Element {
     mode: 'onBlur',
   });
 
- 
   useEffect(() => {
-    if (isInitialized && user && !showWelcome) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !isInitialized || showWelcome) return;
+    
+    if (user) {
+      console.log(' [LOGIN] Usuário já logado, redirecionando...');
       const dashboardRoutes = {
         'ROLE_SECRETARIA': '/secretaria/alunos',
         'ROLE_PROFESSOR': '/professor/home',
-
       };
       
       const redirectPath = dashboardRoutes[user.role as keyof typeof dashboardRoutes] || '/login';
       router.push(redirectPath);
     }
-  }, [isInitialized, user, router, showWelcome]);
+  }, [mounted, isInitialized, user, router, showWelcome]);
 
   const handleSignIn: SubmitHandler<LoginFormData> = async (data: LoginFormData): Promise<void> => {
     clearError(); 
@@ -61,18 +67,17 @@ export default function LoginPage(): JSX.Element {
       <WelcomeAnimation 
         userName={user.email} 
         onComplete={() => {
-          
         }}
       />
     );
   }
 
-  if (!isInitialized) {
+  if (!mounted || (!isInitialized && !user)) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600 text-lg">Carregando...</p>
+          <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600 text-sm">Verificando autenticação...</p>
         </div>
       </main>
     );
@@ -121,7 +126,7 @@ export default function LoginPage(): JSX.Element {
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
                       <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                       </svg>
                     </div>
                     <div className="flex-1">
