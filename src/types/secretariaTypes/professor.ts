@@ -1,6 +1,7 @@
+
 export type { 
-  ProfessorFormData, 
-  ProfessorDTO,
+  ProfessorCadastroData as ProfessorFormData, 
+  ProfessorCreateDTO as ProfessorDTO,
   ProfessorResponse,
   SituacaoType
 } from '@/schemas/professor';

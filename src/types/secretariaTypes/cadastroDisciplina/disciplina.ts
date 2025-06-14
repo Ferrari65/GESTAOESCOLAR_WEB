@@ -1,12 +1,11 @@
+import { UseFormReturn } from 'react-hook-form';
+import { DisciplinaFormData, DisciplinaDTO, DisciplinaResponse } from '@/schemas';
 
 export type { 
   DisciplinaFormData, 
   DisciplinaDTO, 
   DisciplinaResponse as Disciplina 
 } from '@/schemas';
-
-import { UseFormReturn } from 'react-hook-form';
-import { DisciplinaFormData, DisciplinaDTO } from '@/schemas';
 
 export interface DisciplinaFormProps {
   onSuccess?: () => void;
@@ -30,7 +29,7 @@ export interface UseDisciplinaAPIReturn {
 }
 
 export interface DisciplinaListResponse {
-  disciplinas: DisciplinaDTO[];
+  disciplinas: DisciplinaResponse[];
   total: number;
   page: number;
   limit: number;
@@ -44,7 +43,7 @@ export interface DisciplinaFilters {
 }
 
 export interface UseDisciplinaListReturn {
-  disciplinas: DisciplinaDTO[];
+  disciplinas: DisciplinaResponse[];
   loading: boolean;
   error: string | null;
   refetch: () => void;

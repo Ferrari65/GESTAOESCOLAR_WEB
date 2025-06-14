@@ -133,15 +133,14 @@ export function validateSchema<T>(schema: any, data: unknown): {
   }
 }
 
-// ===== COMPATIBILIDADE (para não quebrar imports existentes) =====
-
+// ===== ALIASES PARA COMPATIBILIDADE =====
 // Disciplina - compatibilidade com nomes antigos
-export const disciplinaDTO = disciplinaDTOSchema;
-export const disciplinaResponse = disciplinaResponseSchema;
+export { disciplinaDTOSchema as disciplinaDTO };
+export { disciplinaResponseSchema as disciplinaResponse };
 
 // Curso - compatibilidade
-export const cursoEditarDTO = cursoEditarDTOSchema;
+export { cursoEditarDTOSchema as cursoEditarDTO };
 
 // Situação - compatibilidade
-export const SituacaoTypeEnum = SituacaoEnum;
-export const TurnoTypeEnum = TurnoEnum;
+export { SituacaoEnum as SituacaoTypeEnum };
+export { TurnoEnum as TurnoTypeEnum };

@@ -77,22 +77,41 @@ export interface UseSecretariaDataReturn {
 }
 
 // ===== AUXILIARES =====
-export type Role = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR' ;
+export type Role = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR';
 export type Status = 'ATIVO' | 'INATIVO';
 export type Sexo = 'M' | 'F';
 
-// ===== SCHEMAS =====
+// ===== IMPORTAÇÃO DOS SCHEMAS =====
+
 export type { 
-  ProfessorFormData, 
-  ProfessorDTO, 
-  CursoFormData, 
-  CursoDTO, 
-  CursoResponse,
+  // Auth
   LoginFormData,
   ResetPasswordFormData,
+  
+  // Professor
+  ProfessorCadastroData,
+  ProfessorEdicaoData,
+  ProfessorCreateDTO,
+  ProfessorUpdateDTO,
+  ProfessorResponse,
+  
+  // Curso
+  CursoFormData,
+  CursoDTO,
+  CursoResponse,
+  
+  // Disciplina
+  DisciplinaFormData,
+  DisciplinaDTO,
+  DisciplinaResponse,
+  
+  // Turma
   TurmaFormData,
   TurmaDTO,
   TurmaResponse,
+  
+  // Enums
   SituacaoType,
-  TurnoType
-} from '@/schemas/index';
+  TurnoType,
+  SexoType
+} from '@/schemas';
