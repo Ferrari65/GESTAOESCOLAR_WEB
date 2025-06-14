@@ -7,7 +7,7 @@ import { formDataToDisciplinaDTO } from "@/utils/transformers";
 import {
   DisciplinaFormData,
   disciplinaFormSchema
-} from "@/schemas/secretaria/disciplina/disciplinaValidations";
+} from "@/schemas";
 import { UseDisciplinaFormReturn } from "@/types/secretariaTypes/cadastroDisciplina/disciplina";
 
 interface UseDisciplinaFormParams {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import type { DisciplinaFormData } from '@/schemas/secretaria/disciplina/disciplinaValidations';
+import type { DisciplinaFormData } from '@/schemas';
 
 interface DisciplinaDataSectionProps {
   form: UseFormReturn<DisciplinaFormData>;

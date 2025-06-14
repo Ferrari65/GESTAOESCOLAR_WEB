@@ -3,10 +3,10 @@ export type {
   DisciplinaFormData, 
   DisciplinaDTO, 
   DisciplinaResponse as Disciplina 
-} from '@/schemas/secretaria/disciplina/disciplinaValidations';
+} from '@/schemas';
 
 import { UseFormReturn } from 'react-hook-form';
-import { DisciplinaFormData, DisciplinaDTO } from '@/schemas/secretaria/disciplina/disciplinaValidations';
+import { DisciplinaFormData, DisciplinaDTO } from '@/schemas';
 
 export interface DisciplinaFormProps {
   onSuccess?: () => void;

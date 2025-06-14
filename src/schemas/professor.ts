@@ -1,20 +1,25 @@
 import { z } from 'zod';
+import { 
+  SituacaoEnum, 
+  SexoEnum,
+  nomeValidator,
+  cpfValidator,
+  emailValidator,
+  passwordValidator,
+  phoneValidator,
+  dataValidator,
+  ufValidator,
+  validateCPF,
+  validatePhone,
+  formatCPF,
+  formatPhone,
+  cleanCPF,
+  cleanPhone,
+  type SituacaoType,
+  type SexoType
+} from './shared';
 
-// ===== VALIDADORES =====
-const validateCPF = (cpf: string): boolean => {
-  if (!cpf || typeof cpf !== 'string') return false;
-  const cleanCPF = cpf.replace(/[^\d]/g, '');
-  if (cleanCPF.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
-  return true; // simplified
-};
-
-const validatePhone = (phone: string): boolean => {
-  if (!phone || typeof phone !== 'string') return false;
-  const cleanPhone = phone.replace(/[^\d]/g, '');
-  return cleanPhone.length === 10 || cleanPhone.length === 11;
-};
-
+// ===== VALIDADORES OPCIONAIS PARA EDIÇÃO =====
 const optionalField = <T extends z.ZodType>(
   schema: T, 
   emptyMessage?: string
@@ -50,59 +55,48 @@ const optionalValidatedField = <T>(
       message: errorMessage + ' (quando preenchido)'
     });
 
-// ===== ENUMS =====
-export const SituacaoTypeEnum = z.enum(['ATIVO', 'INATIVO']);
-export const SexoEnum = z.enum(['M', 'F']);
+// ===== SCHEMAS DE PROFESSOR =====
 
-// ===== SCHEMA PARA CADASTRO ====
 export const professorCadastroSchema = z.object({
-  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100).trim(),
-  cpf: z.string().min(1, 'CPF é obrigatório').refine(validateCPF, 'CPF inválido'),
-  email: z.string().email('Email inválido').max(254).toLowerCase().trim(),
-  senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').max(50),
-  telefone: z.string().min(1, 'Telefone é obrigatório').refine(validatePhone, 'Telefone inválido'),
-  data_nasc: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida (use YYYY-MM-DD)'),
+  nome: nomeValidator,
+  cpf: cpfValidator,
+  email: emailValidator,
+  senha: passwordValidator,
+  telefone: phoneValidator,
+  data_nasc: dataValidator,
   sexo: SexoEnum,
   logradouro: z.string().min(1, 'Logradouro é obrigatório').trim(),
   bairro: z.string().min(1, 'Bairro é obrigatório').trim(),
   numero: z.string().min(1, 'Número é obrigatório'),
   cidade: z.string().min(1, 'Cidade é obrigatória').trim(),
-  uf: z.string().length(2, 'UF deve ter 2 caracteres').toUpperCase(),
+  uf: ufValidator,
 });
 
-// ===== SCHEMA PARA EDIÇÃO =====
 export const professorEdicaoSchema = z.object({
-
+  // Campos opcionais para edição
   nome: optionalStringField(2, 100),
-  email: optionalField(
-    z.string().email('Email inválido').max(254).toLowerCase().trim()
-  ),
+  email: optionalField(emailValidator),
   telefone: optionalValidatedField(validatePhone, 'Telefone inválido'),
-  data_nasc: optionalField(
-    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida (use YYYY-MM-DD)')
-  ),
+  data_nasc: optionalField(dataValidator),
   sexo: optionalField(SexoEnum),
   
-
+  // Endereço opcional
   logradouro: optionalStringField(1, 255),
   bairro: optionalStringField(1, 255),
   numero: optionalStringField(1, 10),
   cidade: optionalStringField(1, 255),
-  uf: optionalField(
-    z.string().length(2, 'UF deve ter 2 caracteres').toUpperCase()
-  ),
+  uf: optionalField(ufValidator),
   
+  // Campos que não podem ser editados ou são opcionais
   cpf: z.string().optional(), 
-  senha: optionalField(
-    z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').max(50)
-  ),
+  senha: optionalField(passwordValidator),
 });
 
-// ===== DTOs  BACKEND =====
+// ===== DTOs PARA BACKEND =====
 export const professorCreateDTOSchema = z.object({
   nome: z.string(),
   CPF: z.string(),
-  situacao: SituacaoTypeEnum,
+  situacao: SituacaoEnum,
   logradouro: z.string(),
   bairro: z.string(),
   numero: z.number().positive(),
@@ -118,7 +112,7 @@ export const professorCreateDTOSchema = z.object({
 
 export const professorUpdateDTOSchema = z.object({
   nome: z.string().optional(),
-  situacao: SituacaoTypeEnum.optional(),
+  situacao: SituacaoEnum.optional(),
   logradouro: z.string().optional(),
   bairro: z.string().optional(),
   numero: z.number().optional(),
@@ -137,7 +131,7 @@ export const professorResponseSchema = z.object({
   email: z.string(),
   cpf: z.string(),
   telefone: z.string(),
-  situacao: SituacaoTypeEnum,
+  situacao: SituacaoEnum,
   logradouro: z.string(),
   bairro: z.string(),
   numero: z.number(),
@@ -147,30 +141,34 @@ export const professorResponseSchema = z.object({
   data_nasc: z.string(),
 });
 
-// ===== TIPOS =====
+// ===== TIPOS DE PROFESSOR =====
 export type ProfessorCadastroData = z.infer<typeof professorCadastroSchema>;
 export type ProfessorEdicaoData = z.infer<typeof professorEdicaoSchema>;
 export type ProfessorCreateDTO = z.infer<typeof professorCreateDTOSchema>;
 export type ProfessorUpdateDTO = z.infer<typeof professorUpdateDTOSchema>;
 export type ProfessorResponse = z.infer<typeof professorResponseSchema>;
-export type SituacaoType = z.infer<typeof SituacaoTypeEnum>;
 
-// ===== UTILITÁRIOS =====
-export const cleanCPF = (cpf: string): string => cpf.replace(/[^\d]/g, '');
-export const cleanPhone = (phone: string): string => phone.replace(/[^\d]/g, '');
-
-export const formatCPF = (cpf: string): string => {
-  const clean = cleanCPF(cpf);
-  if (clean.length !== 11) return cpf;
-  return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+// ===== VALIDADORES =====
+export const validateProfessorCadastro = (data: unknown) => {
+  return professorCadastroSchema.safeParse(data);
 };
 
-export const formatPhone = (phone: string): string => {
-  const clean = cleanPhone(phone);
-  if (clean.length === 11) {
-    return clean.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  } else if (clean.length === 10) {
-    return clean.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-  }
-  return phone;
+export const validateProfessorEdicao = (data: unknown) => {
+  return professorEdicaoSchema.safeParse(data);
+};
+
+export const validateProfessorResponse = (data: unknown) => {
+  return professorResponseSchema.safeParse(data);
+};
+
+// ===== RE-EXPORTAR UTILITÁRIOS =====
+export { 
+  validateCPF, 
+  validatePhone, 
+  cleanCPF, 
+  cleanPhone, 
+  formatCPF, 
+  formatPhone,
+  type SituacaoType,
+  type SexoType
 };
