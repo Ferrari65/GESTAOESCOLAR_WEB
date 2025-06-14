@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { getAPIClient, handleApiError } from '@/services/api';
-import { validateDisciplinaDTO, type DisciplinaDTO } from '@/schemas/secretaria/disciplina/disciplinaValidations';
+import { validateDisciplinaDTO, type DisciplinaDTO } from '@/schemas';
 import type { UseDisciplinaAPIReturn } from '@/types/secretariaTypes/cadastroDisciplina/disciplina';
 
 export const useDisciplinaAPI = (): UseDisciplinaAPIReturn => {
