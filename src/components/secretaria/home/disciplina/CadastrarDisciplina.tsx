@@ -9,10 +9,7 @@ import { DisciplinaDataSection } from "./DisciplinaDataSection";
 import { getAPIClient } from "@/services/api";
 import { AuthContext } from "@/contexts/AuthContext";
 
-// ===== IMPORTS CORRIGIDOS =====
-// ANTES: import type { Disciplina } from "@/types/secretariaTypes/cadastroDisciplina/disciplina";
-// DEPOIS: Definir localmente ou importar dos schemas
-import type { SituacaoType } from "@/types";
+import type { SituacaoType } from "@/schemas";
 
 // ===== TIPOS LOCAIS (definidos aqui mesmo) =====
 interface Disciplina {

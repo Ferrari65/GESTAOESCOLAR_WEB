@@ -1,12 +1,11 @@
-// ===== TRATADOR DE ERROS CENTRALIZADO =====
-// Versão final corrigida - apenas troque esta linha 4:
-
 import { AxiosError } from 'axios';
 import { log } from './logger';
-// ===== LINHA CORRIGIDA (era '@/types/shared', agora é '@/types') =====
-import type { ApiError } from '@/types';
 
-// ===== RESTO DO ARQUIVO FICA IGUAL =====
+export interface ApiError {
+  message: string;
+  status?: number;
+}
+
 export type ErrorContext = 
   | 'Auth' | 'CreateProfessor' | 'EditProfessor' | 'FetchProfessores'
   | 'CreateCurso' | 'EditCurso' | 'FetchCursos' 

@@ -1,7 +1,5 @@
-// ===== CONFIGURAÇÃO CENTRAL DA APLICAÇÃO =====
-// Arquivo único para todas as configurações
 
-import type { UserRole } from '@/types/shared';
+type UserRole = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR' | 'ROLE_ALUNO';
 
 // ===== ENVIRONMENT =====
 export const ENV = {

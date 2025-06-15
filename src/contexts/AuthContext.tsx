@@ -2,11 +2,13 @@
 
 import { createContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { log } from '@/utils/logger';
 import { AUTH_CONFIG, API_CONFIG, getDashboardRoute } from '@/config/app';
 import type { User, AuthError } from '@/types';
+
+// ===== ✅ USANDO O CHAVEIRO ÚNICO =====
+import TokenManager from '@/utils/tokenManager';
 
 // ===== INTERFACES =====
 interface LoginResponse {
@@ -39,68 +41,6 @@ interface JWTPayload {
   exp: number;
   iat?: number;
 }
-
-// ===== TOKEN MANAGER =====
-const TokenManager = {
-  save: (token: string, secretariaId?: string): void => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const expires = new Date(Date.now() + AUTH_CONFIG.maxAge * 1000).toUTCString();
-      const isSecure = window.location.protocol === 'https:';
-      
-      document.cookie = `${AUTH_CONFIG.tokenCookieName}=${token}; path=/; expires=${expires}; SameSite=Lax${isSecure ? '; Secure' : ''}`;
-      localStorage.setItem(AUTH_CONFIG.tokenLocalStorageKey, token);
-      
-      if (secretariaId) {
-        localStorage.setItem(AUTH_CONFIG.secretariaIdKey, secretariaId);
-      }
-    } catch (error) {
-      log.error('AUTH', 'Erro ao salvar token', error);
-    }
-  },
-
-  get: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      const cookieMatch = document.cookie.match(new RegExp(`${AUTH_CONFIG.tokenCookieName}=([^;]+)`));
-      if (cookieMatch?.[1]) {
-        return cookieMatch[1];
-      }
-      
-      const localToken = localStorage.getItem(AUTH_CONFIG.tokenLocalStorageKey);
-      return localToken;
-    } catch (error) {
-      log.error('AUTH', 'Erro ao obter token', error);
-      return null;
-    }
-  },
-
-  remove: (): void => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=/; max-age=0`;
-      localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
-      localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
-    } catch (error) {
-      log.error('AUTH', 'Erro ao remover token', error);
-    }
-  },
-
-  isValid: (token: string): boolean => {
-    try {
-      const payload = jwtDecode<JWTPayload>(token);
-      const isExpired = payload.exp <= Date.now() / 1000;
-      const hasRole = Boolean(payload.role);
-      
-      return !isExpired && hasRole;
-    } catch (error) {
-      return false;
-    }
-  }
-};
 
 // ===== ENDPOINTS DE LOGIN =====
 const LOGIN_ENDPOINTS = ['/secretaria/auth/login', '/professor/auth/login'] as const;
@@ -156,17 +96,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), []);
 
+  // ===== ✅ USANDO O GERENCIADOR ÚNICO =====
   const processToken = useCallback((token: string): User | null => {
     try {
       if (!TokenManager.isValid(token)) {
         return null;
       }
 
-      const payload = jwtDecode<JWTPayload>(token);
+      const payload = TokenManager.decode(token);
+      if (!payload) return null;
 
       let userId = '';
       if (payload.role === 'ROLE_SECRETARIA') {
-        userId = localStorage.getItem(AUTH_CONFIG.secretariaIdKey) || payload.sub || '';
+        userId = TokenManager.getSecretariaId() || payload.sub || '';
       } else {
         userId = payload.sub || '';
       }
@@ -182,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ✅ REFRESH SEM REDIRECIONAMENTO AUTOMÁTICO
+  // ===== ✅ REFRESH COM GERENCIADOR ÚNICO =====
   const refreshAuth = useCallback(async (): Promise<void> => {
     try {
       const token = TokenManager.get();
@@ -196,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         TokenManager.remove();
         setUser(null);
         
-        // ✅ SÓ REDIRECIONA SE ESTIVER EM ROTA PROTEGIDA
+        // SÓ REDIRECIONA SE ESTIVER EM ROTA PROTEGIDA
         if (pathname?.startsWith('/secretaria') || pathname?.startsWith('/professor') || pathname?.startsWith('/aluno')) {
           router.push('/login');
         }
@@ -207,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userData) {
         setUser(userData);
         
-        // ✅ SÓ REDIRECIONA DA PÁGINA DE LOGIN SE JÁ ESTIVER AUTENTICADO
+        // SÓ REDIRECIONA DA PÁGINA DE LOGIN SE JÁ ESTIVER AUTENTICADO
         if (pathname === '/login') {
           const dashboardRoute = getDashboardRoute(userData.role);
           router.push(dashboardRoute);
@@ -245,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     throw createError('server', 'Nenhum servidor disponível.');
   }, []);
 
+  // ===== ✅ SIGN IN COM GERENCIADOR ÚNICO =====
   const signIn = useCallback(async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
     setError(null);
@@ -264,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw createError('server', 'Token inválido recebido');
       }
 
+      // ✅ USAR O GERENCIADOR ÚNICO PARA SALVAR
       TokenManager.save(data.token, userData.role === 'ROLE_SECRETARIA' ? data.id : undefined);
       setUser({ ...userData, id: data.id });
       
@@ -291,15 +235,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [attemptLogin, processToken, router]);
 
+  // ===== ✅ SIGN OUT COM GERENCIADOR ÚNICO =====
   const signOut = useCallback((): void => {
     setUser(null);
     setError(null);
     setShowWelcome(false);
-    TokenManager.remove();
+    TokenManager.remove(); // ✅ Usando gerenciador único
     router.push('/login');
   }, [router]);
 
-  // ✅ INICIALIZAÇÃO SEM REDIRECIONAMENTO FORÇADO
+  // ===== INICIALIZAÇÃO =====
   useEffect(() => {
     const initializeAuth = async (): Promise<void> => {
       try {

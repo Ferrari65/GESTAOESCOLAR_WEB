@@ -1,62 +1,35 @@
 import axios, { AxiosInstance, AxiosHeaders, AxiosError } from 'axios';
-import { AUTH_CONFIG, API_CONFIG, ERROR_MESSAGES, ENV } from '@/config/app'; 
+import { API_CONFIG, ERROR_MESSAGES, ENV } from '@/config/app'; 
 
-// ===== TOKEN FUNCTIONS (SINCRONIZADAS COM AUTHCONTEXT) =====
-export function getToken(): string | null {
-  if (ENV.isServer) return null;
-  
-  try {
-    // ✅ MESMO MÉTODO DO AUTHCONTEXT
-    const cookieMatch = document.cookie.match(new RegExp(`${AUTH_CONFIG.tokenCookieName}=([^;]+)`));
-    if (cookieMatch?.[1]) {
-      return cookieMatch[1];
-    }
-    
-    const localToken = localStorage.getItem(AUTH_CONFIG.tokenLocalStorageKey);
-    return localToken;
-  } catch {
-    return null;
+// ===== ✅ USANDO O CHAVEIRO ÚNICO =====
+import TokenManager from '@/utils/tokenManager';
+
+// ===== ✅ FUNÇÕES SIMPLIFICADAS (agora usam o gerenciador único) =====
+export const getToken = (): string | null => TokenManager.get();
+export const clearTokens = (): void => TokenManager.remove();
+export const isTokenValid = (token: string): boolean => TokenManager.isValid(token);
+export const isAuthenticated = (): boolean => {
+  const token = getToken();
+  return token !== null && isTokenValid(token);
+};
+
+// ===== FUNÇÕES DE AUTENTICAÇÃO =====
+export function logout(): void {
+  clearTokens();
+  if (!ENV.isServer) {
+    window.location.href = '/login';
   }
 }
 
-export function clearTokens(): void {
-  if (ENV.isServer) return;
-  
-  try {
-    // ✅ MESMO MÉTODO DO AUTHCONTEXT
-    document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax`;
-    localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
-    localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
-  } catch (error) {
-    console.error('Erro ao limpar tokens:', error);
+export function getAuthHeaders(): Record<string, string> {
+  const token = getToken();
+  if (token && isTokenValid(token)) {
+    return { Authorization: `Bearer ${token}` };
   }
+  return {};
 }
 
-export function isTokenValid(token: string): boolean {
-  try {
-    if (!token || token.trim() === '') return false;
-    
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const now = Math.floor(Date.now() / 1000);
-    const isExpired = payload.exp <= now;
-    const hasRole = Boolean(payload.role);
-    
-    return !isExpired && hasRole;
-  } catch {
-    return false;
-  }
-}
-
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp <= now;
-  } catch {
-    return true;
-  }
-}
-
+// ===== TRATAMENTO DE ERROS =====
 function getErrorMessage(error: AxiosError): string {
   if (error.response) {
     const { status, data } = error.response;
@@ -93,6 +66,7 @@ function getErrorMessage(error: AxiosError): string {
   return error.message || ERROR_MESSAGES.UNKNOWN;
 }
 
+// ===== ✅ API CLIENT COM GERENCIADOR ÚNICO =====
 export function getAPIClient(): AxiosInstance {
   const api = axios.create({
     baseURL: API_CONFIG.baseURL,
@@ -103,9 +77,9 @@ export function getAPIClient(): AxiosInstance {
   // ✅ REQUEST INTERCEPTOR SIMPLIFICADO
   api.interceptors.request.use(
     (config) => {
-      const currentToken = getToken();
+      const currentToken = getToken(); // ✅ Usando função unificada
 
-      if (currentToken && isTokenValid(currentToken)) {
+      if (currentToken && isTokenValid(currentToken)) { // ✅ Usando função unificada
         if (!config.headers) {
           config.headers = new AxiosHeaders();
         }
@@ -129,7 +103,7 @@ export function getAPIClient(): AxiosInstance {
         
         // ✅ EVITA LOOP: Só redireciona se NÃO estiver na página de login
         if (!currentPath.includes('/login')) {
-          clearTokens();
+          clearTokens(); // ✅ Usando função unificada
           window.location.href = '/login';
         }
       }
@@ -141,28 +115,10 @@ export function getAPIClient(): AxiosInstance {
   return api;
 }
 
+// ===== EXPORT DA INSTÂNCIA =====
 export const api = getAPIClient();
 
-export function isAuthenticated(): boolean {
-  const token = getToken();
-  return token !== null && isTokenValid(token);
-}
-
-export function logout(): void {
-  clearTokens();
-  if (!ENV.isServer) {
-    window.location.href = '/login';
-  }
-}
-
-export function getAuthHeaders(): Record<string, string> {
-  const token = getToken();
-  if (token && isTokenValid(token)) {
-    return { Authorization: `Bearer ${token}` };
-  }
-  return {};
-}
-
+// ===== TRATAMENTO DE ERROS DA API =====
 export function handleApiError(
   error: AxiosError | Error | unknown, 
   context?: string
@@ -177,6 +133,7 @@ export function handleApiError(
   return { message };
 }
 
+// ===== VERIFICAÇÃO DE SAÚDE DA API =====
 export function checkAPIHealth(): Promise<boolean> {
   return api.get('/health')
     .then(() => true)

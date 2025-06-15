@@ -1,13 +1,46 @@
 // ===== TIPOS ÚNICOS E CENTRALIZADOS =====
-// Use APENAS este arquivo para todos os tipos da aplicação
+// CORRIGIDO: Este arquivo agora apenas RE-EXPORTA dos schemas (sem duplicação)
 
-// ===== TIPOS BÁSICOS =====
-export type SituacaoType = 'ATIVO' | 'INATIVO';
-export type TurnoType = 'DIURNO' | 'NOTURNO';
-export type SexoType = 'M' | 'F';
+// ===== TIPOS BÁSICOS (vêm dos schemas) =====
+export type {
+  SituacaoType,
+  TurnoType, 
+  SexoType
+} from '@/schemas/shared';
+
+// ===== TIPOS DE FORMULÁRIOS (vêm dos schemas) =====
+export type {
+  // Auth
+  LoginFormData,
+  ResetPasswordFormData,
+  
+  // Professor
+  ProfessorCadastroData,
+  ProfessorEdicaoData,
+  ProfessorCreateDTO,
+  ProfessorUpdateDTO,
+  ProfessorResponse,
+  
+  // Curso
+  CursoFormData,
+  CursoDTO,
+  CursoEditarDTO,
+  CursoResponse,
+  
+  // Disciplina
+  DisciplinaFormData,
+  DisciplinaDTO,
+  DisciplinaResponse,
+  
+  // Turma
+  TurmaFormData,
+  TurmaDTO,
+  TurmaResponse,
+} from '@/schemas';
+
+// ===== TIPOS ÚNICOS DESTE ARQUIVO (que não existem nos schemas) =====
 export type UserRole = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR' | 'ROLE_ALUNO';
 
-// ===== USER E AUTENTICAÇÃO =====
 export interface User {
   id: string;
   email: string;
@@ -20,63 +53,13 @@ export interface AuthError {
   statusCode?: number;
 }
 
-// ===== SECRETARIA =====
 export interface SecretariaData {
   nome: string;
   email: string;
   id_secretaria: string;
 }
 
-// ===== PROFESSOR =====
-export interface ProfessorResponse {
-  id_professor: string;
-  nome: string;
-  email: string;
-  cpf: string;
-  telefone: string;
-  situacao: SituacaoType;
-  logradouro: string;
-  bairro: string;
-  numero: number;
-  cidade: string;
-  uf: string;
-  sexo: string;
-  data_nasc: string;
-}
-
-// ===== CURSO =====
-export interface CursoResponse {
-  idCurso: string;
-  nome: string;
-  duracao: number;
-  id_secretaria: string;
-  situacao: SituacaoType;
-  data_alteracao?: string;
-}
-
-// ===== DISCIPLINA =====
-export interface DisciplinaResponse {
-  idDisciplina: string;
-  nome: string;
-  ementa: string;
-  cargaHoraria: number;
-  idSecretaria: string;
-  situacao: SituacaoType;
-}
-
-// ===== TURMA =====
-export interface TurmaResponse {
-  idTurma: string;
-  nome: string;
-  ano: string;
-  turno: TurnoType;
-  idCurso: string;
-  idSecretaria: string;
-  situacao: SituacaoType;
-  dataCreacao?: string;
-}
-
-// ===== FORMULÁRIOS =====
+// ===== INTERFACES PARA COMPONENTES =====
 export interface BaseFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -88,7 +71,6 @@ export interface LoadingState {
   successMessage: string | null;
 }
 
-// ===== API =====
 export interface ApiResponse<T = any> {
   data: T;
   message?: string;
@@ -100,33 +82,6 @@ export interface ApiError {
   status?: number;
 }
 
-// ===== SCHEMAS (Re-export apenas os necessários) =====
-export type {
-  // Auth
-  LoginFormData,
-  ResetPasswordFormData,
-  
-  // Professor
-  ProfessorCadastroData,
-  ProfessorEdicaoData,
-  ProfessorCreateDTO,
-  ProfessorUpdateDTO,
-  
-  // Curso
-  CursoFormData,
-  CursoDTO,
-  CursoEditarDTO,
-  
-  // Disciplina
-  DisciplinaFormData,
-  DisciplinaDTO,
-  
-  // Turma
-  TurmaFormData,
-  TurmaDTO,
-} from '@/schemas';
-
-// ===== COMPONENTES UI =====
 export interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
@@ -146,7 +101,6 @@ export interface SuccessMessageProps {
   className?: string;
 }
 
-// ===== PAGINAÇÃO =====
 export interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -155,7 +109,6 @@ export interface PaginationProps {
   itemsPerPage: number;
 }
 
-// ===== HEADER =====
 export interface HeaderProps {
   title?: string;
   subtitle?: string;
@@ -165,7 +118,6 @@ export interface HeaderProps {
   showSignOutButton?: boolean;
 }
 
-// ===== SIDEBAR =====
 export interface MenuItem {
   id: string;
   label: string;

@@ -1,6 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { jwtDecode } from 'jwt-decode';
 import { AUTH_CONFIG, MIDDLEWARE_CONFIG } from '@/config/app';
+
+// ===== ✅ USANDO O CHAVEIRO ÚNICO =====
+import TokenManager from '@/utils/tokenManager';
 
 interface JWTPayload {
   role: string;
@@ -13,26 +15,31 @@ function shouldSkipMiddleware(pathname: string): boolean {
   return MIDDLEWARE_CONFIG.skipPaths.some(path => pathname.startsWith(path));
 }
 
+// ===== ✅ USANDO FUNÇÃO UNIFICADA PARA PEGAR TOKEN =====
 function getTokenFromRequest(request: NextRequest): string | null {
-  try {
-    const tokenFromCookie = request.cookies.get(AUTH_CONFIG.tokenCookieName)?.value;
-    return tokenFromCookie && tokenFromCookie.trim() !== '' ? tokenFromCookie : null;
-  } catch {
-    return null;
-  }
+  return TokenManager.getFromRequest(request);
 }
 
+// ===== ✅ USANDO FUNÇÃO UNIFICADA PARA VALIDAR TOKEN =====
 function isTokenValid(token: string): { valid: boolean; payload?: JWTPayload } {
   try {
-    if (!token || token.trim() === '') return { valid: false };
+    if (!TokenManager.isValid(token)) {
+      return { valid: false };
+    }
 
-    const payload = jwtDecode<JWTPayload>(token);
-    const now = Math.floor(Date.now() / 1000) - 30; // Buffer de 30 segundos
-    
-    if (payload.exp <= now) return { valid: false };
-    if (!payload.role || payload.role.trim() === '') return { valid: false };
-    
-    return { valid: true, payload };
+    const payload = TokenManager.decode(token);
+    if (!payload) {
+      return { valid: false };
+    }
+
+    return { 
+      valid: true, 
+      payload: {
+        role: payload.role,
+        exp: payload.exp,
+        sub: payload.sub
+      }
+    };
   } catch {
     return { valid: false };
   }
@@ -55,7 +62,7 @@ export default function middleware(request: NextRequest) {
   // ✅ DEIXAR O AUTHCONTEXT GERENCIAR TUDO
   // Middleware só protege rotas, não faz redirecionamento automático
   
-  const token = getTokenFromRequest(request);
+  const token = getTokenFromRequest(request); // ✅ Usando função unificada
   
   // ✅ SEM TOKEN: Só bloqueia rotas protegidas
   if (!token) {
@@ -67,7 +74,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ✅ COM TOKEN: Verificar validade
+  // ✅ COM TOKEN: Verificar validade usando função unificada
   const { valid: isTokenValidResult, payload } = isTokenValid(token);
   
   // ✅ TOKEN INVÁLIDO: Só bloqueia rotas protegidas

@@ -2,7 +2,16 @@
 
 import React from "react";
 import { LoadingSpinner } from "@/components/ui/loading/LoadingSpinner";
-import type { Disciplina } from "@/types/secretariaTypes/cadastroDisciplina/disciplina";
+import type { SituacaoType } from "@/schemas";
+
+interface Disciplina {
+  idDisciplina: string;
+  nome: string;
+  ementa: string;
+  cargaHoraria: number;
+  idSecretaria: string;
+  situacao: SituacaoType;
+}
 
 interface ListarDisciplinasProps {
   disciplinas: Disciplina[];
