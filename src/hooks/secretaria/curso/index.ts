@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
 import { transformCursoFormToDTO } from '@/utils/transformers';
+import { log } from '@/utils/logger'; // ✅ Sistema de logs limpo
 import {
   cursoFormSchema,
   type CursoFormData,
@@ -12,7 +13,7 @@ import {
   type SituacaoType,
 } from '@/schemas/index';
 
-// ===== CACHE LOCAL =====
+// ===== CACHE LOCAL SIMPLES =====
 const cursoCache = {
   data: [] as CursoResponse[],
   timestamp: 0,
@@ -176,9 +177,16 @@ export const useCursoForm = ({
             const novoCurso = mapCursoResponse(response.data);
             cursoCache.data = [novoCurso, ...cursoCache.data];
             cursoCache.timestamp = Date.now();
-            console.log('➕ [CURSO-FORM] Curso adicionado ao cache:', novoCurso.nome);
+            
+            // ✅ Log apenas em desenvolvimento
+            if (process.env.NODE_ENV === 'development') {
+              log.success('CURSO', `Curso "${novoCurso.nome}" cadastrado`);
+            }
           } catch (err) {
-            console.warn('⚠️ [CURSO-FORM] Erro ao mapear curso criado:', err);
+            // ✅ Log de erro apenas se necessário
+            if (process.env.NODE_ENV === 'development') {
+              log.warn('CURSO', 'Erro ao mapear curso criado', err);
+            }
           }
         }
         
@@ -225,7 +233,6 @@ export const useCursoList = (): UseCursoListReturn => {
 
   // ===== ATUALIZAÇÕES OTIMISTAS =====
   const updateCursoOptimistic = useCallback((cursoId: string, updates: Partial<CursoResponse>) => {
-    console.log('🔄 [CURSO-LIST] Atualizando curso:', cursoId, updates);
     setCursos(prev => {
       const novosCursos = prev.map(curso => 
         curso.idCurso === cursoId 
@@ -238,7 +245,6 @@ export const useCursoList = (): UseCursoListReturn => {
   }, []);
 
   const revertCursoOptimistic = useCallback((cursoId: string, originalData: CursoResponse) => {
-    console.log('↩️ [CURSO-LIST] Revertendo curso:', cursoId);
     setCursos(prev => {
       const novosCursos = prev.map(curso => 
         curso.idCurso === cursoId 
@@ -251,7 +257,6 @@ export const useCursoList = (): UseCursoListReturn => {
   }, []);
 
   const adicionarCurso = useCallback((curso: CursoResponse) => {
-    console.log('➕ [CURSO-LIST] Adicionando curso:', curso.nome);
     setCursos(prev => {
       const novosCursos = [curso, ...prev];
       cursoCache.data = novosCursos;
@@ -261,7 +266,6 @@ export const useCursoList = (): UseCursoListReturn => {
   }, []);
 
   const removerCurso = useCallback((cursoId: string) => {
-    console.log('🗑️ [CURSO-LIST] Removendo curso:', cursoId);
     setCursos(prev => {
       const novosCursos = prev.filter(curso => curso.idCurso !== cursoId);
       cursoCache.data = novosCursos;
@@ -277,14 +281,11 @@ export const useCursoList = (): UseCursoListReturn => {
     }
 
     if (!forceRefresh && isDataFresh()) {
-      console.log(' [CURSO-LIST] Usando dados do cache');
       setCursos(cursoCache.data);
       return;
     }
 
-
     if (cursoCache.isLoading) {
-      console.log(' [CURSO-LIST] Já está carregando...');
       return;
     }
 
@@ -293,7 +294,6 @@ export const useCursoList = (): UseCursoListReturn => {
     setError(null);
 
     try {
-      console.log(' [CURSO-LIST] Buscando cursos do servidor...');
       const api = getAPIClient();
       const response = await api.get(`/curso/${user.id}/secretaria`);
       
@@ -330,19 +330,16 @@ export const useCursoList = (): UseCursoListReturn => {
         }
       }
 
-      console.log(`✅ [CURSO-LIST] ${cursosValidos.length} cursos carregados`);
       setCursos(cursosValidos);
       cursoCache.data = cursosValidos;
       cursoCache.timestamp = Date.now();
       
     } catch (err: unknown) {
-      console.error('❌ [CURSO-LIST] Erro ao buscar cursos:', err);
       const errorMessage = handleCursoError(err, 'FetchCursos');
       setError(errorMessage);
       
       // Se deu erro mas tem cache, usa o cache
       if (cursoCache.data.length > 0) {
-        console.log('🔄 [CURSO-LIST] Usando cache por erro de rede');
         setCursos(cursoCache.data);
       } else {
         setCursos([]);
@@ -354,7 +351,6 @@ export const useCursoList = (): UseCursoListReturn => {
   }, [user?.id]);
 
   const refetch = useCallback(() => {
-    console.log('🔄 [CURSO-LIST] Recarregamento forçado');
     clearError();
     fetchCursos(true);
   }, [fetchCursos, clearError]);
@@ -409,12 +405,9 @@ export const useCursoActions = (): UseCursoActionsReturn => {
     setLoading(true);
     setError(null);
 
-    // Função de reversão para otimistic update
     let revertFunction: (() => void) | null = null;
 
     try {
-      console.log(`🔄 [CURSO-ACTION] Alterando curso ${cursoId} para ${situacao}`);
-      
       // Executa update otimista se fornecido
       if (onOptimisticUpdate) {
         onOptimisticUpdate((revert) => {
@@ -429,7 +422,6 @@ export const useCursoActions = (): UseCursoActionsReturn => {
       const api = getAPIClient();
       await api.put(`/curso/${cursoId}/situacao`, editarDTO);
       
-      console.log(`✅ [CURSO-ACTION] Curso ${cursoId} alterado para ${situacao}`);
       setSuccessMessage(`Curso ${situacao.toLowerCase()} com sucesso!`);
       
       // Limpar mensagem após 3 segundos
@@ -438,8 +430,6 @@ export const useCursoActions = (): UseCursoActionsReturn => {
       }, 3000);
       
     } catch (err: unknown) {
-      console.error('❌ [CURSO-ACTION] Erro ao alterar situação:', err);
-      
       // Reverter otimistic update se deu erro
       if (revertFunction) {
         revertFunction();

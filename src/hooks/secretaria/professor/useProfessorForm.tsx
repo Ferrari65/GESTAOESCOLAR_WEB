@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
+import { log } from '@/utils/logger';
 import { 
   professorCadastroSchema,
   professorEdicaoSchema,
@@ -90,10 +91,8 @@ export const useProfessorForm = ({
 
   const getDefaultValues = (): Partial<ProfessorFormData> => {
     if (modoEdicao) {
-
       return prepareEmptyFormForEdit();
     } else {
-
       return {
         nome: '',
         cpf: '',
@@ -123,14 +122,12 @@ export const useProfessorForm = ({
   }, []);
 
   const enviarFormulario = useCallback(async () => {
-    console.log(` [${modoEdicao ? 'EDIÇÃO' : 'CADASTRO'}] Iniciando envio...`);
-    
     if (!user?.id) {
       setErro('Sessão expirada. Faça login novamente.');
       return;
     }
 
-
+    // Validar formulário
     const isValid = await form.trigger();
     if (!isValid) {
       setErro('Por favor, corrija os erros no formulário.');
@@ -138,9 +135,8 @@ export const useProfessorForm = ({
     }
 
     const data = form.getValues();
-    console.log(`[${modoEdicao ? 'EDIÇÃO' : 'CADASTRO'}] Dados do formulário:`, data);
 
-
+    // Para edição, verificar se há mudanças
     if (modoEdicao) {
       if (!hasChangesToUpdate(data as ProfessorEdicaoData)) {
         setMensagemSucesso('Nenhum campo foi preenchido. Dados mantidos inalterados.');
@@ -149,7 +145,11 @@ export const useProfessorForm = ({
       }
       
       const totalCampos = countFieldsToUpdate(data as ProfessorEdicaoData);
-      console.log(` [EDIÇÃO] ${totalCampos} campo(s) serão atualizados`);
+      
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.info('PROFESSOR', `${totalCampos} campo(s) serão atualizados`);
+      }
     }
 
     setCarregando(true);
@@ -159,7 +159,7 @@ export const useProfessorForm = ({
       const api = getAPIClient();
       
       if (modoEdicao && professorId) {
-
+        // =====  EDIÇÃO =====
         const updateDTO = transformProfessorEdicaoToDTO(data as ProfessorEdicaoData);
 
         if (Object.keys(updateDTO).length === 0) {
@@ -168,13 +168,15 @@ export const useProfessorForm = ({
           return;
         }
         
-        console.log(` [EDIÇÃO] Atualizando professor ${professorId}`);
-        console.log(`[EDIÇÃO] DTO para backend:`, updateDTO);
-        
         await api.put(`/professor/${professorId}`, updateDTO);
         
         const totalCamposAtualizados = Object.keys(updateDTO).length;
         setMensagemSucesso(`Professor atualizado com sucesso! ${totalCamposAtualizados} campo(s) alterado(s).`);
+
+        // ✅ Log apenas em desenvolvimento
+        if (process.env.NODE_ENV === 'development') {
+          log.success('PROFESSOR', `Professor ${professorId} atualizado com ${totalCamposAtualizados} campos`);
+        }
 
       } else {
         // =====  CADASTRO =====
@@ -183,12 +185,15 @@ export const useProfessorForm = ({
           user.id
         );
         
-        console.log(`[CADASTRO] Criando professor`);
-        console.log(`[CADASTRO] DTO para backend:`, createDTO);
-        
         await api.post(`/professor/${user.id}`, createDTO);
         setMensagemSucesso('Professor cadastrado com sucesso!');
 
+        // ✅ Log apenas em desenvolvimento
+        if (process.env.NODE_ENV === 'development') {
+          log.success('PROFESSOR', 'Professor cadastrado com sucesso');
+        }
+
+        // Limpar formulário após cadastro
         form.reset({
           nome: '',
           cpf: '',
@@ -208,34 +213,20 @@ export const useProfessorForm = ({
       onSucesso?.();
       
     } catch (err: unknown) {
-      console.error(` [${modoEdicao ? 'EDIÇÃO' : 'CADASTRO'}] Erro:`, err);
-      
       const errorMessage = handleProfessorError(
         err, 
         modoEdicao ? 'EditProfessor' : 'CreateProfessor'
       );
       setErro(errorMessage);
+      
+      // ✅ Log de erro apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('PROFESSOR', `Erro no ${modoEdicao ? 'edição' : 'cadastro'}`, err);
+      }
     } finally {
       setCarregando(false);
     }
   }, [user?.id, form, onSucesso, modoEdicao, professorId]);
-
-  const resetFormForNewEdit = useCallback(() => {
-    if (modoEdicao) {
-      form.reset(prepareEmptyFormForEdit());
-      limparMensagens();
-    }
-  }, [modoEdicao, form, limparMensagens]);
-
-  const getCurrentFormStats = useCallback(() => {
-    if (!modoEdicao) return null;
-    
-    const data = form.getValues() as ProfessorEdicaoData;
-    return {
-      hasChanges: hasChangesToUpdate(data),
-      fieldsCount: countFieldsToUpdate(data)
-    };
-  }, [modoEdicao, form]);
 
   return {
     form,
@@ -245,11 +236,5 @@ export const useProfessorForm = ({
     mensagemSucesso,
     limparMensagens,
     modoEdicao,
-
-    resetFormForNewEdit,
-    getCurrentFormStats
-  } as UseProfessorFormReturn & {
-    resetFormForNewEdit: () => void;
-    getCurrentFormStats: () => { hasChanges: boolean; fieldsCount: number } | null;
   };
 };

@@ -4,6 +4,7 @@ import { useDisciplinaAPI } from "./useDisciplinaAPI";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formDataToDisciplinaDTO } from "@/utils/transformers";
+import { log } from '@/utils/logger';
 import {
   DisciplinaFormData,
   disciplinaFormSchema
@@ -40,11 +41,9 @@ export const useDisciplinaForm = ({
 
   const onSubmit = useCallback(
     async (data: DisciplinaFormData) => {
-      
       clearMessages();
 
       if (!user?.id) {
-        
         form.setError("nome", { message: "Faça login novamente." });
         return;
       }
@@ -53,10 +52,16 @@ export const useDisciplinaForm = ({
         const disciplinaDTO = formDataToDisciplinaDTO(data, user.id);
         await createDisciplina(disciplinaDTO);
 
-
+        // Limpar formulário após sucesso
         form.reset();
         setSuccessMessage("Disciplina cadastrada com sucesso!");
 
+        // ✅ Log apenas em desenvolvimento
+        if (process.env.NODE_ENV === 'development') {
+          log.success('DISCIPLINA', `Disciplina "${data.nome}" cadastrada`);
+        }
+
+        // Callbacks
         if (onRefetch) {
           onRefetch();
         }
@@ -65,7 +70,10 @@ export const useDisciplinaForm = ({
           onSuccess();
         }
       } catch (err: any) {
-          console.log(" createDisciplina lançou erro:", err);
+        // ✅ Log de erro apenas em desenvolvimento
+        if (process.env.NODE_ENV === 'development') {
+          log.error('DISCIPLINA', 'Erro ao cadastrar disciplina', err);
+        }
         return;
       }
     },
@@ -76,7 +84,7 @@ export const useDisciplinaForm = ({
     form,
     onSubmit,
     loading,
-    error: apiError,       // usa a mensagem de erro que veio do useDisciplinaAPI
+    error: apiError,
     successMessage,
     clearMessages
   };

@@ -1,8 +1,7 @@
-// src/hooks/secretaria/professor/useProfessorActions.tsx
-
 import { useState, useCallback, useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
+import { log } from '@/utils/logger';
 import type { ProfessorResponse, SituacaoType } from '@/schemas/professor';
 
 // ===== INTERFACES =====
@@ -46,20 +45,14 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
     setErro(null);
 
     try {
-      console.log('🔍 [BUSCA] Buscando professor ID:', professorId);
-      console.log('🔍 [BUSCA] Secretaria ID:', user.id);
-      
       const api = getAPIClient();
       
-      // ✅ ESTRATÉGIA: Como o endpoint direto dá 403, vamos buscar na lista da secretaria
-      console.log('🔍 [BUSCA] Buscando na lista da secretaria...');
-      
+      // Buscar na lista da secretaria (estratégia que funciona)
       const response = await api.get(`/professor/secretaria/${user.id}`);
-      console.log('✅ [BUSCA] Lista da secretaria obtida:', response.data);
       
       let professoresList = response.data;
       
-      // ✅ Garantir que é um array
+      // Garantir que é um array
       if (!Array.isArray(professoresList)) {
         if (professoresList.professores) {
           professoresList = professoresList.professores;
@@ -72,23 +65,17 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
         }
       }
       
-      console.log(`🔍 [BUSCA] Procurando professor ${professorId} em ${professoresList.length} registros...`);
-      
-      // ✅ Buscar o professor específico na lista
+      // Buscar o professor específico na lista
       const professorEncontrado = professoresList.find((prof: any) => {
         const id = prof.id_professor || prof.idProfessor || prof.id || prof.CPF;
-        console.log(`🔍 [BUSCA] Comparando: ${id} === ${professorId}`);
         return id === professorId;
       });
       
       if (!professorEncontrado) {
-        console.error('❌ [BUSCA] Professor não encontrado na lista da secretaria');
         throw new Error(`Professor com ID ${professorId} não encontrado na sua secretaria`);
       }
-      
-      console.log('✅ [BUSCA] Professor encontrado:', professorEncontrado);
 
-      // ✅ Mapear os dados para o formato esperado
+      // Mapear os dados para o formato esperado
       const professorMapeado: ProfessorResponse = {
         id_professor: professorEncontrado.id_professor || professorEncontrado.idProfessor || professorEncontrado.id || professorId,
         nome: professorEncontrado.nome || '',
@@ -105,28 +92,22 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
         situacao: professorEncontrado.situacao || 'ATIVO'
       };
 
-      // ✅ Validação final
+      // Validação final
       if (!professorMapeado.nome || !professorMapeado.email) {
-        console.error('❌ [BUSCA] Dados essenciais faltando:', {
-          nome: professorMapeado.nome,
-          email: professorMapeado.email
-        });
         throw new Error('Dados essenciais do professor estão faltando');
       }
-
-      console.log('✅ [BUSCA] Professor mapeado com sucesso:', {
-        id: professorMapeado.id_professor,
-        nome: professorMapeado.nome,
-        email: professorMapeado.email
-      });
 
       return professorMapeado;
       
     } catch (err: unknown) {
-      console.error('❌ [BUSCA] Erro detalhado:', err);
-      
       const { message } = handleApiError(err, 'BuscarProfessor');
       setErro(message);
+      
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('PROFESSOR', 'Erro ao buscar professor por ID', err);
+      }
+      
       return null;
     } finally {
       setCarregando(false);
@@ -150,23 +131,27 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
     setErro(null);
 
     try {
-      console.log(`🔄 [SITUACAO] Alterando situação de ${professorId} para ${novaSituacao}`);
-      
       const api = getAPIClient();
       
-      // ✅ Usar o endpoint que você mostrou: PUT /professor/{id_professor}
       await api.put(`/professor/${professorId}`, { 
         situacao: novaSituacao 
       });
       
-      console.log(`✅ [SITUACAO] Professor ${professorId} agora está ${novaSituacao}`);
       setMensagemSucesso(`Professor ${novaSituacao.toLowerCase()} com sucesso!`);
       
-    } catch (err: unknown) {
-      console.error('❌ [SITUACAO] Erro ao alterar situação:', err);
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.success('PROFESSOR', `Professor ${professorId} agora está ${novaSituacao}`);
+      }
       
+    } catch (err: unknown) {
       const { message } = handleApiError(err, 'AlterarSituacao');
       setErro(message);
+
+      // ✅ Log de erro apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('PROFESSOR', 'Erro ao alterar situação', err);
+      }
 
       throw err;
     } finally {
@@ -187,23 +172,27 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
     setErro(null);
 
     try {
-      console.log(`🗑️ [INATIVAR] Inativando professor ${professorId}`);
-      
       const api = getAPIClient();
       
-      // ✅ Usar o endpoint PUT para inativar
       await api.put(`/professor/${professorId}`, { 
         situacao: 'INATIVO' 
       });
       
-      console.log(`✅ [INATIVAR] Professor ${professorId} inativado`);
       setMensagemSucesso('Professor inativado com sucesso!');
       
-    } catch (err: unknown) {
-      console.error('❌ [INATIVAR] Erro ao inativar professor:', err);
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.success('PROFESSOR', `Professor ${professorId} inativado`);
+      }
       
+    } catch (err: unknown) {
       const { message } = handleApiError(err, 'InativarProfessor');
       setErro(message);
+      
+      // ✅ Log de erro apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('PROFESSOR', 'Erro ao inativar professor', err);
+      }
       
       throw err;
     } finally {

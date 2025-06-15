@@ -4,6 +4,7 @@ import { createContext, useState, ReactNode, useEffect, useCallback, useMemo } f
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import axios, { AxiosError, AxiosResponse } from 'axios';
+import { log } from '@/utils/logger';
 
 // ===== INTERFACES =====
 interface LoginResponse {
@@ -116,7 +117,10 @@ const TokenManager = {
         localStorage.setItem(AUTH_CONFIG.secretariaIdKey, secretariaId);
       }
     } catch (error) {
-      console.error('Erro ao salvar token:', getErrorMessage(error));
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('AUTH', 'Erro ao salvar token', error);
+      }
     }
   },
 
@@ -136,7 +140,10 @@ const TokenManager = {
       
       return null;
     } catch (error) {
-      console.error('Erro ao obter token:', getErrorMessage(error));
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('AUTH', 'Erro ao obter token', error);
+      }
       return null;
     }
   },
@@ -149,7 +156,10 @@ const TokenManager = {
       localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
       localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
     } catch (error) {
-      console.error('Erro ao remover token:', getErrorMessage(error));
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('AUTH', 'Erro ao remover token', error);
+      }
     }
   },
 
@@ -248,7 +258,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return userData;
     } catch (error) {
-      console.error('Erro ao processar token:', error);
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('AUTH', 'Erro ao processar token', error);
+      }
       return null;
     }
   }, []);
@@ -282,7 +295,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Erro na verificação de autenticação:', error);
+      // ✅ Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        log.error('AUTH', 'Erro na verificação de autenticação', error);
+      }
       TokenManager.remove();
       setUser(null);
     }
@@ -345,7 +361,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 2000);
       
     } catch (error: unknown) {
-      console.error('Erro no login:', error);
       if (isAxiosError(error)) {
         setError(handleAxiosError(error as AxiosError<ApiErrorResponse>));
       } else if (error && typeof error === 'object' && 'type' in error) {
@@ -379,7 +394,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         await Promise.race([refreshAuth(), timeoutPromise]);
       } catch (error) {
-        console.warn('Timeout na inicialização da autenticação:', error);
+        // ✅ Log apenas em desenvolvimento
+        if (process.env.NODE_ENV === 'development') {
+          log.warn('AUTH', 'Timeout na inicialização da autenticação', error);
+        }
         TokenManager.remove();
         setUser(null);
       } finally {

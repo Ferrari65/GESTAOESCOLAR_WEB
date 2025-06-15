@@ -1,88 +1,9 @@
-export interface User {
-  id: string;
-  email: string;
-  role: string;
-}
+// ===== ARQUIVO PRINCIPAL DE TIPOS CORRIGIDO =====
 
-export interface SecretariaData {
-  nome: string;
-  email: string;
-  id_secretaria: string;
-}
+// ===== IMPORTAR TODOS OS TIPOS COMPARTILHADOS =====
+export * from './shared';
 
-// ===== UI =====
-export interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  error?: string;
-  icon?: React.ReactNode;
-  helperText?: string;
-}
-
-export interface ErrorMessageProps {
-  message: string;
-  onRetry?: () => void;
-  className?: string;
-}
-
-export interface SuccessMessageProps {
-  message: string;
-  onClose?: () => void;
-  className?: string;
-}
-
-export interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
-}
-
-// ===== COMPONENTES =====
-export interface HeaderProps {
-  title?: string;
-  subtitle?: string;
-  secretariaData?: SecretariaData | null;
-  user: User;
-  onSignOut: () => void;
-  showSignOutButton?: boolean;
-}
-
-export interface MenuItem {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  path: string;
-}
-
-export interface SidebarProps {
-  className?: string;
-  onMenuItemClick?: (itemId: string) => void;
-}
-
-// ===== API & HOOKS =====
-export interface ApiError {
-  message: string;
-  status?: number;
-}
-
-export interface ApiResponse<T = Record<string, unknown>> {
-  data: T;
-  message?: string;
-  success?: boolean;
-}
-
-export interface UseSecretariaDataReturn {
-  secretariaData: SecretariaData | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-}
-
-// ===== AUXILIARES =====
-export type Role = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR';
-export type Status = 'ATIVO' | 'INATIVO';
-export type Sexo = 'M' | 'F';
-
-// ===== IMPORTAÇÃO DOS SCHEMAS =====
-
+// ===== IMPORTAR TIPOS DOS SCHEMAS =====
 export type { 
   // Auth
   LoginFormData,
@@ -98,6 +19,7 @@ export type {
   // Curso
   CursoFormData,
   CursoDTO,
+  CursoEditarDTO,
   CursoResponse,
   
   // Disciplina
@@ -109,9 +31,107 @@ export type {
   TurmaFormData,
   TurmaDTO,
   TurmaResponse,
-  
-  // Enums
+} from '@/schemas';
+
+// ===== ALIASES PARA COMPATIBILIDADE =====
+// (Para não quebrar código existente)
+export type { SituacaoType as Status } from './shared';
+export type { UserRole as Role } from './shared';
+export type { SexoType as Sexo } from './shared';
+
+// ===== TIPOS ESPECÍFICOS DE DOMÍNIO =====
+
+// Professor específicos
+export interface ProfessorListItem {
+  id_professor: string;
+  nome: string;
+  email: string;
+  situacao: SituacaoType;
+}
+
+export interface ProfessorFilters extends BaseFilters {
+  nome?: string;
+  email?: string;
+  situacao?: SituacaoType;
+}
+
+// Curso específicos
+export interface CursoListItem {
+  idCurso: string;
+  nome: string;
+  duracao: number;
+  situacao: SituacaoType;
+}
+
+export interface CursoFilters extends BaseFilters {
+  nome?: string;
+  duracao?: number;
+}
+
+// Disciplina específicos
+export interface DisciplinaListItem {
+  idDisciplina: string;
+  nome: string;
+  cargaHoraria: number;
+  situacao: SituacaoType;
+}
+
+export interface DisciplinaFilters extends BaseFilters {
+  nome?: string;
+  cargaHoraria?: number;
+}
+
+// Turma específicos
+export interface TurmaListItem {
+  idTurma: string;
+  nome: string;
+  ano: string;
+  turno: TurnoType;
+  situacao: SituacaoType;
+}
+
+export interface TurmaFilters extends BaseFilters {
+  nome?: string;
+  ano?: string;
+  turno?: TurnoType;
+}
+
+// ===== HOOKS ESPECIALIZADOS =====
+export interface UseProfessorListReturn extends FetchResponse<ProfessorResponse[]> {
+  atualizarProfessor: (id: string, dados: Partial<ProfessorResponse>) => void;
+}
+
+export interface UseCursoListReturn extends FetchResponse<CursoResponse[]> {
+  updateCursoOptimistic: (id: string, updates: Partial<CursoResponse>) => void;
+  revertCursoOptimistic: (id: string, original: CursoResponse) => void;
+}
+
+// ===== RE-EXPORTAR TUDO IMPORTANTE =====
+import type {
+  SituacaoType,
+  TurnoType, 
+  SexoType,
+  User,
+  UserRole,
+  SecretariaData,
+  ApiResponse,
+  ApiError,
+  BaseFormProps,
+  LoadingState,
+  BaseHookReturn
+} from './shared';
+
+// Garantir que estes tipos estão disponíveis
+export type {
   SituacaoType,
   TurnoType,
-  SexoType
-} from '@/schemas';
+  SexoType,
+  User,
+  UserRole,
+  SecretariaData,
+  ApiResponse,
+  ApiError,
+  BaseFormProps,
+  LoadingState,
+  BaseHookReturn
+};
