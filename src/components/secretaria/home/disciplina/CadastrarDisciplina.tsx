@@ -8,8 +8,27 @@ import { DisciplinaDataSection } from "./DisciplinaDataSection";
 
 import { getAPIClient } from "@/services/api";
 import { AuthContext } from "@/contexts/AuthContext";
-import type { Disciplina } from "@/types/secretariaTypes/cadastroDisciplina/disciplina";
-import type { DisciplinaFormProps } from "@/types/secretariaTypes/cadastroDisciplina/disciplina";
+
+// ===== IMPORTS CORRIGIDOS =====
+// ANTES: import type { Disciplina } from "@/types/secretariaTypes/cadastroDisciplina/disciplina";
+// DEPOIS: Definir localmente ou importar dos schemas
+import type { SituacaoType } from "@/types";
+
+// ===== TIPOS LOCAIS (definidos aqui mesmo) =====
+interface Disciplina {
+  idDisciplina: string;
+  nome: string;
+  ementa: string;
+  cargaHoraria: number;
+  idSecretaria: string;
+  situacao: SituacaoType;
+}
+
+interface DisciplinaFormProps {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
 import ListarDisciplinas from "./ListarDisciplina";
 
 export default function CadastroDisciplina({ onSuccess, onCancel }: DisciplinaFormProps) {

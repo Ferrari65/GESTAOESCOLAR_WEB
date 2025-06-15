@@ -1,16 +1,14 @@
 'use client';
 
 import { createContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { log } from '@/utils/logger';
-// ===== IMPORTAR CONFIGURAÇÃO CENTRALIZADA =====
 import { AUTH_CONFIG, API_CONFIG, getDashboardRoute } from '@/config/app';
-// ===== IMPORTAR TIPOS CENTRALIZADOS =====
 import type { User, AuthError } from '@/types';
 
-// ===== INTERFACES ESPECÍFICAS DO CONTEXTO =====
+// ===== INTERFACES =====
 interface LoginResponse {
   id: string;
   token: string;
@@ -40,40 +38,6 @@ interface JWTPayload {
   role: string;
   exp: number;
   iat?: number;
-}
-
-interface ApiErrorResponse {
-  message?: string;
-  error?: string;
-}
-
-// ===== ENDPOINTS DE LOGIN =====
-const LOGIN_ENDPOINTS = [
-  '/secretaria/auth/login',
-  '/professor/auth/login'
-] as const;
-
-// ===== AXIOS INSTANCE =====
-const api = axios.create({
-  baseURL: API_CONFIG.baseURL,
-  timeout: API_CONFIG.timeout,
-  headers: API_CONFIG.headers
-});
-
-function isAxiosError(error: unknown): error is AxiosError {
-  return error !== null && 
-         typeof error === 'object' && 
-         'isAxiosError' in error;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  if (typeof error === 'string') {
-    return error;
-  }
-  return 'Erro desconhecido';
 }
 
 // ===== TOKEN MANAGER =====
@@ -106,11 +70,7 @@ const TokenManager = {
       }
       
       const localToken = localStorage.getItem(AUTH_CONFIG.tokenLocalStorageKey);
-      if (localToken) {
-        return localToken;
-      }
-      
-      return null;
+      return localToken;
     } catch (error) {
       log.error('AUTH', 'Erro ao obter token', error);
       return null;
@@ -129,15 +89,6 @@ const TokenManager = {
     }
   },
 
-  getSecretariaId: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    try {
-      return localStorage.getItem(AUTH_CONFIG.secretariaIdKey);
-    } catch {
-      return null;
-    }
-  },
-
   isValid: (token: string): boolean => {
     try {
       const payload = jwtDecode<JWTPayload>(token);
@@ -151,18 +102,26 @@ const TokenManager = {
   }
 };
 
+// ===== ENDPOINTS DE LOGIN =====
+const LOGIN_ENDPOINTS = ['/secretaria/auth/login', '/professor/auth/login'] as const;
+
+// ===== AXIOS INSTANCE =====
+const api = axios.create({
+  baseURL: API_CONFIG.baseURL,
+  timeout: API_CONFIG.timeout,
+  headers: API_CONFIG.headers
+});
+
 const createError = (type: AuthError['type'], message: string, statusCode?: number): AuthError => ({
   type, message, statusCode
 });
 
-const handleAxiosError = (error: AxiosError<ApiErrorResponse>): AuthError => {
+const handleAxiosError = (error: AxiosError): AuthError => {
   if (error.response) {
     const status = error.response.status;
-    const serverMessage = error.response.data?.message;
+    const serverMessage = (error.response.data as any)?.message;
     
     switch (status) {
-      case 400:
-        return createError('validation', serverMessage || 'Dados inválidos fornecidos.', status);
       case 401:
         return createError('unauthorized', 'Email ou senha incorretos.', status);
       case 403:
@@ -188,6 +147,7 @@ export const AuthContext = createContext<AuthContextData>({} as AuthContextData)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
@@ -206,24 +166,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       let userId = '';
       if (payload.role === 'ROLE_SECRETARIA') {
-        userId = TokenManager.getSecretariaId() || payload.sub || '';
+        userId = localStorage.getItem(AUTH_CONFIG.secretariaIdKey) || payload.sub || '';
       } else {
         userId = payload.sub || '';
       }
 
-      const userData = {
+      return {
         email: payload.email || payload.sub || '',
         role: payload.role,
         id: userId
       };
-
-      return userData;
     } catch (error) {
       log.error('AUTH', 'Erro ao processar token', error);
       return null;
     }
   }, []);
 
+  // ✅ REFRESH SEM REDIRECIONAMENTO AUTOMÁTICO
   const refreshAuth = useCallback(async (): Promise<void> => {
     try {
       const token = TokenManager.get();
@@ -236,7 +195,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!TokenManager.isValid(token)) {
         TokenManager.remove();
         setUser(null);
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        
+        // ✅ SÓ REDIRECIONA SE ESTIVER EM ROTA PROTEGIDA
+        if (pathname?.startsWith('/secretaria') || pathname?.startsWith('/professor') || pathname?.startsWith('/aluno')) {
           router.push('/login');
         }
         return;
@@ -245,23 +206,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = processToken(token);
       if (userData) {
         setUser(userData);
+        
+        // ✅ SÓ REDIRECIONA DA PÁGINA DE LOGIN SE JÁ ESTIVER AUTENTICADO
+        if (pathname === '/login') {
+          const dashboardRoute = getDashboardRoute(userData.role);
+          router.push(dashboardRoute);
+        }
       } else {
         TokenManager.remove();
         setUser(null);
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          router.push('/login');
-        }
       }
     } catch (error) {
       log.error('AUTH', 'Erro na verificação de autenticação', error);
       TokenManager.remove();
       setUser(null);
     }
-  }, [processToken, router]);
+  }, [processToken, router, pathname]);
 
   const attemptLogin = useCallback(async (credentials: LoginCredentials): Promise<AxiosResponse<LoginResponse>> => {
-    const errors: AxiosError[] = [];
-    
     for (const endpoint of LOGIN_ENDPOINTS) {
       try {
         const response = await api.post<LoginResponse>(endpoint, {
@@ -271,10 +233,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         return response;
       } catch (error: unknown) {
-        if (isAxiosError(error)) {
-          const axiosError = error as AxiosError<ApiErrorResponse>;
-          errors.push(axiosError);
-          
+        if (axios.isAxiosError(error)) {
+          const axiosError = error as AxiosError;
           if (axiosError.response?.status === 401 || axiosError.response?.status === 400) {
             throw handleAxiosError(axiosError);
           }
@@ -316,12 +276,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 2000);
       
     } catch (error: unknown) {
-      if (isAxiosError(error)) {
-        setError(handleAxiosError(error as AxiosError<ApiErrorResponse>));
+      if (axios.isAxiosError(error)) {
+        setError(handleAxiosError(error));
       } else if (error && typeof error === 'object' && 'type' in error) {
         setError(error as AuthError);
       } else {
-        setError(createError('unknown', getErrorMessage(error)));
+        setError(createError('unknown', String(error)));
       }
       
       TokenManager.remove();
@@ -339,17 +299,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   }, [router]);
 
-  // ===== INICIALIZAÇÃO =====
+  // ✅ INICIALIZAÇÃO SEM REDIRECIONAMENTO FORÇADO
   useEffect(() => {
     const initializeAuth = async (): Promise<void> => {
       try {
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout de inicialização')), 5000)
-        );
-        
-        await Promise.race([refreshAuth(), timeoutPromise]);
+        await refreshAuth();
       } catch (error) {
-        log.warn('AUTH', 'Timeout na inicialização da autenticação', error);
+        log.warn('AUTH', 'Erro na inicialização da autenticação', error);
         TokenManager.remove();
         setUser(null);
       } finally {

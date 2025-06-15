@@ -1,11 +1,12 @@
 // ===== TRATADOR DE ERROS CENTRALIZADO =====
-// Substitui todos os tratamentos de erro espalhados
+// Versão final corrigida - apenas troque esta linha 4:
 
 import { AxiosError } from 'axios';
 import { log } from './logger';
-import type { ApiError } from '@/types/shared';
+// ===== LINHA CORRIGIDA (era '@/types/shared', agora é '@/types') =====
+import type { ApiError } from '@/types';
 
-// ===== TIPOS DE ERRO =====
+// ===== RESTO DO ARQUIVO FICA IGUAL =====
 export type ErrorContext = 
   | 'Auth' | 'CreateProfessor' | 'EditProfessor' | 'FetchProfessores'
   | 'CreateCurso' | 'EditCurso' | 'FetchCursos' 
@@ -115,7 +116,6 @@ function getErrorType(status?: number): ErrorResult['type'] {
 function extractServerMessage(error: AxiosError): string | null {
   const data = error.response?.data as any;
   
-  // Tentar diferentes formatos de resposta do servidor
   return data?.message || 
          data?.error || 
          data?.msg || 
@@ -128,18 +128,15 @@ function getContextualMessage(
   status: number, 
   serverMessage?: string
 ): string {
-  // Mensagem específica do contexto
   const contextMessages = CONTEXT_SPECIFIC_MESSAGES[context];
   if (contextMessages?.[status]) {
     return contextMessages[status];
   }
   
-  // Mensagem do servidor se for útil
   if (serverMessage && serverMessage.length > 0 && serverMessage.length < 200) {
     return serverMessage;
   }
   
-  // Mensagem genérica por status
   return STATUS_MESSAGES[status] || 'Erro desconhecido.';
 }
 
@@ -148,7 +145,6 @@ export function handleError(
   error: unknown, 
   context: ErrorContext = 'Unknown'
 ): ErrorResult {
-  // Log do erro original
   log.error(context, 'Erro capturado', error);
 
   if (isAxiosError(error)) {
@@ -156,7 +152,6 @@ export function handleError(
     const serverMessage = extractServerMessage(error);
     
     if (error.response) {
-      // Erro de resposta do servidor
       const message = getContextualMessage(context, status!, serverMessage);
       
       return {
@@ -168,7 +163,6 @@ export function handleError(
     }
     
     if (error.request) {
-      // Erro de rede
       return {
         message: 'Erro de conexão. Verifique sua internet.',
         type: 'network',
@@ -177,7 +171,6 @@ export function handleError(
     }
   }
   
-  // Erro do JavaScript normal
   if (error instanceof Error) {
     return {
       message: error.message || 'Erro inesperado.',
@@ -186,7 +179,6 @@ export function handleError(
     };
   }
   
-  // Erro desconhecido
   return {
     message: 'Erro desconhecido. Tente novamente.',
     type: 'unknown',
@@ -195,8 +187,6 @@ export function handleError(
 }
 
 // ===== FUNÇÕES DE CONVENIÊNCIA =====
-
-// Para contextos específicos
 export const errorHandlers = {
   auth: (error: unknown) => handleError(error, 'Auth'),
   
@@ -264,7 +254,6 @@ export function useErrorHandler() {
   };
 }
 
-// ===== COMPONENTE DE ERRO =====
 export interface ErrorDisplayProps {
   error: ErrorResult;
   onRetry?: () => void;

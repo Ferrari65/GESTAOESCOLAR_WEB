@@ -1,42 +1,49 @@
 import axios, { AxiosInstance, AxiosHeaders, AxiosError } from 'axios';
-// ===== IMPORTAR CONFIGURAÇÃO CENTRALIZADA =====
-import { 
-  API_CONFIG, 
-  AUTH_CONFIG, 
-  ERROR_MESSAGES, 
-  ENV 
-} from '@/config/app'; 
+import { AUTH_CONFIG, API_CONFIG, ERROR_MESSAGES, ENV } from '@/config/app'; 
 
-// ===== TOKEN MANAGEMENT =====
-function getToken(): string | null {
+// ===== TOKEN FUNCTIONS (SINCRONIZADAS COM AUTHCONTEXT) =====
+export function getToken(): string | null {
   if (ENV.isServer) return null;
   
   try {
+    // ✅ MESMO MÉTODO DO AUTHCONTEXT
     const cookieMatch = document.cookie.match(new RegExp(`${AUTH_CONFIG.tokenCookieName}=([^;]+)`));
     if (cookieMatch?.[1]) {
       return cookieMatch[1];
     }
     
     const localToken = localStorage.getItem(AUTH_CONFIG.tokenLocalStorageKey);
-    if (localToken) {
-      return localToken;
-    }
-
-    return null;
+    return localToken;
   } catch {
     return null;
   }
 }
 
-function clearTokens(): void {
+export function clearTokens(): void {
   if (ENV.isServer) return;
   
   try {
-    document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=/; max-age=0`;
+    // ✅ MESMO MÉTODO DO AUTHCONTEXT
+    document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax`;
     localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
     localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
   } catch (error) {
     console.error('Erro ao limpar tokens:', error);
+  }
+}
+
+export function isTokenValid(token: string): boolean {
+  try {
+    if (!token || token.trim() === '') return false;
+    
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const now = Math.floor(Date.now() / 1000);
+    const isExpired = payload.exp <= now;
+    const hasRole = Boolean(payload.role);
+    
+    return !isExpired && hasRole;
+  } catch {
+    return false;
   }
 }
 
@@ -93,44 +100,38 @@ export function getAPIClient(): AxiosInstance {
     headers: API_CONFIG.headers,
   });
 
-  // Request interceptor
+  // ✅ REQUEST INTERCEPTOR SIMPLIFICADO
   api.interceptors.request.use(
     (config) => {
       const currentToken = getToken();
 
-      if (currentToken && !isTokenExpired(currentToken)) {
+      if (currentToken && isTokenValid(currentToken)) {
         if (!config.headers) {
           config.headers = new AxiosHeaders();
         }
         config.headers.set('Authorization', `Bearer ${currentToken}`);
-      } else if (currentToken && isTokenExpired(currentToken)) {
-        clearTokens();
       }
 
       return config;
     },
-    (error) => {
-      return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
   );
 
+  // ✅ RESPONSE INTERCEPTOR SIMPLIFICADO
   api.interceptors.response.use(
-    (response) => {
-      return response;
-    },
+    (response) => response,
     (error: AxiosError) => {
       const status = error.response?.status;
 
-      switch (status) {
-        case 401:
+      // ✅ SÓ REDIRECIONA EM CASOS ESPECÍFICOS
+      if (status === 401 && !ENV.isServer) {
+        const currentPath = window.location.pathname;
+        
+        // ✅ EVITA LOOP: Só redireciona se NÃO estiver na página de login
+        if (!currentPath.includes('/login')) {
           clearTokens();
-          
-          if (!ENV.isServer && !window.location.pathname.includes('/login')) {
-            const currentPath = window.location.pathname + window.location.search;
-            const redirectParam = encodeURIComponent(currentPath);
-            window.location.href = `/login?redirect=${redirectParam}`;
-          }
-          break;
+          window.location.href = '/login';
+        }
       }
 
       return Promise.reject(error);
@@ -144,7 +145,7 @@ export const api = getAPIClient();
 
 export function isAuthenticated(): boolean {
   const token = getToken();
-  return token !== null && !isTokenExpired(token);
+  return token !== null && isTokenValid(token);
 }
 
 export function logout(): void {
@@ -156,7 +157,7 @@ export function logout(): void {
 
 export function getAuthHeaders(): Record<string, string> {
   const token = getToken();
-  if (token && !isTokenExpired(token)) {
+  if (token && isTokenValid(token)) {
     return { Authorization: `Bearer ${token}` };
   }
   return {};
@@ -169,12 +170,10 @@ export function handleApiError(
   if (axios.isAxiosError(error)) {
     const message = getErrorMessage(error);
     const status = error.response?.status;
-    
     return { message, status };
   }
   
   const message = error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN;
-  
   return { message };
 }
 

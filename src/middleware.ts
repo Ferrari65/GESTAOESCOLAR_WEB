@@ -1,13 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
-// ===== IMPORTAR CONFIGURAÇÃO CENTRALIZADA =====
-import { 
-  AUTH_CONFIG, 
-  MIDDLEWARE_CONFIG, 
-  getDashboardRoute, 
-  isPublicPath, 
-  getRequiredRole 
-} from '@/config/app';
+import { AUTH_CONFIG, MIDDLEWARE_CONFIG } from '@/config/app';
 
 interface JWTPayload {
   role: string;
@@ -15,6 +8,7 @@ interface JWTPayload {
   sub?: string;
 }
 
+// ===== FUNÇÕES AUXILIARES =====
 function shouldSkipMiddleware(pathname: string): boolean {
   return MIDDLEWARE_CONFIG.skipPaths.some(path => pathname.startsWith(path));
 }
@@ -30,21 +24,13 @@ function getTokenFromRequest(request: NextRequest): string | null {
 
 function isTokenValid(token: string): { valid: boolean; payload?: JWTPayload } {
   try {
-    if (!token || token.trim() === '') {
-      return { valid: false };
-    }
+    if (!token || token.trim() === '') return { valid: false };
 
     const payload = jwtDecode<JWTPayload>(token);
+    const now = Math.floor(Date.now() / 1000) - 30; // Buffer de 30 segundos
     
-    const now = Math.floor(Date.now() / 1000) - 30;
-    
-    if (payload.exp <= now) {
-      return { valid: false };
-    }
-    
-    if (!payload.role || payload.role.trim() === '') {
-      return { valid: false };
-    }
+    if (payload.exp <= now) return { valid: false };
+    if (!payload.role || payload.role.trim() === '') return { valid: false };
     
     return { valid: true, payload };
   } catch {
@@ -52,82 +38,88 @@ function isTokenValid(token: string): { valid: boolean; payload?: JWTPayload } {
   }
 }
 
-function hasPermissionForRoute(userRole: string, pathname: string): boolean {
-  const requiredRole = getRequiredRole(pathname);
-  
-  if (!requiredRole) {
-    return true; // Rota não protegida
-  }
-  
-  return userRole === requiredRole;
-}
-
-// ===== MIDDLEWARE PRINCIPAL =====
+// ===== MIDDLEWARE PRINCIPAL (SIMPLIFICADO) =====
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ✅ PULAR ARQUIVOS ESTÁTICOS
   if (shouldSkipMiddleware(pathname)) {
     return NextResponse.next();
   }
 
+  // ✅ REDIRECIONAR RAIZ PARA LOGIN (SEM VERIFICAR TOKEN)
   if (pathname === '/') {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // ✅ DEIXAR O AUTHCONTEXT GERENCIAR TUDO
+  // Middleware só protege rotas, não faz redirecionamento automático
+  
   const token = getTokenFromRequest(request);
   
+  // ✅ SEM TOKEN: Só bloqueia rotas protegidas
   if (!token) {
-    if (!isPublicPath(pathname)) {
-      const loginUrl = new URL('/login', request.url);
-      if (pathname !== '/login') {
-        loginUrl.searchParams.set('redirect', pathname);
-      }
-      return NextResponse.redirect(loginUrl);
+    // Se estiver tentando acessar rota protegida sem token
+    if (pathname.startsWith('/secretaria') || pathname.startsWith('/professor') || pathname.startsWith('/aluno')) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
+    // Se estiver em rota pública, deixa passar
     return NextResponse.next();
   }
 
+  // ✅ COM TOKEN: Verificar validade
   const { valid: isTokenValidResult, payload } = isTokenValid(token);
   
+  // ✅ TOKEN INVÁLIDO: Só bloqueia rotas protegidas
   if (!isTokenValidResult || !payload) {
-    if (!isPublicPath(pathname)) {
-      const loginUrl = new URL('/login', request.url);
-      if (pathname !== '/login') {
-        loginUrl.searchParams.set('redirect', pathname);
-      }
-      return NextResponse.redirect(loginUrl);
+    // Se estiver tentando acessar rota protegida com token inválido
+    if (pathname.startsWith('/secretaria') || pathname.startsWith('/professor') || pathname.startsWith('/aluno')) {
+      // ⚠️ IMPORTANTE: Limpar cookie inválido
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.set(AUTH_CONFIG.tokenCookieName, '', { 
+        expires: new Date(0),
+        path: '/' 
+      });
+      return response;
     }
-
+    // Se estiver em rota pública, deixa passar
     return NextResponse.next();
   }
 
-  // ===== USUÁRIO AUTENTICADO COM TOKEN VÁLIDO =====
-  
-  // Se está na página de login mas já está autenticado, redirecionar para dashboard
-  if (pathname === '/login') {
-    const dashboardRoute = getDashboardRoute(payload.role);
-    return NextResponse.redirect(new URL(dashboardRoute, request.url));
-  }
+  // ✅ TOKEN VÁLIDO: Verificar permissões
+  const userRole = payload.role;
 
-  // Se está em rota pública mas autenticado, redirecionar para dashboard
-  if (isPublicPath(pathname) && pathname !== '/login') {
-    const dashboardRoute = getDashboardRoute(payload.role);
-    return NextResponse.redirect(new URL(dashboardRoute, request.url));
-  }
-
-  // Verificar permissões para a rota
-  if (!hasPermissionForRoute(payload.role, pathname)) {
-    const dashboardRoute = getDashboardRoute(payload.role);
-    
-    if (pathname === dashboardRoute || pathname.startsWith(dashboardRoute)) {
-      return NextResponse.next();
+  // Verificar se tem permissão para a rota
+  if (pathname.startsWith('/secretaria') && userRole !== 'ROLE_SECRETARIA') {
+    // Redirecionar para dashboard correto do usuário
+    if (userRole === 'ROLE_PROFESSOR') {
+      return NextResponse.redirect(new URL('/professor/home', request.url));
     }
-    
-    return NextResponse.redirect(new URL(dashboardRoute, request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  if (pathname.startsWith('/professor') && userRole !== 'ROLE_PROFESSOR') {
+    // Redirecionar para dashboard correto do usuário
+    if (userRole === 'ROLE_SECRETARIA') {
+      return NextResponse.redirect(new URL('/secretaria/alunos', request.url));
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  if (pathname.startsWith('/aluno') && userRole !== 'ROLE_ALUNO') {
+    // Redirecionar para dashboard correto do usuário
+    if (userRole === 'ROLE_SECRETARIA') {
+      return NextResponse.redirect(new URL('/secretaria/alunos', request.url));
+    }
+    if (userRole === 'ROLE_PROFESSOR') {
+      return NextResponse.redirect(new URL('/professor/home', request.url));
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // ✅ TUDO OK: Deixar passar
   const response = NextResponse.next();
-  response.headers.set('x-user-role', payload.role);
+  response.headers.set('x-user-role', userRole);
   
   return response;
 }
