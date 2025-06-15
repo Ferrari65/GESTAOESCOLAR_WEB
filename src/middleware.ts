@@ -1,23 +1,13 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
-
-// ===== CONFIGURAÇÕES =====
-const AUTH_CONFIG = {
-  tokenCookieName: 'nextauth.token',
-  publicPaths: ['/login', '/redefinir'],
-  
-
-  protectedRoutes: {
-    '/secretaria': 'ROLE_SECRETARIA',
-    '/professor': 'ROLE_PROFESSOR'
-  },
-  
-  dashboardRoutes: {
-    ROLE_SECRETARIA: '/secretaria/alunos',
-    ROLE_PROFESSOR: '/professor/home'
-
-  }
-} as const;
+// ===== IMPORTAR CONFIGURAÇÃO CENTRALIZADA =====
+import { 
+  AUTH_CONFIG, 
+  MIDDLEWARE_CONFIG, 
+  getDashboardRoute, 
+  isPublicPath, 
+  getRequiredRole 
+} from '@/config/app';
 
 interface JWTPayload {
   role: string;
@@ -26,18 +16,7 @@ interface JWTPayload {
 }
 
 function shouldSkipMiddleware(pathname: string): boolean {
-  const skipPatterns = [
-    /^\/_next/,
-    /^\/api/,
-    /^\/favicon/,
-    /\.(png|jpe?g|svg|gif|ico|css|js|woff2?|ttf|eot|webp)$/i
-  ];
-  
-  return skipPatterns.some(pattern => pattern.test(pathname));
-}
-
-function isPublicPath(pathname: string): boolean {
-  return AUTH_CONFIG.publicPaths.includes(pathname);
+  return MIDDLEWARE_CONFIG.skipPaths.some(path => pathname.startsWith(path));
 }
 
 function getTokenFromRequest(request: NextRequest): string | null {
@@ -74,27 +53,13 @@ function isTokenValid(token: string): { valid: boolean; payload?: JWTPayload } {
 }
 
 function hasPermissionForRoute(userRole: string, pathname: string): boolean {
-
-  let hasProtectedRoute = false;
-  let requiredRole = '';
+  const requiredRole = getRequiredRole(pathname);
   
-  for (const [routePrefix, role] of Object.entries(AUTH_CONFIG.protectedRoutes)) {
-    if (pathname.startsWith(routePrefix)) {
-      hasProtectedRoute = true;
-      requiredRole = role;
-      break;
-    }
-  }
-  
-  if (!hasProtectedRoute) {
-    return true;
+  if (!requiredRole) {
+    return true; // Rota não protegida
   }
   
   return userRole === requiredRole;
-}
-
-function getDashboardRoute(role: string): string {
-  return AUTH_CONFIG.dashboardRoutes[role as keyof typeof AUTH_CONFIG.dashboardRoutes] || '/login';
 }
 
 // ===== MIDDLEWARE PRINCIPAL =====
@@ -138,18 +103,19 @@ export default function middleware(request: NextRequest) {
 
   // ===== USUÁRIO AUTENTICADO COM TOKEN VÁLIDO =====
   
-
+  // Se está na página de login mas já está autenticado, redirecionar para dashboard
   if (pathname === '/login') {
     const dashboardRoute = getDashboardRoute(payload.role);
     return NextResponse.redirect(new URL(dashboardRoute, request.url));
   }
 
+  // Se está em rota pública mas autenticado, redirecionar para dashboard
   if (isPublicPath(pathname) && pathname !== '/login') {
     const dashboardRoute = getDashboardRoute(payload.role);
     return NextResponse.redirect(new URL(dashboardRoute, request.url));
   }
 
-
+  // Verificar permissões para a rota
   if (!hasPermissionForRoute(payload.role, pathname)) {
     const dashboardRoute = getDashboardRoute(payload.role);
     

@@ -1,96 +1,112 @@
+// ===== LOGGER CENTRALIZADO E SIMPLIFICADO =====
+// Todos os logs passam por aqui, facilitando controle e limpeza
 
-const isDev = process.env.NODE_ENV === 'development';
+import { ENV } from '@/config/app';
+
+// ===== CONFIGURAÇÃO =====
+const shouldLog = ENV.isDevelopment;
 
 // ===== FUNÇÃO PRINCIPAL =====
-function createLog(level: string, emoji: string, color: string) {
+function createLog(level: string, emoji: string, consoleMethod: 'log' | 'warn' | 'error' | 'info') {
   return (context: string, message: string, data?: any) => {
-    // Só mostra logs em desenvolvimento
-    if (!isDev) return;
+    // ✅ APENAS em desenvolvimento
+    if (!shouldLog) return;
     
     const timestamp = new Date().toLocaleTimeString();
     const formattedMessage = `${emoji} [${timestamp}] ${level} [${context}] ${message}`;
     
-    // Escolher o método de console baseado no level
-    const consoleMethod = level === 'ERROR' ? console.error : 
-                         level === 'WARN' ? console.warn : 
-                         console.log;
-    
-    if (data) {
-      consoleMethod(formattedMessage, data);
+    if (data !== undefined) {
+      console[consoleMethod](formattedMessage, data);
     } else {
-      consoleMethod(formattedMessage);
+      console[consoleMethod](formattedMessage);
     }
   };
 }
 
 // ===== TIPOS DE LOG =====
 export const log = {
-  // Geral
-  info: createLog('INFO', 'ℹ️', 'blue'),
-  success: createLog('SUCCESS', '✅', 'green'),
-  warn: createLog('WARN', '⚠️', 'yellow'),
-  error: createLog('ERROR', '❌', 'red'),
-  debug: createLog('DEBUG', '🐛', 'purple'),
+  // Básicos
+  info: createLog('INFO', 'ℹ️', 'info'),
+  success: createLog('SUCCESS', '✅', 'log'),
+  warn: createLog('WARN', '⚠️', 'warn'),
+  error: createLog('ERROR', '❌', 'error'),
+  debug: createLog('DEBUG', '🐛', 'log'),
 
-  // Contextos específicos (shortcuts)
+  // Contextos específicos (para facilitar)
   auth: (message: string, data?: any) => {
-    if (!isDev) return;
-    console.log(`🔐 [AUTH] ${message}`, data || '');
+    if (!shouldLog) return;
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`🔐 [${timestamp}] [AUTH] ${message}`, data || '');
   },
 
   api: (message: string, data?: any) => {
-    if (!isDev) return;
-    console.log(`🌐 [API] ${message}`, data || '');
+    if (!shouldLog) return;
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`🌐 [${timestamp}] [API] ${message}`, data || '');
   },
 
   form: (message: string, data?: any) => {
-    if (!isDev) return;
-    console.log(`📝 [FORM] ${message}`, data || '');
+    if (!shouldLog) return;
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`📝 [${timestamp}] [FORM] ${message}`, data || '');
   },
 
-  hook: (message: string, data?: any) => {
-    if (!isDev) return;
-    console.log(`⚛️ [HOOK] ${message}`, data || '');
-  },
-
-  cache: (message: string, data?: any) => {
-    if (!isDev) return;
-    console.log(`💾 [CACHE] ${message}`, data || '');
-  },
-
-  // Grupos (para operações complexas)
+  // Para grupos de logs relacionados
   group: (context: string, title: string) => {
-    if (!isDev) return;
+    if (!shouldLog) return;
     console.group(`🔍 [${context}] ${title}`);
   },
 
   groupEnd: () => {
-    if (!isDev) return;
+    if (!shouldLog) return;
     console.groupEnd();
   },
 
-  // Performance
+  // Para medir performance
   time: (label: string) => {
-    if (!isDev) return;
+    if (!shouldLog) return;
     console.time(`⏱️ ${label}`);
   },
 
   timeEnd: (label: string) => {
-    if (!isDev) return;
+    if (!shouldLog) return;
     console.timeEnd(`⏱️ ${label}`);
   },
 
-  // Transformação de dados
+  // Para transformações de dados
   transform: (operation: string, input: any, output: any) => {
-    if (!isDev) return;
+    if (!shouldLog) return;
     
     console.group(`🔄 [TRANSFORM] ${operation}`);
     console.log('📥 Input:', input);
     console.log('📤 Output:', output);
-    console.log('📊 Campos:', Object.keys(output).length);
+    console.log('📊 Campos:', Object.keys(output || {}).length);
     console.groupEnd();
   }
 };
 
+// ===== FUNÇÕES DE CONVENIÊNCIA =====
 
+// Para remover todos os logs de uma vez (se precisar)
+export function disableLogs() {
+  // Você pode sobrescrever os métodos se precisar desabilitar completamente
+  Object.keys(log).forEach(key => {
+    if (typeof log[key as keyof typeof log] === 'function') {
+      (log as any)[key] = () => {};
+    }
+  });
+}
+
+// Para debug condicional 
+export function logIf(condition: boolean, level: keyof typeof log, context: string, message: string, data?: any) {
+  if (condition && shouldLog) {
+    if (level === 'transform') {
+      log[level](context, message, data);
+    } else {
+      (log[level] as any)(context, message, data);
+    }
+  }
+}
+
+// ===== EXPORT DEFAULT =====
 export default log;

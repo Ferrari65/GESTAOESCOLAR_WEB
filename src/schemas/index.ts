@@ -1,4 +1,5 @@
-// ===== EXPORTAÇÕES CENTRALIZADAS DOS SCHEMAS =====
+// ===== SCHEMAS CENTRALIZADOS - EXPORTS SIMPLIFICADOS =====
+// Este arquivo apenas re-exporta os schemas sem criar dependências circulares
 
 // ===== TIPOS COMPARTILHADOS =====
 export type { SituacaoType, TurnoType, SexoType } from './shared';
@@ -110,7 +111,7 @@ export {
   validateTurmaResponse,
 } from './turma';
 
-// ===== FUNÇÕES UTILITÁRIAS GERAIS =====
+// ===== FUNÇÃO UTILITÁRIA GERAL =====
 export function validateSchema<T>(schema: any, data: unknown): {
   success: boolean;
   data?: T;
@@ -132,15 +133,3 @@ export function validateSchema<T>(schema: any, data: unknown): {
     };
   }
 }
-
-// ===== ALIASES PARA COMPATIBILIDADE =====
-// Disciplina - compatibilidade com nomes antigos
-export { disciplinaDTOSchema as disciplinaDTO };
-export { disciplinaResponseSchema as disciplinaResponse };
-
-// Curso - compatibilidade
-export { cursoEditarDTOSchema as cursoEditarDTO };
-
-// Situação - compatibilidade
-export { SituacaoEnum as SituacaoTypeEnum };
-export { TurnoEnum as TurnoTypeEnum };

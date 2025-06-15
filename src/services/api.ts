@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosHeaders, AxiosError } from 'axios';
+// ===== IMPORTAR CONFIGURAÇÃO CENTRALIZADA =====
 import { 
   API_CONFIG, 
   AUTH_CONFIG, 
@@ -176,7 +177,6 @@ export function handleApiError(
   
   return { message };
 }
-
 
 export function checkAPIHealth(): Promise<boolean> {
   return api.get('/health')

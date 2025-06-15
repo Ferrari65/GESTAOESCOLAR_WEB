@@ -5,28 +5,20 @@ import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { log } from '@/utils/logger';
+// ===== IMPORTAR CONFIGURAÇÃO CENTRALIZADA =====
+import { AUTH_CONFIG, API_CONFIG, getDashboardRoute } from '@/config/app';
+// ===== IMPORTAR TIPOS CENTRALIZADOS =====
+import type { User, AuthError } from '@/types';
 
-// ===== INTERFACES =====
+// ===== INTERFACES ESPECÍFICAS DO CONTEXTO =====
 interface LoginResponse {
   id: string;
   token: string;
 }
 
-interface User {
-  id: string;
-  email: string;
-  role: string;
-}
-
 interface LoginCredentials {
   email: string;
   password: string;
-}
-
-interface AuthError {
-  type: 'validation' | 'network' | 'unauthorized' | 'server' | 'unknown';
-  message: string;
-  statusCode?: number;
 }
 
 interface AuthContextData {
@@ -55,34 +47,17 @@ interface ApiErrorResponse {
   error?: string;
 }
 
-// ===== CONFIGURAÇÕES =====
-const AUTH_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
-  requestTimeout: 10000,
-  tokenCookieName: 'nextauth.token',
-  tokenLocalStorageKey: 'nextauth.token',
-  secretariaIdKey: 'secretaria_id',
-  maxAge: 604800,
-} as const;
-
+// ===== ENDPOINTS DE LOGIN =====
 const LOGIN_ENDPOINTS = [
   '/secretaria/auth/login',
   '/professor/auth/login'
 ] as const;
 
-const DASHBOARD_ROUTES = {
-  ROLE_SECRETARIA: '/secretaria/alunos', 
-  ROLE_PROFESSOR: '/professor/home'
-} as const;
-
 // ===== AXIOS INSTANCE =====
 const api = axios.create({
-  baseURL: AUTH_CONFIG.baseURL,
-  timeout: AUTH_CONFIG.requestTimeout,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+  baseURL: API_CONFIG.baseURL,
+  timeout: API_CONFIG.timeout,
+  headers: API_CONFIG.headers
 });
 
 function isAxiosError(error: unknown): error is AxiosError {
@@ -117,10 +92,7 @@ const TokenManager = {
         localStorage.setItem(AUTH_CONFIG.secretariaIdKey, secretariaId);
       }
     } catch (error) {
-      // ✅ Log apenas em desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
-        log.error('AUTH', 'Erro ao salvar token', error);
-      }
+      log.error('AUTH', 'Erro ao salvar token', error);
     }
   },
 
@@ -140,10 +112,7 @@ const TokenManager = {
       
       return null;
     } catch (error) {
-      // ✅ Log apenas em desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
-        log.error('AUTH', 'Erro ao obter token', error);
-      }
+      log.error('AUTH', 'Erro ao obter token', error);
       return null;
     }
   },
@@ -156,10 +125,7 @@ const TokenManager = {
       localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
       localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
     } catch (error) {
-      // ✅ Log apenas em desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
-        log.error('AUTH', 'Erro ao remover token', error);
-      }
+      log.error('AUTH', 'Erro ao remover token', error);
     }
   },
 
@@ -228,12 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
-  // ===== FUNCTIONS =====
   const clearError = useCallback(() => setError(null), []);
-
-  const getRedirectPath = useCallback((role: string): string => {
-    return DASHBOARD_ROUTES[role as keyof typeof DASHBOARD_ROUTES] || '/login';
-  }, []);
 
   const processToken = useCallback((token: string): User | null => {
     try {
@@ -258,10 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return userData;
     } catch (error) {
-      // ✅ Log apenas em desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
-        log.error('AUTH', 'Erro ao processar token', error);
-      }
+      log.error('AUTH', 'Erro ao processar token', error);
       return null;
     }
   }, []);
@@ -295,10 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      // ✅ Log apenas em desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
-        log.error('AUTH', 'Erro na verificação de autenticação', error);
-      }
+      log.error('AUTH', 'Erro na verificação de autenticação', error);
       TokenManager.remove();
       setUser(null);
     }
@@ -356,7 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setTimeout(() => {
         setShowWelcome(false);
-        const redirectPath = getRedirectPath(userData.role);
+        const redirectPath = getDashboardRoute(userData.role);
         router.push(redirectPath);
       }, 2000);
       
@@ -374,7 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [attemptLogin, processToken, getRedirectPath, router]);
+  }, [attemptLogin, processToken, router]);
 
   const signOut = useCallback((): void => {
     setUser(null);
@@ -394,10 +349,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         await Promise.race([refreshAuth(), timeoutPromise]);
       } catch (error) {
-        // ✅ Log apenas em desenvolvimento
-        if (process.env.NODE_ENV === 'development') {
-          log.warn('AUTH', 'Timeout na inicialização da autenticação', error);
-        }
+        log.warn('AUTH', 'Timeout na inicialização da autenticação', error);
         TokenManager.remove();
         setUser(null);
       } finally {
