@@ -1,44 +1,4 @@
-// ===== TIPOS ÚNICOS E CENTRALIZADOS =====
-// CORRIGIDO: Este arquivo agora apenas RE-EXPORTA dos schemas (sem duplicação)
 
-// ===== TIPOS BÁSICOS (vêm dos schemas) =====
-export type {
-  SituacaoType,
-  TurnoType, 
-  SexoType
-} from '@/schemas/shared';
-
-// ===== TIPOS DE FORMULÁRIOS (vêm dos schemas) =====
-export type {
-  // Auth
-  LoginFormData,
-  ResetPasswordFormData,
-  
-  // Professor
-  ProfessorCadastroData,
-  ProfessorEdicaoData,
-  ProfessorCreateDTO,
-  ProfessorUpdateDTO,
-  ProfessorResponse,
-  
-  // Curso
-  CursoFormData,
-  CursoDTO,
-  CursoEditarDTO,
-  CursoResponse,
-  
-  // Disciplina
-  DisciplinaFormData,
-  DisciplinaDTO,
-  DisciplinaResponse,
-  
-  // Turma
-  TurmaFormData,
-  TurmaDTO,
-  TurmaResponse,
-} from '@/schemas';
-
-// ===== TIPOS ÚNICOS DESTE ARQUIVO (que não existem nos schemas) =====
 export type UserRole = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR' | 'ROLE_ALUNO';
 
 export interface User {
@@ -59,7 +19,6 @@ export interface SecretariaData {
   id_secretaria: string;
 }
 
-// ===== INTERFACES PARA COMPONENTES =====
 export interface BaseFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
