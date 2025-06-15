@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
 import { transformCursoFormToDTO } from '@/utils/transformers';
-import { log } from '@/utils/logger'; // ✅ Sistema de logs limpo
+import { log } from '@/utils/logger'; 
 import {
   cursoFormSchema,
   type CursoFormData,
