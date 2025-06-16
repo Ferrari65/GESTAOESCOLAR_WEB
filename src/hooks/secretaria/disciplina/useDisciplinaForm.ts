@@ -76,7 +76,7 @@ export const useDisciplinaForm = ({
     form,
     onSubmit,
     loading,
-    error: apiError,       // usa a mensagem de erro que veio do useDisciplinaAPI
+    error: apiError,      
     successMessage,
     clearMessages
   };

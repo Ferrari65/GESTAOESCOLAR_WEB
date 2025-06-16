@@ -170,15 +170,14 @@ export const useCursoForm = ({
         const api = getAPIClient();
         const response = await api.post(`/curso/${user.id}`, cursoDTO);
         
-        // ✅ Adicionar curso ao cache automaticamente
         if (response.data) {
           try {
             const novoCurso = mapCursoResponse(response.data);
             cursoCache.data = [novoCurso, ...cursoCache.data];
             cursoCache.timestamp = Date.now();
-            console.log('➕ [CURSO-FORM] Curso adicionado ao cache:', novoCurso.nome);
+            console.log(' [CURSO-FORM] Curso adicionado ao cache:', novoCurso.nome);
           } catch (err) {
-            console.warn('⚠️ [CURSO-FORM] Erro ao mapear curso criado:', err);
+            console.warn(' [CURSO-FORM] Erro ao mapear curso criado:', err);
           }
         }
         
@@ -191,7 +190,7 @@ export const useCursoForm = ({
         
         onSuccess?.();
         
-        // Limpar mensagem após 3 segundos
+
         setTimeout(() => setSuccessMessage(null), 3000);
         
       } catch (err: unknown) {
@@ -225,7 +224,7 @@ export const useCursoList = (): UseCursoListReturn => {
 
   // ===== ATUALIZAÇÕES OTIMISTAS =====
   const updateCursoOptimistic = useCallback((cursoId: string, updates: Partial<CursoResponse>) => {
-    console.log('🔄 [CURSO-LIST] Atualizando curso:', cursoId, updates);
+    console.log(' [CURSO-LIST] Atualizando curso:', cursoId, updates);
     setCursos(prev => {
       const novosCursos = prev.map(curso => 
         curso.idCurso === cursoId 
@@ -238,7 +237,7 @@ export const useCursoList = (): UseCursoListReturn => {
   }, []);
 
   const revertCursoOptimistic = useCallback((cursoId: string, originalData: CursoResponse) => {
-    console.log('↩️ [CURSO-LIST] Revertendo curso:', cursoId);
+    console.log('↩ [CURSO-LIST] Revertendo curso:', cursoId);
     setCursos(prev => {
       const novosCursos = prev.map(curso => 
         curso.idCurso === cursoId 
@@ -251,7 +250,7 @@ export const useCursoList = (): UseCursoListReturn => {
   }, []);
 
   const adicionarCurso = useCallback((curso: CursoResponse) => {
-    console.log('➕ [CURSO-LIST] Adicionando curso:', curso.nome);
+    console.log(' [CURSO-LIST] Adicionando curso:', curso.nome);
     setCursos(prev => {
       const novosCursos = [curso, ...prev];
       cursoCache.data = novosCursos;
@@ -261,7 +260,7 @@ export const useCursoList = (): UseCursoListReturn => {
   }, []);
 
   const removerCurso = useCallback((cursoId: string) => {
-    console.log('🗑️ [CURSO-LIST] Removendo curso:', cursoId);
+    console.log('[CURSO-LIST] Removendo curso:', cursoId);
     setCursos(prev => {
       const novosCursos = prev.filter(curso => curso.idCurso !== cursoId);
       cursoCache.data = novosCursos;
@@ -306,7 +305,6 @@ export const useCursoList = (): UseCursoListReturn => {
 
       let cursosData = response.data;
       
-      // Normalizar estrutura
       if (!Array.isArray(cursosData)) {
         if (cursosData.cursos && Array.isArray(cursosData.cursos)) {
           cursosData = cursosData.cursos;
@@ -326,23 +324,22 @@ export const useCursoList = (): UseCursoListReturn => {
             cursosValidos.push(cursoMapeado);
           }
         } catch {
-          // Ignorar curso inválido
         }
       }
 
-      console.log(`✅ [CURSO-LIST] ${cursosValidos.length} cursos carregados`);
+      console.log(` [CURSO-LIST] ${cursosValidos.length} cursos carregados`);
       setCursos(cursosValidos);
       cursoCache.data = cursosValidos;
       cursoCache.timestamp = Date.now();
       
     } catch (err: unknown) {
-      console.error('❌ [CURSO-LIST] Erro ao buscar cursos:', err);
+      console.error(' [CURSO-LIST] Erro ao buscar cursos:', err);
       const errorMessage = handleCursoError(err, 'FetchCursos');
       setError(errorMessage);
       
       // Se deu erro mas tem cache, usa o cache
       if (cursoCache.data.length > 0) {
-        console.log('🔄 [CURSO-LIST] Usando cache por erro de rede');
+        console.log('[CURSO-LIST] Usando cache por erro de rede');
         setCursos(cursoCache.data);
       } else {
         setCursos([]);
@@ -354,7 +351,7 @@ export const useCursoList = (): UseCursoListReturn => {
   }, [user?.id]);
 
   const refetch = useCallback(() => {
-    console.log('🔄 [CURSO-LIST] Recarregamento forçado');
+    console.log(' [CURSO-LIST] Recarregamento forçado');
     clearError();
     fetchCursos(true);
   }, [fetchCursos, clearError]);
@@ -409,13 +406,11 @@ export const useCursoActions = (): UseCursoActionsReturn => {
     setLoading(true);
     setError(null);
 
-    // Função de reversão para otimistic update
     let revertFunction: (() => void) | null = null;
 
     try {
-      console.log(`🔄 [CURSO-ACTION] Alterando curso ${cursoId} para ${situacao}`);
+      console.log(` [CURSO-ACTION] Alterando curso ${cursoId} para ${situacao}`);
       
-      // Executa update otimista se fornecido
       if (onOptimisticUpdate) {
         onOptimisticUpdate((revert) => {
           revertFunction = revert;
@@ -429,18 +424,16 @@ export const useCursoActions = (): UseCursoActionsReturn => {
       const api = getAPIClient();
       await api.put(`/curso/${cursoId}/situacao`, editarDTO);
       
-      console.log(`✅ [CURSO-ACTION] Curso ${cursoId} alterado para ${situacao}`);
+      console.log(`[CURSO-ACTION] Curso ${cursoId} alterado para ${situacao}`);
       setSuccessMessage(`Curso ${situacao.toLowerCase()} com sucesso!`);
-      
-      // Limpar mensagem após 3 segundos
+
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
       
     } catch (err: unknown) {
-      console.error('❌ [CURSO-ACTION] Erro ao alterar situação:', err);
-      
-      // Reverter otimistic update se deu erro
+      console.error(' [CURSO-ACTION] Erro ao alterar situação:', err);
+
       if (revertFunction) {
         revertFunction();
       }

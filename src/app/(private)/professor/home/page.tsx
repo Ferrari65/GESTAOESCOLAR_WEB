@@ -2,18 +2,18 @@
 
 import React, { useCallback } from 'react';
 import Header from '@/components/secretaria/header';
-import UFEMSidebar from '@/components/secretaria/UFEMSidebar';
+import UFEMProfessorSidebar from '@/components/professor/UFEMProfessorSidebar';
 
 export default function ProfessorHomePage(): React.JSX.Element {
-  // Dados mockados - substitua pelos dados reais do seu contexto/API
+
   const secretariaData = {
     nome: "Sistema Acadêmico",
-    // adicione outros campos conforme necessário
+
   };
 
   const user = {
     nome: "Professor",
-    // adicione outros campos conforme necessário
+
   };
 
   const handleLogout = (): void => {
@@ -34,7 +34,7 @@ export default function ProfessorHomePage(): React.JSX.Element {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <UFEMSidebar 
+      <UFEMProfessorSidebar
         onMenuItemClick={handleMenuClick}
         className="fixed left-0 top-0 z-40 w-64 h-full"
       />
