@@ -30,7 +30,7 @@ export interface LoadingState {
   successMessage: string | null;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   success?: boolean;

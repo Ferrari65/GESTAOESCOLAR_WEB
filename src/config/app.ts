@@ -1,4 +1,3 @@
-
 type UserRole = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR' | 'ROLE_ALUNO';
 
 // ===== ENVIRONMENT =====

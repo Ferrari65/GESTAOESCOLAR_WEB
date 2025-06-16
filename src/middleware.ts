@@ -1,16 +1,13 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { AUTH_CONFIG, MIDDLEWARE_CONFIG } from '@/config/app';
 
-// ===== ✅ USANDO O CHAVEIRO ÚNICO =====
 import TokenManager from '@/utils/tokenManager';
 
 interface JWTPayload {
   role: string;
   exp: number;
-  sub?: string;
+  sub?: string | undefined;
 }
-
-// ===== FUNÇÕES AUXILIARES =====
 function shouldSkipMiddleware(pathname: string): boolean {
   return MIDDLEWARE_CONFIG.skipPaths.some(path => pathname.startsWith(path));
 }

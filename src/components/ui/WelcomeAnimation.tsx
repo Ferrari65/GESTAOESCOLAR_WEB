@@ -19,6 +19,7 @@ export const WelcomeAnimation: React.FC<WelcomeAnimationProps> = ({
       const timer = setTimeout(onComplete, duration);
       return () => clearTimeout(timer);
     }
+    return;
   }, [onComplete, duration]);
 
   return (

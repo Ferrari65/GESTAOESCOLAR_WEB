@@ -7,7 +7,7 @@ import { log } from '@/utils/logger';
 import { AUTH_CONFIG, API_CONFIG, getDashboardRoute } from '@/config/app';
 import type { User, AuthError } from '@/types';
 
-// ===== ✅ USANDO O CHAVEIRO ÚNICO =====
+// ===== ✅ USING UNIFIED TOKEN MANAGER =====
 import TokenManager from '@/utils/tokenManager';
 
 // ===== INTERFACES =====
@@ -34,6 +34,7 @@ interface AuthContextData {
   setShowWelcome: (show: boolean) => void;
 }
 
+// ===== DEFININDO JWTPayload LOCALMENTE =====
 interface JWTPayload {
   sub?: string;
   email?: string;
@@ -42,7 +43,7 @@ interface JWTPayload {
   iat?: number;
 }
 
-// ===== ENDPOINTS DE LOGIN =====
+// ===== LOGIN ENDPOINTS =====
 const LOGIN_ENDPOINTS = ['/secretaria/auth/login', '/professor/auth/login'] as const;
 
 // ===== AXIOS INSTANCE =====
@@ -52,6 +53,7 @@ const api = axios.create({
   headers: API_CONFIG.headers
 });
 
+// ===== ERROR HANDLING =====
 const createError = (type: AuthError['type'], message: string, statusCode?: number): AuthError => ({
   type, message, statusCode
 });
@@ -96,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), []);
 
-  // ===== ✅ USANDO O GERENCIADOR ÚNICO =====
+  // ===== ✅ TOKEN PROCESSING WITH UNIFIED MANAGER =====
   const processToken = useCallback((token: string): User | null => {
     try {
       if (!TokenManager.isValid(token)) {
@@ -124,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ===== ✅ REFRESH COM GERENCIADOR ÚNICO =====
+  // ===== ✅ REFRESH AUTH WITH UNIFIED MANAGER =====
   const refreshAuth = useCallback(async (): Promise<void> => {
     try {
       const token = TokenManager.get();
@@ -138,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         TokenManager.remove();
         setUser(null);
         
-        // SÓ REDIRECIONA SE ESTIVER EM ROTA PROTEGIDA
+        // ONLY REDIRECT IF ON PROTECTED ROUTE
         if (pathname?.startsWith('/secretaria') || pathname?.startsWith('/professor') || pathname?.startsWith('/aluno')) {
           router.push('/login');
         }
@@ -149,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userData) {
         setUser(userData);
         
-        // SÓ REDIRECIONA DA PÁGINA DE LOGIN SE JÁ ESTIVER AUTENTICADO
+        // ONLY REDIRECT FROM LOGIN PAGE IF ALREADY AUTHENTICATED
         if (pathname === '/login') {
           const dashboardRoute = getDashboardRoute(userData.role);
           router.push(dashboardRoute);
@@ -165,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [processToken, router, pathname]);
 
+  // ===== LOGIN ATTEMPT =====
   const attemptLogin = useCallback(async (credentials: LoginCredentials): Promise<AxiosResponse<LoginResponse>> => {
     for (const endpoint of LOGIN_ENDPOINTS) {
       try {
@@ -187,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     throw createError('server', 'Nenhum servidor disponível.');
   }, []);
 
-  // ===== ✅ SIGN IN COM GERENCIADOR ÚNICO =====
+  // ===== ✅ SIGN IN WITH UNIFIED MANAGER =====
   const signIn = useCallback(async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
     setError(null);
@@ -207,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw createError('server', 'Token inválido recebido');
       }
 
-      // ✅ USAR O GERENCIADOR ÚNICO PARA SALVAR
+      // ✅ USE UNIFIED MANAGER TO SAVE
       TokenManager.save(data.token, userData.role === 'ROLE_SECRETARIA' ? data.id : undefined);
       setUser({ ...userData, id: data.id });
       
@@ -235,16 +238,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [attemptLogin, processToken, router]);
 
-  // ===== ✅ SIGN OUT COM GERENCIADOR ÚNICO =====
+  // ===== ✅ SIGN OUT WITH UNIFIED MANAGER =====
   const signOut = useCallback((): void => {
     setUser(null);
     setError(null);
     setShowWelcome(false);
-    TokenManager.remove(); // ✅ Usando gerenciador único
+    TokenManager.remove(); // ✅ Using unified manager
     router.push('/login');
   }, [router]);
 
-  // ===== INICIALIZAÇÃO =====
+  // ===== INITIALIZATION =====
   useEffect(() => {
     const initializeAuth = async (): Promise<void> => {
       try {
