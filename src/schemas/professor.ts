@@ -21,8 +21,7 @@ import {
 
 // ===== VALIDADORES OPCIONAIS PARA EDIÇÃO =====
 const optionalField = <T extends z.ZodType>(
-  schema: T, 
-  emptyMessage?: string
+  schema: T
 ) => 
   schema
     .optional()
@@ -32,14 +31,13 @@ const optionalField = <T extends z.ZodType>(
 const optionalStringField = (
   minLength: number = 1,
   maxLength: number = 255,
-  emptyMessage?: string
+  
 ) => 
   optionalField(
     z.string()
       .min(minLength, `Deve ter pelo menos ${minLength} caracteres`)
       .max(maxLength, `Deve ter no máximo ${maxLength} caracteres`)
-      .trim(),
-    emptyMessage
+      .trim()
   );
 
 const optionalValidatedField = <T>(

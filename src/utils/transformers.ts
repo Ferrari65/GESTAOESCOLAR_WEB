@@ -367,10 +367,10 @@ export const logTransformation = (
   output: any
 ): void => {
   if (process.env.NODE_ENV === 'development') {
-    console.group(`🔄 [TRANSFORMER] ${operation}`);
-    console.log('📥 Input:', input);
-    console.log('📤 Output:', output);
-    console.log('📊 Campos no output:', Object.keys(output).length);
+    console.group(` [TRANSFORMER] ${operation}`);
+    console.log('Input:', input);
+    console.log(' Output:', output);
+    console.log(' Campos no output:', Object.keys(output).length);
     console.groupEnd();
   }
 };

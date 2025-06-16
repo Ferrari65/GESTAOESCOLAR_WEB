@@ -1,5 +1,3 @@
-// FormularioProfessor.tsx - VERSÃO FINAL
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -31,7 +29,7 @@ export const FormularioProfessor: React.FC<FormularioProfessorProps> = ({
   mensagemSucesso,
   limparMensagens
 }) => {
-  const { register, formState: { errors }, handleSubmit, watch } = form;
+  const { register, formState: { errors }, watch } = form;
 
 
   const watchedFields = watch();

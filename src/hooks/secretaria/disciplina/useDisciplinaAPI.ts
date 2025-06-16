@@ -29,18 +29,17 @@ export const useDisciplinaAPI = (): UseDisciplinaAPIReturn => {
       const response = await api.post(`/disciplina/${validData.id_secretaria}`, validData);
 
       if (response.status === 409) {
-
+        // ✅ CORRIGIDO: Tipagem específica em vez de any
         const backendMsg = 
           typeof response.data === "string" 
             ? response.data 
-            : (response.data as any).message || "Disciplina já cadastrada.";
+            : (response.data as { message?: string }).message || "Disciplina já cadastrada.";
         
         const errorMessage = backendMsg.toLowerCase().includes("disciplina já cadastrada")
           ? "Esta disciplina já está cadastrada no sistema."
           : backendMsg;
         
         setError(errorMessage);
-
         throw new Error(errorMessage);
       }
 
@@ -50,14 +49,18 @@ export const useDisciplinaAPI = (): UseDisciplinaAPIReturn => {
 
       let errorMessage = message;
 
+      // ✅ CORRIGIDO: Tipagem específica para verificação de erro
       if (
-        ((err as any)?.response?.status === 400 || (err as any)?.response?.status === 409) &&
-        typeof (err as any)?.response?.data === 'string' &&
-        (err as any)?.response?.data.toLowerCase().includes('disciplina já cadastrada')
+        err && 
+        typeof err === 'object' && 
+        'response' in err &&
+        ((err as { response: { status: number } }).response?.status === 400 || 
+         (err as { response: { status: number } }).response?.status === 409) &&
+        typeof (err as { response: { data: unknown } }).response?.data === 'string' &&
+        ((err as { response: { data: string } }).response?.data.toLowerCase().includes('disciplina já cadastrada'))
       ) {
         errorMessage = 'Esta disciplina já está cadastrada no sistema.';
       }
-
 
       setError(errorMessage);
       throw new Error(errorMessage);

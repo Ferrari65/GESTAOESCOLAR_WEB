@@ -215,7 +215,7 @@ export default function ListarCursos() {
       await updateSituacao(curso.idCurso, novaSituacao);
       
 
-    } catch (error) {
+    } catch {
 
       revertCursoOptimistic(curso.idCurso, dadosOriginais);
 

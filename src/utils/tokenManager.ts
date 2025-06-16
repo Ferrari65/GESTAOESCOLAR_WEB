@@ -10,6 +10,13 @@ interface JWTPayload {
   iat?: number;
 }
 
+// ===== INTERFACES PARA REQUEST (Next.js) =====
+interface NextRequest {
+  cookies: {
+    get: (name: string) => { value?: string } | undefined;
+  };
+}
+
 // ===== GERENCIADOR ÚNICO DE TOKENS =====
 export const TokenManager = {
 
@@ -28,9 +35,13 @@ export const TokenManager = {
         localStorage.setItem(AUTH_CONFIG.secretariaIdKey, secretariaId);
       }
       
-      console.log('✅ Token salvo com sucesso');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Token salvo com sucesso');
+      }
     } catch (error) {
-      console.error('❌ Erro ao salvar token:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Erro ao salvar token:', error);
+      }
     }
   },
 
@@ -51,12 +62,14 @@ export const TokenManager = {
       
       return null;
     } catch (error) {
-      console.error('❌ Erro ao obter token:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Erro ao obter token:', error);
+      }
       return null;
     }
   },
 
-  getFromRequest: (request: { cookies: { get: (name: string) => { value?: string } | undefined } }): string | null => {
+  getFromRequest: (request: NextRequest): string | null => {
     try {
       const tokenFromCookie = request.cookies.get(AUTH_CONFIG.tokenCookieName)?.value;
       return tokenFromCookie && tokenFromCookie.trim() !== '' ? tokenFromCookie : null;
@@ -76,9 +89,13 @@ export const TokenManager = {
       localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
       localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
       
-      console.log('✅ Token removido com sucesso');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Token removido com sucesso');
+      }
     } catch (error) {
-      console.error('❌ Erro ao remover token:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Erro ao remover token:', error);
+      }
     }
   },
 
@@ -86,14 +103,18 @@ export const TokenManager = {
   isValid: (token: string): boolean => {
     try {
       if (!token || token.trim() === '') {
-        console.log('🔒 Token vazio ou nulo');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔒 Token vazio ou nulo');
+        }
         return false;
       }
       
       // ✅ CORREÇÃO: Verifica se tem pelo menos 3 partes (header.payload.signature)
       const parts = token.split('.');
       if (parts.length !== 3) {
-        console.log('🔒 Token com formato inválido');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔒 Token com formato inválido');
+        }
         return false;
       }
       
@@ -104,20 +125,22 @@ export const TokenManager = {
       const isNotExpired = payload.exp > (now + 30);
       const hasRole = Boolean(payload.role);
       
-      if (!isNotExpired) {
+      if (!isNotExpired && process.env.NODE_ENV === 'development') {
         console.log('🔒 Token expirado:', {
           exp: new Date(payload.exp * 1000).toISOString(),
           now: new Date(now * 1000).toISOString()
         });
       }
       
-      if (!hasRole) {
+      if (!hasRole && process.env.NODE_ENV === 'development') {
         console.log('🔒 Token sem role');
       }
       
       return isNotExpired && hasRole;
     } catch (error) {
-      console.log('🔒 Erro ao validar token:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔒 Erro ao validar token:', error);
+      }
       return false;
     }
   },
@@ -136,7 +159,7 @@ export const TokenManager = {
       // ✅ CORREÇÃO: Sem margem aqui, verificação exata
       const isExpired = payload.exp <= now;
       
-      if (isExpired) {
+      if (isExpired && process.env.NODE_ENV === 'development') {
         console.log('🔒 Token expirado detectado:', {
           exp: new Date(payload.exp * 1000).toISOString(),
           now: new Date(now * 1000).toISOString(),
@@ -146,7 +169,9 @@ export const TokenManager = {
       
       return isExpired;
     } catch (error) {
-      console.log('🔒 Erro ao verificar expiração:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔒 Erro ao verificar expiração:', error);
+      }
       return true;
     }
   },
@@ -158,7 +183,9 @@ export const TokenManager = {
       }
       return jwtDecode<JWTPayload>(token);
     } catch (error) {
-      console.log('🔒 Erro ao decodificar token:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔒 Erro ao decodificar token:', error);
+      }
       return null;
     }
   },

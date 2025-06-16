@@ -1,13 +1,14 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { AUTH_CONFIG, MIDDLEWARE_CONFIG } from '@/config/app';
-
 import TokenManager from '@/utils/tokenManager';
 
+// ===== INTERFACE JWT LOCAL =====
 interface JWTPayload {
   role: string;
   exp: number;
   sub?: string | undefined;
 }
+
 function shouldSkipMiddleware(pathname: string): boolean {
   return MIDDLEWARE_CONFIG.skipPaths.some(path => pathname.startsWith(path));
 }

@@ -77,8 +77,7 @@ function handleProfessorError(error: unknown, context: string): string {
 export const useProfessorForm = ({ 
   modo = 'cadastro',
   onSucesso, 
-  professorId,
-  dadosIniciais
+  professorId
 }: UseProfessorFormOptions = {}): UseProfessorFormReturn => {
   
   const [carregando, setCarregando] = useState(false);

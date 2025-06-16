@@ -1,3 +1,4 @@
+
 import { AxiosError } from 'axios';
 import { log } from './logger';
 
@@ -96,7 +97,7 @@ function isAxiosError(error: unknown): error is AxiosError {
   return error !== null && 
          typeof error === 'object' && 
          'isAxiosError' in error && 
-         (error as any).isAxiosError === true;
+         (error as AxiosError).isAxiosError === true;
 }
 
 function getErrorType(status?: number): ErrorResult['type'] {
@@ -112,8 +113,16 @@ function getErrorType(status?: number): ErrorResult['type'] {
   return 'unknown';
 }
 
+interface ServerErrorData {
+  message?: string;
+  error?: string;
+  msg?: string;
+  detail?: string;
+  [key: string]: unknown;
+}
+
 function extractServerMessage(error: AxiosError): string | null {
-  const data = error.response?.data as any;
+  const data = error.response?.data as ServerErrorData;
   
   return data?.message || 
          data?.error || 
@@ -148,17 +157,20 @@ export function handleError(
 
   if (isAxiosError(error)) {
     const status = error.response?.status;
-    const serverMessage = extractServerMessage(error);
+    const serverMessage = extractServerMessage(error) ?? undefined;
     
     if (error.response) {
       const message = getContextualMessage(context, status!, serverMessage);
       
-      return {
+      const result: ErrorResult = {
         message,
-        status,
         type: getErrorType(status),
         context,
       };
+      if (typeof status === 'number') {
+        result.status = status;
+      }
+      return result;
     }
     
     if (error.request) {
@@ -214,7 +226,7 @@ export const errorHandlers = {
   secretaria: (error: unknown) => handleError(error, 'SecretariaData'),
 };
 
-// ===== HOOK PARA USAR EM COMPONENTES =====
+// ===== HOOK COMPONENTES =====
 import { useState, useCallback } from 'react';
 
 export function useErrorHandler() {

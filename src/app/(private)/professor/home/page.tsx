@@ -13,6 +13,7 @@ export default function ProfessorHomePage(): React.JSX.Element {
 
   const user = {
     nome: "Professor",
+    email: "professor@email.com", // adicione o campo de email conforme exigido pela interface User
     // adicione outros campos conforme necessário
   };
 

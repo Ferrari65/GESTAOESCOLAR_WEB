@@ -12,7 +12,8 @@ export default function SecretariaTurmasPage(): React.JSX.Element {
   const { user, signOut } = useContext(AuthContext);
   const { secretariaData, error } = useSecretariaData();
 
-  const handleMenuClick = useCallback((itemId: string): void => {
+  // ✅ CORRIGIDO: Removido parâmetro não utilizado
+  const handleMenuClick = useCallback((): void => {
     // Lógica do menu
   }, []);
 

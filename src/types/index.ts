@@ -1,4 +1,3 @@
-
 export type UserRole = 'ROLE_SECRETARIA' | 'ROLE_PROFESSOR' | 'ROLE_ALUNO';
 
 export interface User {
@@ -87,4 +86,13 @@ export interface MenuItem {
 export interface SidebarProps {
   className?: string;
   onMenuItemClick?: (itemId: string) => void;
+}
+
+// ===== JWT PAYLOAD INTERFACE =====
+export interface JWTPayload {
+  sub?: string;
+  email?: string;
+  role: UserRole;
+  exp: number;
+  iat?: number;
 }

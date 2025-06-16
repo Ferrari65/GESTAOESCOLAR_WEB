@@ -4,7 +4,7 @@ import { createContext, useState, ReactNode, useEffect, useCallback, useMemo } f
 import { useRouter, usePathname } from 'next/navigation';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { log } from '@/utils/logger';
-import { AUTH_CONFIG, API_CONFIG, getDashboardRoute } from '@/config/app';
+import { API_CONFIG, getDashboardRoute } from '@/config/app'; // ✅ Removido AUTH_CONFIG não usado
 import type { User, AuthError } from '@/types';
 
 // ===== ✅ USING UNIFIED TOKEN MANAGER =====
@@ -34,14 +34,7 @@ interface AuthContextData {
   setShowWelcome: (show: boolean) => void;
 }
 
-// ===== DEFININDO JWTPayload LOCALMENTE =====
-interface JWTPayload {
-  sub?: string;
-  email?: string;
-  role: string;
-  exp: number;
-  iat?: number;
-}
+// ===== ✅ INTERFACE JWT LOCAL - removida não utilizada =====
 
 // ===== LOGIN ENDPOINTS =====
 const LOGIN_ENDPOINTS = ['/secretaria/auth/login', '/professor/auth/login'] as const;
@@ -54,14 +47,16 @@ const api = axios.create({
 });
 
 // ===== ERROR HANDLING =====
-const createError = (type: AuthError['type'], message: string, statusCode?: number): AuthError => ({
-  type, message, statusCode
-});
+const createError = (type: AuthError['type'], message: string, statusCode?: number): AuthError => {
+  return statusCode !== undefined
+    ? { type, message, statusCode }
+    : { type, message };
+};
 
 const handleAxiosError = (error: AxiosError): AuthError => {
   if (error.response) {
     const status = error.response.status;
-    const serverMessage = (error.response.data as any)?.message;
+    const serverMessage = (error.response.data as { message?: string })?.message;
     
     switch (status) {
       case 401:
@@ -117,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return {
         email: payload.email || payload.sub || '',
-        role: payload.role,
+        role: payload.role as User['role'], // ✅ Cast explícito para resolver tipo
         id: userId
       };
     } catch (error) {
@@ -243,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setError(null);
     setShowWelcome(false);
-    TokenManager.remove(); // ✅ Using unified manager
+    TokenManager.remove();
     router.push('/login');
   }, [router]);
 

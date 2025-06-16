@@ -26,16 +26,8 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
   // ===== HOOKS =====
   const modo = professorEditando ? 'edicao' : 'cadastro';
   
-  const {
-    form,
-    enviarFormulario,
-    carregando,
-    erro,
-    mensagemSucesso,
-    limparMensagens
-  } = useProfessorForm({
+  const professorFormOptions = {
     modo: professorEditando ? 'edicao' : 'cadastro',
-    professorId: professorEditando?.id_professor,
     dadosIniciais: professorEditando || undefined,
     onSucesso: useCallback(() => {
       console.log(' Professor processado com sucesso!');
@@ -44,7 +36,20 @@ export const CadastroProfessor: React.FC<CadastroProfessorProps> = ({
       setMostrarFormulario(false);
       onSuccess?.();
     }, [onSuccess])
-  });
+  } as any;
+
+  if (professorEditando && professorEditando.id_professor) {
+    (professorFormOptions as any).professorId = professorEditando.id_professor;
+  }
+
+  const {
+    form,
+    enviarFormulario,
+    carregando,
+    erro,
+    mensagemSucesso,
+    limparMensagens
+  } = useProfessorForm(professorFormOptions);
 
   const { buscarProfessorPorId } = useProfessorActions();
 

@@ -52,11 +52,9 @@ export const useDisciplinaForm = ({
         const disciplinaDTO = formDataToDisciplinaDTO(data, user.id);
         await createDisciplina(disciplinaDTO);
 
-        // Limpar formulário após sucesso
         form.reset();
         setSuccessMessage("Disciplina cadastrada com sucesso!");
 
-        // ✅ Log apenas em desenvolvimento
         if (process.env.NODE_ENV === 'development') {
           log.success('DISCIPLINA', `Disciplina "${data.nome}" cadastrada`);
         }
@@ -69,8 +67,8 @@ export const useDisciplinaForm = ({
         if (onSuccess) {
           onSuccess();
         }
-      } catch (err: any) {
-        // ✅ Log de erro apenas em desenvolvimento
+      } catch (err: unknown) {
+
         if (process.env.NODE_ENV === 'development') {
           log.error('DISCIPLINA', 'Erro ao cadastrar disciplina', err);
         }

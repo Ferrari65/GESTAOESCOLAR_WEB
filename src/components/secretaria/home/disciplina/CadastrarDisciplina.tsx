@@ -9,9 +9,10 @@ import { DisciplinaDataSection } from "./DisciplinaDataSection";
 import { getAPIClient } from "@/services/api";
 import { AuthContext } from "@/contexts/AuthContext";
 
+
 import type { SituacaoType } from "@/schemas";
 
-// ===== TIPOS LOCAIS (definidos aqui mesmo) =====
+// ===== TIPOS =====
 interface Disciplina {
   idDisciplina: string;
   nome: string;
@@ -31,12 +32,12 @@ import ListarDisciplinas from "./ListarDisciplina";
 export default function CadastroDisciplina({ onSuccess, onCancel }: DisciplinaFormProps) {
   const { user } = useContext(AuthContext);
 
-  // Estado local para armazenar a lista de disciplinas
+
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [loadingList, setLoadingList] = useState<boolean>(true);
   const [errorList, setErrorList] = useState<string | null>(null);
 
-  // Função que busca as disciplinas do backend
+
   const fetchDisciplinas = async () => {
     if (!user?.id) return;
 
@@ -47,20 +48,25 @@ export default function CadastroDisciplina({ onSuccess, onCancel }: DisciplinaFo
       const api = getAPIClient();
       const response = await api.get<Disciplina[]>(`/disciplina/secretaria/${user.id}`);
       setDisciplinas(response.data);
-    } catch (err: any) {
-      // Pode extrair mensagem de erro aqui
-      setErrorList(err.response?.data?.message || err.message || "Erro ao carregar disciplinas");
+    } catch (err: unknown) {
+      
+      if (err && typeof err === "object" && "response" in err && err.response && typeof err.response === "object" && "data" in err.response && err.response.data && typeof err.response.data === "object" && "message" in err.response.data) {
+        setErrorList((err.response as { data: { message?: string } }).data.message || "Erro ao carregar disciplinas");
+      } else if (err && typeof err === "object" && "message" in err) {
+        setErrorList((err as { message?: string }).message || "Erro ao carregar disciplinas");
+      } else {
+        setErrorList("Erro ao carregar disciplinas");
+      }
     } finally {
       setLoadingList(false);
     }
   };
 
-  // dispara o fetch assim que o user.id estiver disponível
+ 
   useEffect(() => {
     fetchDisciplinas();
   }, [user?.id]);
 
-  // Chamamos useDisciplinaForm passando o onRefetch = fetchDisciplinas
   const {
     form,
     onSubmit,
@@ -69,8 +75,8 @@ export default function CadastroDisciplina({ onSuccess, onCancel }: DisciplinaFo
     successMessage,
     clearMessages
   } = useDisciplinaForm({
-    ...(onSuccess && { onSuccess }),         // se quiser algo extra no sucesso
-    onRefetch: fetchDisciplinas // after create, recarrega lista
+    ...(onSuccess && { onSuccess }),         
+    onRefetch: fetchDisciplinas 
   });
 
   return (
@@ -138,7 +144,7 @@ export default function CadastroDisciplina({ onSuccess, onCancel }: DisciplinaFo
 
       {/* Listagem de Disciplinas */}
       <div className="mt-8">
-        {/* Passamos toda a lista via prop, junto com estados de loading / error */}
+        {/*  lista via prop*/}
         <ListarDisciplinas
           disciplinas={disciplinas}
           loading={loadingList}

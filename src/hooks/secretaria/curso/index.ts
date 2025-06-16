@@ -97,20 +97,21 @@ function handleCursoError(error: unknown, context: string): string {
   }
 }
 
-function mapCursoResponse(curso: any): CursoResponse {
-  if (!curso) {
+function mapCursoResponse(curso: unknown): CursoResponse { // ✅ CORRIGIDO: any → unknown
+  if (!curso || typeof curso !== 'object') {
     throw new Error('Dados do curso inválidos');
   }
 
-  const idCurso = curso.idCurso;
-  const nome = curso.nome;
-  const duracao = curso.duracao;
-  const id_secretaria = curso.id_secretaria;
-  const situacao = curso.situacao;
+  const cursoObj = curso as Record<string, unknown>; // ✅ CORRIGIDO: Cast seguro
+  const idCurso = cursoObj.idCurso;
+  const nome = cursoObj.nome;
+  const duracao = cursoObj.duracao;
+  const id_secretaria = cursoObj.id_secretaria;
+  const situacao = cursoObj.situacao;
 
   if (!idCurso) throw new Error('ID do curso não encontrado');
-  if (!nome || nome.trim() === '') throw new Error('Nome do curso não encontrado');
-  if (!duracao || Number(duracao) <= 0) throw new Error('Duração do curso inválida');
+  if (!nome || typeof nome !== 'string' || nome.trim() === '') throw new Error('Nome do curso não encontrado');
+  if (!duracao || typeof duracao !== 'number' || Number(duracao) <= 0) throw new Error('Duração do curso inválida');
 
   return {
     idCurso: String(idCurso),
@@ -121,7 +122,7 @@ function mapCursoResponse(curso: any): CursoResponse {
   };
 }
 
-function validateCursoData(curso: any): boolean {
+function validateCursoData(curso: unknown): boolean { // ✅ CORRIGIDO: any → unknown
   if (!curso) return false;
   try {
     mapCursoResponse(curso);

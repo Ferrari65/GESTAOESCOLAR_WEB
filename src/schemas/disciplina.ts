@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SituacaoEnum, cargaHorariaValidator, type SituacaoType } from './shared';
+import { SituacaoEnum, cargaHorariaValidator } from './shared';
 
 // ===== SCHEMAS DE DISCIPLINA =====
 

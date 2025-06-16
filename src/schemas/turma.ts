@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SituacaoEnum, TurnoEnum, type SituacaoType, type TurnoType } from './shared';
+import { SituacaoEnum, TurnoEnum} from './shared';
 
 // ===== SCHEMAS DE TURMA =====
 

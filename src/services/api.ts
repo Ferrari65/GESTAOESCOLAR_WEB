@@ -33,7 +33,9 @@ export function getAuthHeaders(): Record<string, string> {
 function getErrorMessage(error: AxiosError): string {
   if (error.response) {
     const { status, data } = error.response;
-    const serverMessage = (data as any)?.message || (data as any)?.error;
+    // ✅ CORRIGIDO: Tipagem específica em vez de any
+    const serverMessage = (data as { message?: string; error?: string })?.message || 
+                         (data as { message?: string; error?: string })?.error;
     
     switch (status) {
       case 400:
@@ -121,12 +123,12 @@ export const api = getAPIClient();
 // ===== TRATAMENTO DE ERROS DA API =====
 export function handleApiError(
   error: AxiosError | Error | unknown, 
-  context?: string
+  // ✅ REMOVIDO: context não usado, parâmetro opcional removido
 ): { message: string; status?: number } {
   if (axios.isAxiosError(error)) {
     const message = getErrorMessage(error);
     const status = error.response?.status;
-    return { message, status };
+    return status !== undefined ? { message, status } : { message };
   }
   
   const message = error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN;

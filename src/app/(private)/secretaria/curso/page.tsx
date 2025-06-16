@@ -11,8 +11,9 @@ export default function SecretariaCursoPage(): React.JSX.Element {
   const { user, signOut } = useContext(AuthContext);
   const { secretariaData } = useSecretariaData();
 
-  const handleMenuClick = useCallback((itemId: string): void => {
-
+  // ✅ CORRIGIDO: Removido parâmetro não utilizado
+  const handleMenuClick = useCallback((): void => {
+    // Lógica do menu (vazia por enquanto)
   }, []);
 
   const handleSignOut = useCallback((): void => {
@@ -22,7 +23,7 @@ export default function SecretariaCursoPage(): React.JSX.Element {
   }, [signOut]);
 
   const handleCursoSuccess = useCallback(() => {
-
+    // Lógica de sucesso (vazia por enquanto)
   }, []);
 
   if (!user) {

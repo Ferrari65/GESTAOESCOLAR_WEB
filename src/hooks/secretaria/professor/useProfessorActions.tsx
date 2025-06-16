@@ -66,7 +66,7 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
       }
       
       // Buscar o professor específico na lista
-      const professorEncontrado = professoresList.find((prof: any) => {
+      const professorEncontrado = professoresList.find((prof: Record<string, unknown>) => { // ✅ CORRIGIDO: any → Record<string, unknown>
         const id = prof.id_professor || prof.idProfessor || prof.id || prof.CPF;
         return id === professorId;
       });
@@ -76,20 +76,21 @@ export const useProfessorActions = (): UseProfessorActionsReturn => {
       }
 
       // Mapear os dados para o formato esperado
+      const professor = professorEncontrado as Record<string, unknown>; // ✅ CORRIGIDO: Cast seguro
       const professorMapeado: ProfessorResponse = {
-        id_professor: professorEncontrado.id_professor || professorEncontrado.idProfessor || professorEncontrado.id || professorId,
-        nome: professorEncontrado.nome || '',
-        email: professorEncontrado.email || '',
-        cpf: professorEncontrado.cpf || professorEncontrado.CPF || '',
-        telefone: professorEncontrado.telefone || '',
-        data_nasc: professorEncontrado.data_nasc || '',
-        sexo: professorEncontrado.sexo || 'M',
-        logradouro: professorEncontrado.logradouro || '',
-        bairro: professorEncontrado.bairro || '',
-        numero: professorEncontrado.numero || 0,
-        cidade: professorEncontrado.cidade || '',
-        uf: professorEncontrado.uf || professorEncontrado.UF || '',
-        situacao: professorEncontrado.situacao || 'ATIVO'
+        id_professor: String(professor.id_professor || professor.idProfessor || professor.id || professorId),
+        nome: String(professor.nome || ''),
+        email: String(professor.email || ''),
+        cpf: String(professor.cpf || professor.CPF || ''),
+        telefone: String(professor.telefone || ''),
+        data_nasc: String(professor.data_nasc || ''),
+        sexo: String(professor.sexo || 'M'),
+        logradouro: String(professor.logradouro || ''),
+        bairro: String(professor.bairro || ''),
+        numero: Number(professor.numero || 0),
+        cidade: String(professor.cidade || ''),
+        uf: String(professor.uf || professor.UF || ''),
+        situacao: (professor.situacao as SituacaoType) || 'ATIVO'
       };
 
       // Validação final

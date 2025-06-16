@@ -118,27 +118,22 @@ export const useProfessorList = (): UseProfessorListReturn => {
       // Lista de endpoints para testar
       const endpointsParaTestar = [
         `/professor/secretaria/${user.id}`,
-        `/professor/${user.id}/secretaria`, 
-        `/professor/lista/${user.id}`,
-        `/professor/all/${user.id}`,
-        `/professor`,
-        `/professores`,
-        `/professores/secretaria/${user.id}`
+        `/professor/${user.id}/secretaria` 
       ];
 
       let response = null;
 
-      // Tentar cada endpoint até um funcionar
+
       for (const endpoint of endpointsParaTestar) {
         try {
           response = await api.get(endpoint);
-          break; // Se chegou aqui, funcionou
-        } catch (err: any) {
-          // Se for o último endpoint e ainda não funcionou
+          break; 
+        } catch (_: unknown) {
+          
           if (endpoint === endpointsParaTestar[endpointsParaTestar.length - 1]) {
             throw new Error('Nenhum endpoint de professores funcionou. Verifique a API.');
           }
-          continue; // Tenta o próximo
+          continue; 
         }
       }
 
@@ -174,8 +169,7 @@ export const useProfessorList = (): UseProfessorListReturn => {
       }
 
       setProfessores(professoresValidos);
-      
-      // ✅ Log apenas em desenvolvimento
+  
       if (process.env.NODE_ENV === 'development') {
         log.success('PROFESSOR', `${professoresValidos.length} professores carregados`);
       }

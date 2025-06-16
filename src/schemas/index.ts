@@ -112,7 +112,7 @@ export {
 } from './turma';
 
 // ===== FUNÇÃO UTILITÁRIA GERAL =====
-export function validateSchema<T>(schema: any, data: unknown): {
+export function validateSchema<T>(schema: { parse: (data: unknown) => T }, data: unknown): { // ✅ CORRIGIDO: any → específico
   success: boolean;
   data?: T;
   errors?: string[];
@@ -120,11 +120,11 @@ export function validateSchema<T>(schema: any, data: unknown): {
   try {
     const result = schema.parse(data);
     return { success: true, data: result };
-  } catch (error: any) {
-    if (error?.errors) {
+  } catch (error: unknown) { // ✅ CORRIGIDO: any → unknown
+    if (error && typeof error === 'object' && 'errors' in error) { // ✅ CORRIGIDO: verificação de tipo
       return {
         success: false,
-        errors: error.errors.map((err: any) => err.message)
+        errors: (error as { errors: { message: string }[] }).errors.map((err) => err.message) // ✅ CORRIGIDO: any → tipo específico
       };
     }
     return {

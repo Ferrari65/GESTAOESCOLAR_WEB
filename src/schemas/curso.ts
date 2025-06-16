@@ -1,5 +1,6 @@
+// ===== CURSO SCHEMA =====
 import { z } from 'zod';
-import { SituacaoEnum, duracaoValidator, type SituacaoType } from './shared';
+import { SituacaoEnum, duracaoValidator } from './shared'; // ✅ Removido SituacaoType não usado
 
 // ===== SCHEMAS DE CURSO =====
 
