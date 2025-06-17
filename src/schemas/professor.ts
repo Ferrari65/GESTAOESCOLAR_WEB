@@ -70,6 +70,19 @@ export const professorCadastroSchema = z.object({
   uf: z.string().length(2, 'UF deve ter 2 caracteres').toUpperCase(),
 });
 
+export const alunoCadastroSchema = professorCadastroSchema.extend({
+  matricula: z.string()
+    .min(1, 'Matrícula é obrigatória')
+    .max(20, 'Matrícula deve ter no máximo 20 caracteres')
+    .trim()
+    .regex(/^[0-9]+$/, 'Matrícula deve conter apenas números')
+    .transform(val => val.toUpperCase()),
+
+    id_turma: z.string()
+    .min(1, 'turma é obrigatório')
+    
+})
+
 // ===== SCHEMA PARA EDIÇÃO =====
 export const professorEdicaoSchema = z.object({
 
@@ -147,6 +160,20 @@ export const professorResponseSchema = z.object({
   data_nasc: z.string(),
 });
 
+export const alunoCreateDTOSchema = professorCreateDTOSchema
+ .omit({ id_secretaria: true})
+ .extend({
+  matricula: z.string(),
+ });
+
+ export const alunoResponseSchema = professorResponseSchema
+ .omit({ id_professor: true})
+ .extend({
+  id_aluno: z.string(),
+  matricula: z.string(),
+  id_turma: z.string(),
+ });
+
 // ===== TIPOS =====
 export type ProfessorCadastroData = z.infer<typeof professorCadastroSchema>;
 export type ProfessorEdicaoData = z.infer<typeof professorEdicaoSchema>;
@@ -155,9 +182,13 @@ export type ProfessorUpdateDTO = z.infer<typeof professorUpdateDTOSchema>;
 export type ProfessorResponse = z.infer<typeof professorResponseSchema>;
 export type SituacaoType = z.infer<typeof SituacaoTypeEnum>;
 
+export type AlunoCadastroData = z.infer<typeof alunoCadastroSchema>;
+export type AlunoCreateDTO = z.infer<typeof alunoCreateDTOSchema>;
+
 // ===== UTILITÁRIOS =====
 export const cleanCPF = (cpf: string): string => cpf.replace(/[^\d]/g, '');
 export const cleanPhone = (phone: string): string => phone.replace(/[^\d]/g, '');
+export type AlunoResponse = z.infer<typeof alunoResponseSchema>;
 
 export const formatCPF = (cpf: string): string => {
   const clean = cleanCPF(cpf);

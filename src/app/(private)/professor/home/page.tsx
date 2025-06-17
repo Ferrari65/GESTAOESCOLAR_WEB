@@ -13,7 +13,7 @@ export default function ProfessorHomePage(): React.JSX.Element {
 
   const user = {
     nome: "Professor",
-
+    email: "professor@email.com",
   };
 
   const handleLogout = (): void => {

@@ -215,6 +215,18 @@ export const turmaDTOSchema = z.object({
   turno: TurnoTypeEnum,
 });
 
+export const turmaListItemSchema = z.object({
+  id: z.string(),
+  idTurma: z.string().optional(),
+  nome: z.string(),
+  ano: z.string(),
+  turno: TurnoTypeEnum,
+  curso: z.object({
+    nome: z.string(),
+  }).optional(),
+  nomeCurso: z.string().optional(),
+});
+
 // ===== TIPOS DERIVADOS =====
 export type SituacaoType = z.infer<typeof SituacaoTypeEnum>;
 export type TurnoType = z.infer<typeof TurnoTypeEnum>;
@@ -233,6 +245,7 @@ export type DisciplinaResponse = z.infer<typeof disciplinaResponse>;
 
 export type TurmaFormData = z.infer<typeof turmaFormSchema>;
 export type TurmaDTO = z.infer<typeof turmaDTOSchema>;
+export type turmaListItem = z.infer <typeof turmaListItemSchema>;
 
 // ===== FUNÇÕES DE VALIDAÇÃO =====
 export const validateCursoForm = (data: unknown) => {

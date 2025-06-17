@@ -3,7 +3,8 @@ import type {
   ProfessorEdicaoData,
   ProfessorCreateDTO,   
   ProfessorUpdateDTO,
-  ProfessorResponse
+  AlunoCadastroData,
+  AlunoCreateDTO,
 } from '@/schemas/professor';
 
 // ===== UTILITÁRIOS =====
@@ -41,6 +42,24 @@ export const transformProfessorCadastroToDTO = (
     id_secretaria: secretariaId
   };
 };
+
+// ==== ALUNO CADASTRO ====
+
+export const transformAlunoCadastroToDTO = (
+  data: AlunoCadastroData,
+  ): AlunoCreateDTO => {
+    const professorDTO = transformProfessorCadastroToDTO(data, 'fake-id');
+
+    const {id_secretaria, ...baseDTO} = professorDTO; 
+
+    return {
+      ...baseDTO,
+      matricula: data.matricula.trim(),
+    }
+  }
+// ==== TURMA MAPPER
+
+export const mapTurmaFromBackend = (turmaBackand: any): 
 
 // ===== EDIÇÃO  =====
 export const transformProfessorEdicaoToDTO = (
