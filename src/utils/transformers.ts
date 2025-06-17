@@ -59,7 +59,7 @@ export const transformAlunoCadastroToDTO = (
   }
 // ==== TURMA MAPPER
 
-export const mapTurmaFromBackend = (turmaBackand: any): 
+export const mapTurmaFromBackend = (turmaBackand: any): TurmaListItem | 
 
 // ===== EDIÇÃO  =====
 export const transformProfessorEdicaoToDTO = (
