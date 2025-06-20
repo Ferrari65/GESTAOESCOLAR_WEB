@@ -245,7 +245,7 @@ export type DisciplinaResponse = z.infer<typeof disciplinaResponse>;
 
 export type TurmaFormData = z.infer<typeof turmaFormSchema>;
 export type TurmaDTO = z.infer<typeof turmaDTOSchema>;
-export type turmaListItem = z.infer <typeof turmaListItemSchema>;
+export type TurmaListItem = z.infer <typeof turmaListItemSchema>;
 
 // ===== FUNÇÕES DE VALIDAÇÃO =====
 export const validateCursoForm = (data: unknown) => {

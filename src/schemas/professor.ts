@@ -6,7 +6,7 @@ const validateCPF = (cpf: string): boolean => {
   const cleanCPF = cpf.replace(/[^\d]/g, '');
   if (cleanCPF.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
-  return true; // simplified
+  return true; 
 };
 
 const validatePhone = (phone: string): boolean => {
@@ -82,6 +82,20 @@ export const alunoCadastroSchema = professorCadastroSchema.extend({
     .min(1, 'turma é obrigatório')
     
 })
+
+export const turmaListItemSchema = z.object({
+  id: z.string(),
+  idTurma: z.string().optional(),
+  nome: z.string(),
+  ano: z.string(),
+  turno: z.enum(['DIURNO', 'NOTURNO']),
+  curso: z.object({
+    nome: z.string(),
+  }).optional(),
+  nomeCurso: z.string().optional(),
+});
+
+export type TurmaListItem = z.infer<typeof turmaListItemSchema>;
 
 // ===== SCHEMA PARA EDIÇÃO =====
 export const professorEdicaoSchema = z.object({

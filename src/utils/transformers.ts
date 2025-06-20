@@ -5,13 +5,15 @@ import type {
   ProfessorUpdateDTO,
   AlunoCadastroData,
   AlunoCreateDTO,
+  TurmaListItem  // ← ADICIONADO
 } from '@/schemas/professor';
+
 
 // ===== UTILITÁRIOS =====
 export const cleanCPF = (cpf: string): string => cpf.replace(/[^\d]/g, '');
 export const cleanPhone = (phone: string): string => phone.replace(/[^\d]/g, '');
 
-// ===== CADASTRO =====
+// ===== PROFESSOR - CADASTRO =====
 export const transformProfessorCadastroToDTO = (
   data: ProfessorCadastroData,
   secretariaId: string
@@ -43,32 +45,84 @@ export const transformProfessorCadastroToDTO = (
   };
 };
 
-// ==== ALUNO CADASTRO ====
-
+// ===== ALUNO - CADASTRO (CORRIGIDO) =====
 export const transformAlunoCadastroToDTO = (
-  data: AlunoCadastroData,
-  ): AlunoCreateDTO => {
-    const professorDTO = transformProfessorCadastroToDTO(data, 'fake-id');
+  data: AlunoCadastroData
+): AlunoCreateDTO => {
+  
+  // Reutiliza toda a lógica do professor
+  const professorDTO = transformProfessorCadastroToDTO(data, 'fake-id');
+  
+  // Remove campo do professor e adiciona do aluno
+  const { id_secretaria, ...baseDTO } = professorDTO; 
 
-    const {id_secretaria, ...baseDTO} = professorDTO; 
+  return {
+    ...baseDTO,
+    matricula: data.matricula, // Já processado pelo schema (.trim() + .toUpperCase())
+  };
+};
 
-    return {
-      ...baseDTO,
-      matricula: data.matricula.trim(),
+// ===== TURMA MAPPER (CORRIGIDO) =====
+export const mapTurmaFromBackend = (turmaBackend: any): TurmaListItem | null => {
+  try {
+    console.log('🔄 [TURMA-MAPPER] Mapeando turma:', turmaBackend);
+
+    const id = turmaBackend.idTurma || turmaBackend.id || turmaBackend.id_turma || '';
+    const nome = turmaBackend.nome || '';
+    const ano = turmaBackend.ano || '';
+    const turno = turmaBackend.turno || 'DIURNO';
+
+    // Buscar nome do curso em diferentes estruturas
+    let nomeCurso = '';
+    if (turmaBackend.curso?.nome) {
+      nomeCurso = turmaBackend.curso.nome;
+    } else if (turmaBackend.nomeCurso) {
+      nomeCurso = turmaBackend.nomeCurso;
+    } else if (turmaBackend.curso_nome) {
+      nomeCurso = turmaBackend.curso_nome;
     }
+
+    if (!id || !nome) {
+      console.log('❌ [TURMA-MAPPER] Turma inválida - falta ID ou nome');
+      return null;
+    }
+
+    const turmaMapeada: TurmaListItem = {
+      id: String(id),
+      nome: String(nome).trim(),
+      ano: String(ano),
+      turno: turno as 'DIURNO' | 'NOTURNO',
+      nomeCurso: nomeCurso || 'Curso não informado'
+    };
+
+    console.log('✅ [TURMA-MAPPER] Turma mapeada:', turmaMapeada);
+    return turmaMapeada;
+
+  } catch (error) {
+    console.error('❌ [TURMA-MAPPER] Erro ao mapear turma:', error);
+    return null;
   }
-// ==== TURMA MAPPER
+};
 
-export const mapTurmaFromBackend = (turmaBackand: any): TurmaListItem | 
+// ===== HELPER PARA VALIDAÇÃO =====
+export const validateTurmaData = (turma: any): boolean => {
+  if (!turma) return false;
+  try {
+    mapTurmaFromBackend(turma);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
-// ===== EDIÇÃO  =====
+// ===== PROFESSOR - EDIÇÃO =====
 export const transformProfessorEdicaoToDTO = (
   data: ProfessorEdicaoData
 ): ProfessorUpdateDTO => {
   
   const updateDTO: ProfessorUpdateDTO = {};
   
-  console.log(' [EDIT] Dados do formulário:', data);
+  console.log('🔄 [EDIT] Dados do formulário:', data);
 
   if (data.nome !== undefined) {
     updateDTO.nome = data.nome.trim();
@@ -117,15 +171,14 @@ export const transformProfessorEdicaoToDTO = (
     updateDTO.senha = data.senha.trim();
   }
 
-  console.log(' [EDIT] DTO final (só campos alterados):', updateDTO);
-  console.log(' [EDIT] Total de campos que serão atualizados:', Object.keys(updateDTO).length);
+  console.log('✅ [EDIT] DTO final (só campos alterados):', updateDTO);
+  console.log('📊 [EDIT] Total de campos que serão atualizados:', Object.keys(updateDTO).length);
   
   return updateDTO;
 };
 
 export const prepareEmptyFormForEdit = (): ProfessorEdicaoData => {
   return {
-    
     nome: '',
     email: '',
     telefone: '',
@@ -140,7 +193,6 @@ export const prepareEmptyFormForEdit = (): ProfessorEdicaoData => {
     cpf: '', 
   };
 };
-
 
 export const hasChangesToUpdate = (data: ProfessorEdicaoData): boolean => {
   const fieldsToCheck = [
