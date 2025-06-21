@@ -116,7 +116,7 @@ const TokenManager = {
         localStorage.setItem(AUTH_CONFIG.secretariaIdKey, secretariaId);
       }
     } catch (error) {
-      console.error('Erro ao salvar token:', getErrorMessage(error));
+      // Falha silenciosa para não quebrar o fluxo
     }
   },
 
@@ -130,13 +130,8 @@ const TokenManager = {
       }
       
       const localToken = localStorage.getItem(AUTH_CONFIG.tokenLocalStorageKey);
-      if (localToken) {
-        return localToken;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Erro ao obter token:', getErrorMessage(error));
+      return localToken;
+    } catch {
       return null;
     }
   },
@@ -148,8 +143,8 @@ const TokenManager = {
       document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=/; max-age=0`;
       localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
       localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
-    } catch (error) {
-      console.error('Erro ao remover token:', getErrorMessage(error));
+    } catch {
+      // Falha silenciosa
     }
   },
 
@@ -169,7 +164,7 @@ const TokenManager = {
       const hasRole = Boolean(payload.role);
       
       return !isExpired && hasRole;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -240,53 +235,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userId = payload.sub || '';
       }
 
-      const userData = {
+      return {
         email: payload.email || payload.sub || '',
         role: payload.role,
         id: userId
       };
-
-      return userData;
-    } catch (error) {
-      console.error('Erro ao processar token:', error);
+    } catch {
       return null;
     }
   }, []);
 
   const refreshAuth = useCallback(async (): Promise<void> => {
-    try {
-      const token = TokenManager.get();
-      
-      if (!token) {
-        setUser(null);
-        return;
-      }
+    const token = TokenManager.get();
+    
+    if (!token) {
+      setUser(null);
+      return;
+    }
 
-      if (!TokenManager.isValid(token)) {
-        TokenManager.remove();
-        setUser(null);
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          router.push('/login');
-        }
-        return;
-      }
+    if (!TokenManager.isValid(token)) {
+      TokenManager.remove();
+      setUser(null);
+      return;
+    }
 
-      const userData = processToken(token);
-      if (userData) {
-        setUser(userData);
-      } else {
-        TokenManager.remove();
-        setUser(null);
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          router.push('/login');
-        }
-      }
-    } catch (error) {
-      console.error('Erro na verificação de autenticação:', error);
+    const userData = processToken(token);
+    if (userData) {
+      setUser(userData);
+    } else {
       TokenManager.remove();
       setUser(null);
     }
-  }, [processToken, router]);
+  }, [processToken]);
 
   const attemptLogin = useCallback(async (credentials: LoginCredentials): Promise<AxiosResponse<LoginResponse>> => {
     const errors: AxiosError[] = [];
@@ -345,7 +325,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 2000);
       
     } catch (error: unknown) {
-      console.error('Erro no login:', error);
       if (isAxiosError(error)) {
         setError(handleAxiosError(error as AxiosError<ApiErrorResponse>));
       } else if (error && typeof error === 'object' && 'type' in error) {
@@ -369,26 +348,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   }, [router]);
 
-  // ===== INICIALIZAÇÃO =====
+  // ===== INICIALIZAÇÃO (CORRIGIDA) =====
   useEffect(() => {
-    const initializeAuth = async (): Promise<void> => {
+    const initializeAuth = (): void => {
       try {
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout de inicialização')), 5000)
-        );
+        const token = TokenManager.get();
         
-        await Promise.race([refreshAuth(), timeoutPromise]);
-      } catch (error) {
-        console.warn('Timeout na inicialização da autenticação:', error);
+        if (!token) {
+          setUser(null);
+          setIsInitialized(true);
+          return;
+        }
+
+        if (!TokenManager.isValid(token)) {
+          TokenManager.remove();
+          setUser(null);
+          setIsInitialized(true);
+          return;
+        }
+
+        const userData = processToken(token);
+        if (userData) {
+          setUser(userData);
+        } else {
+          TokenManager.remove();
+          setUser(null);
+        }
+        
+        setIsInitialized(true);
+      } catch {
         TokenManager.remove();
         setUser(null);
-      } finally {
         setIsInitialized(true);
       }
     };
 
     initializeAuth();
-  }, [refreshAuth]);
+  }, [processToken]);
 
   // ===== CONTEXT VALUE =====
   const contextValue = useMemo((): AuthContextData => ({

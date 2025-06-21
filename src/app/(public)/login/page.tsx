@@ -43,17 +43,20 @@ export default function LoginPage(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (!mounted || !isInitialized || showWelcome) return;
+    // Só redireciona se estiver tudo pronto E se estiver na página de login
+    if (!mounted || !isInitialized || showWelcome || !user) return;
     
-    if (user) {
-      console.log(' [LOGIN] Usuário já logado, redirecionando...');
-      const dashboardRoutes = {
-        'ROLE_SECRETARIA': '/secretaria/alunos',
-        'ROLE_PROFESSOR': '/professor/home',
-      };
-      
-      const redirectPath = dashboardRoutes[user.role as keyof typeof dashboardRoutes] || '/login';
-      router.push(redirectPath);
+    // Só redireciona se estiver realmente na página de login
+    if (window.location.pathname !== '/login') return;
+    
+    const dashboardRoutes = {
+      'ROLE_SECRETARIA': '/secretaria/alunos',
+      'ROLE_PROFESSOR': '/professor/home',
+    };
+    
+    const redirectPath = dashboardRoutes[user.role as keyof typeof dashboardRoutes];
+    if (redirectPath) {
+      router.replace(redirectPath);
     }
   }, [mounted, isInitialized, user, router, showWelcome]);
 
@@ -62,25 +65,18 @@ export default function LoginPage(): JSX.Element {
     await signIn(data);
   };
 
+
   if (showWelcome && user) {
     return (
       <WelcomeAnimation 
         userName={user.email} 
-        onComplete={() => {
-        }}
+        onComplete={() => {}}
       />
     );
   }
 
-  if (!mounted || (!isInitialized && !user)) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600 text-sm">Verificando autenticação...</p>
-        </div>
-      </main>
-    );
+  if (!mounted) {
+    return null;
   }
 
   return (

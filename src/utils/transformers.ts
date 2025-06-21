@@ -1,3 +1,5 @@
+// src/utils/transformers.ts
+
 import type { 
   ProfessorCadastroData,
   ProfessorEdicaoData,
@@ -5,9 +7,17 @@ import type {
   ProfessorUpdateDTO,
   AlunoCadastroData,
   AlunoCreateDTO,
-  TurmaListItem  // ← ADICIONADO
+  TurmaListItem  
 } from '@/schemas/professor';
 
+import type { 
+  TurmaFormData,
+  TurmaDTO,
+  CursoFormData,
+  CursoDTO,
+  DisciplinaFormData,
+  DisciplinaDTO
+} from '@/schemas/index';
 
 // ===== UTILITÁRIOS =====
 export const cleanCPF = (cpf: string): string => cpf.replace(/[^\d]/g, '');
@@ -45,7 +55,7 @@ export const transformProfessorCadastroToDTO = (
   };
 };
 
-// ===== ALUNO - CADASTRO (CORRIGIDO) =====
+// ===== ALUNO - CADASTRO =====
 export const transformAlunoCadastroToDTO = (
   data: AlunoCadastroData
 ): AlunoCreateDTO => {
@@ -62,59 +72,6 @@ export const transformAlunoCadastroToDTO = (
   };
 };
 
-// ===== TURMA MAPPER (CORRIGIDO) =====
-export const mapTurmaFromBackend = (turmaBackend: any): TurmaListItem | null => {
-  try {
-    console.log('🔄 [TURMA-MAPPER] Mapeando turma:', turmaBackend);
-
-    const id = turmaBackend.idTurma || turmaBackend.id || turmaBackend.id_turma || '';
-    const nome = turmaBackend.nome || '';
-    const ano = turmaBackend.ano || '';
-    const turno = turmaBackend.turno || 'DIURNO';
-
-    // Buscar nome do curso em diferentes estruturas
-    let nomeCurso = '';
-    if (turmaBackend.curso?.nome) {
-      nomeCurso = turmaBackend.curso.nome;
-    } else if (turmaBackend.nomeCurso) {
-      nomeCurso = turmaBackend.nomeCurso;
-    } else if (turmaBackend.curso_nome) {
-      nomeCurso = turmaBackend.curso_nome;
-    }
-
-    if (!id || !nome) {
-      console.log('❌ [TURMA-MAPPER] Turma inválida - falta ID ou nome');
-      return null;
-    }
-
-    const turmaMapeada: TurmaListItem = {
-      id: String(id),
-      nome: String(nome).trim(),
-      ano: String(ano),
-      turno: turno as 'DIURNO' | 'NOTURNO',
-      nomeCurso: nomeCurso || 'Curso não informado'
-    };
-
-    console.log('✅ [TURMA-MAPPER] Turma mapeada:', turmaMapeada);
-    return turmaMapeada;
-
-  } catch (error) {
-    console.error('❌ [TURMA-MAPPER] Erro ao mapear turma:', error);
-    return null;
-  }
-};
-
-// ===== HELPER PARA VALIDAÇÃO =====
-export const validateTurmaData = (turma: any): boolean => {
-  if (!turma) return false;
-  try {
-    mapTurmaFromBackend(turma);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 // ===== PROFESSOR - EDIÇÃO =====
 export const transformProfessorEdicaoToDTO = (
   data: ProfessorEdicaoData
@@ -124,19 +81,19 @@ export const transformProfessorEdicaoToDTO = (
   
   console.log('🔄 [EDIT] Dados do formulário:', data);
 
-  if (data.nome !== undefined) {
+  if (data.nome !== undefined && data.nome !== '') {
     updateDTO.nome = data.nome.trim();
   }
 
-  if (data.email !== undefined) {
+  if (data.email !== undefined && data.email !== '') {
     updateDTO.email = data.email.trim().toLowerCase();
   }
 
-  if (data.telefone !== undefined) {
+  if (data.telefone !== undefined && data.telefone !== '') {
     updateDTO.telefone = cleanPhone(data.telefone);
   }
 
-  if (data.data_nasc !== undefined) {
+  if (data.data_nasc !== undefined && data.data_nasc !== '') {
     updateDTO.data_nasc = data.data_nasc;
   }
 
@@ -144,30 +101,30 @@ export const transformProfessorEdicaoToDTO = (
     updateDTO.sexo = data.sexo;
   }
 
-  if (data.logradouro !== undefined) {
+  if (data.logradouro !== undefined && data.logradouro !== '') {
     updateDTO.logradouro = data.logradouro.trim();
   }
 
-  if (data.bairro !== undefined) {
+  if (data.bairro !== undefined && data.bairro !== '') {
     updateDTO.bairro = data.bairro.trim();
   }
 
-  if (data.numero !== undefined) {
+  if (data.numero !== undefined && data.numero !== '') {
     const numeroInt = parseInt(data.numero, 10);
     if (!isNaN(numeroInt)) {
       updateDTO.numero = numeroInt;
     }
   }
 
-  if (data.cidade !== undefined) {
+  if (data.cidade !== undefined && data.cidade !== '') {
     updateDTO.cidade = data.cidade.trim();
   }
 
-  if (data.uf !== undefined) {
+  if (data.uf !== undefined && data.uf !== '') {
     updateDTO.UF = data.uf.toUpperCase();
   }
 
-  if (data.senha !== undefined) {
+  if (data.senha !== undefined && data.senha !== '') {
     updateDTO.senha = data.senha.trim();
   }
 
@@ -236,4 +193,166 @@ export const getFieldsToUpdate = (data: ProfessorEdicaoData): string[] => {
   return Object.entries(data)
     .filter(([key, value]) => value !== undefined && value !== '' && key !== 'cpf')
     .map(([key]) => fieldNames[key] || key);
+};
+
+// ===== TURMA - TRANSFORMADORES =====
+export const transformTurmaFormToDTO = (data: TurmaFormData): TurmaDTO => {
+  console.log('🔄 [TURMA-TRANSFORMER] Transformando dados do formulário:', data);
+  
+  const turmaDTO: TurmaDTO = {
+    nome: data.nome.trim(),
+    ano: data.ano,
+    turno: data.turno,
+  };
+  
+  console.log('✅ [TURMA-TRANSFORMER] DTO criado:', turmaDTO);
+  return turmaDTO;
+};
+
+// ===== TURMA MAPPER COM LOOKUP DE CURSO =====
+export const mapTurmaWithCurso = (turmaBackend: any, cursos: any[]): TurmaListItem | null => {
+  try {
+    console.log('🔄 [TURMA-CURSO] Mapeando turma com lookup de curso:', turmaBackend);
+
+    const id = turmaBackend.idTurma || turmaBackend.id || turmaBackend.id_turma || '';
+    const nome = turmaBackend.nome || '';
+    const ano = turmaBackend.ano || '';
+    const turno = turmaBackend.turno || 'DIURNO';
+    
+    // ✨ BUSCAR ID DO CURSO NA TURMA
+    const idCurso = turmaBackend.idCurso || 
+                   turmaBackend.id_curso || 
+                   turmaBackend.curso_id ||
+                   turmaBackend.cursoId || '';
+
+    console.log('🔍 [TURMA-CURSO] ID do curso na turma:', idCurso);
+    console.log('📚 [TURMA-CURSO] Cursos disponíveis:', cursos.length);
+
+    // ✨ FAZER LOOKUP DO NOME DO CURSO
+    let nomeCurso = '';
+    if (idCurso && cursos.length > 0) {
+      const cursoEncontrado = cursos.find(curso => 
+        String(curso.idCurso) === String(idCurso)
+      );
+      
+      if (cursoEncontrado) {
+        nomeCurso = cursoEncontrado.nome;
+        console.log('✅ [TURMA-CURSO] Curso encontrado:', nomeCurso);
+      } else {
+        console.log('❌ [TURMA-CURSO] Curso não encontrado para ID:', idCurso);
+        console.log('📋 [TURMA-CURSO] IDs disponíveis:', cursos.map(c => c.idCurso));
+      }
+    } else {
+      console.log('⚠️ [TURMA-CURSO] ID do curso não encontrado na turma');
+    }
+
+    if (!id || !nome) {
+      console.log('❌ [TURMA-CURSO] Turma inválida - falta ID ou nome');
+      return null;
+    }
+
+    const turmaMapeada: TurmaListItem = {
+      id: String(id),
+      nome: String(nome).trim(),
+      ano: String(ano),
+      turno: turno as 'DIURNO' | 'NOTURNO',
+      nomeCurso: nomeCurso || 'Curso não encontrado'
+    };
+
+    console.log('✅ [TURMA-CURSO] Turma mapeada com curso:', turmaMapeada);
+    return turmaMapeada;
+
+  } catch (error) {
+    console.error('❌ [TURMA-CURSO] Erro ao mapear turma:', error);
+    return null;
+  }
+};
+
+// ===== TURMA MAPPER ORIGINAL (FALLBACK) =====
+export const mapTurmaFromBackend = (turmaBackend: any): TurmaListItem | null => {
+  try {
+    console.log('🔄 [TURMA-MAPPER] Mapeando turma:', turmaBackend);
+
+    const id = turmaBackend.idTurma || turmaBackend.id || turmaBackend.id_turma || '';
+    const nome = turmaBackend.nome || '';
+    const ano = turmaBackend.ano || '';
+    const turno = turmaBackend.turno || 'DIURNO';
+
+    // Buscar nome do curso em diferentes estruturas
+    let nomeCurso = '';
+    if (turmaBackend.curso?.nome) {
+      nomeCurso = turmaBackend.curso.nome;
+    } else if (turmaBackend.nomeCurso) {
+      nomeCurso = turmaBackend.nomeCurso;
+    } else if (turmaBackend.curso_nome) {
+      nomeCurso = turmaBackend.curso_nome;
+    }
+
+    if (!id || !nome) {
+      console.log('❌ [TURMA-MAPPER] Turma inválida - falta ID ou nome');
+      return null;
+    }
+
+    const turmaMapeada: TurmaListItem = {
+      id: String(id),
+      nome: String(nome).trim(),
+      ano: String(ano),
+      turno: turno as 'DIURNO' | 'NOTURNO',
+      nomeCurso: nomeCurso || 'Curso não informado'
+    };
+
+    console.log('✅ [TURMA-MAPPER] Turma mapeada:', turmaMapeada);
+    return turmaMapeada;
+
+  } catch (error) {
+    console.error('❌ [TURMA-MAPPER] Erro ao mapear turma:', error);
+    return null;
+  }
+};
+
+// ===== HELPER PARA VALIDAÇÃO =====
+export const validateTurmaData = (turma: any): boolean => {
+  if (!turma) return false;
+  try {
+    mapTurmaFromBackend(turma);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// ===== CURSO - TRANSFORMADORES =====
+export const transformCursoFormToDTO = (
+  data: CursoFormData,
+  secretariaId: string
+): CursoDTO => {
+  console.log('🔄 [CURSO-TRANSFORMER] Transformando dados do formulário:', data);
+  
+  const cursoDTO: CursoDTO = {
+    nome: data.nome.trim(),
+    duracao: Number(data.duracao),
+    id_secretaria: secretariaId,
+    situacao: 'ATIVO',
+  };
+  
+  console.log('✅ [CURSO-TRANSFORMER] DTO criado:', cursoDTO);
+  return cursoDTO;
+};
+
+// ===== DISCIPLINA - TRANSFORMADORES =====
+export const formDataToDisciplinaDTO = (
+  data: DisciplinaFormData, 
+  secretariaId: string
+): DisciplinaDTO => {
+  console.log('🔄 [DISCIPLINA-TRANSFORMER] Transformando dados do formulário:', data);
+
+  const disciplinaDTO: DisciplinaDTO = {
+    nome: data.nome.trim(),
+    ementa: data.ementa.trim(),
+    cargaHoraria: data.cargaHoraria,
+    id_secretaria: secretariaId
+  };
+
+  console.log('✅ [DISCIPLINA-TRANSFORMER] DTO criado:', disciplinaDTO);
+  return disciplinaDTO;
 };

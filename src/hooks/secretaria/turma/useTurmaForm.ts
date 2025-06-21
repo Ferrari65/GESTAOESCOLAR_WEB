@@ -1,10 +1,12 @@
+// src/hooks/secretaria/turma/useTurmaForm.ts
+
 import { useState, useContext, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAPIClient, handleApiError } from '@/services/api';
-import { transformTurmaFormToDTO } from '@/utils/transformers';
-import { turmaFormSchema, type TurmaFormData } from '@/schemas/index';
+// CORREÇÃO: Remover a importação da função inexistente e importar apenas os tipos necessários
+import { turmaFormSchema, type TurmaFormData, type TurmaDTO } from '@/schemas/index';
 
 export interface TurmaFormProps {
   onSuccess?: () => void;
@@ -61,9 +63,22 @@ export const useTurmaForm = ({
       setError(null);
 
       try {
-        const turmaDTO = transformTurmaFormToDTO(data);
+        // CORREÇÃO: Criar o DTO diretamente, sem função intermediária
+        const turmaDTO: TurmaDTO = {
+          nome: data.nome.trim(),
+          ano: data.ano,
+          turno: data.turno,
+        };
+
         const api = getAPIClient();
         const endpoint = `/turma/criar/${user.id}/${data.id_curso}`;
+        
+        console.log('🚀 [TURMA] Enviando dados:', {
+          endpoint,
+          turmaDTO,
+          secretariaId: user.id,
+          cursoId: data.id_curso
+        });
         
         await api.post(endpoint, turmaDTO);
 
@@ -79,6 +94,8 @@ export const useTurmaForm = ({
         onSuccess?.();
         
       } catch (err: unknown) {
+        console.error('❌ [TURMA] Erro ao cadastrar:', err);
+        
         const { message, status } = handleApiError(err, 'CreateTurma');
         
         let errorMessage = message;

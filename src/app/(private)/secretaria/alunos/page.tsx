@@ -1,15 +1,16 @@
+
 'use client';
 
 import React, { useContext, useCallback } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useSecretariaData } from '@/hooks/shared';
 import UFEMSidebar from '@/components/secretaria/UFEMSidebar';
-// import CadastroProfessor from '@/components/login/secretaria/professor/CadastroProfessor';
+import { CadastroAluno } from '@/components/secretaria/home/aluno/CadastroAluno';
 import { LoadingSpinner } from '@/components/ui/loading/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import Header from '@/components/secretaria/header';
 
-export default function SecretariaHomePage(): React.JSX.Element {
+export default function SecretariaAlunosPage(): React.JSX.Element {
   const { user, signOut } = useContext(AuthContext);
   const { secretariaData, loading, error } = useSecretariaData();
 
@@ -23,11 +24,10 @@ export default function SecretariaHomePage(): React.JSX.Element {
     }
   }, [signOut]);
 
-//   const handleProfessorSuccess = useCallback(() => {
-//     console.log('Professor cadastrado com sucesso!');
-//   }, []); FUTURO CADASTRO ALUNO COMPONENT
+  const handleAlunoSuccess = useCallback(() => {
+    console.log(' Aluno cadastrado com sucesso!');
+  }, []);
 
-  // Loading state
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -36,7 +36,6 @@ export default function SecretariaHomePage(): React.JSX.Element {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
@@ -56,40 +55,18 @@ export default function SecretariaHomePage(): React.JSX.Element {
       <main className="flex-1 ml-64" role="main">
         <div className="p-8">
           <div className="max-w-8xl mx-auto space-y-8">
-          
-          <Header 
-            title="Gerenciamento de Turmas"
-            subtitle="Bem-vindo(a),"
-            secretariaData={secretariaData}
-            user={user}
-            onSignOut={handleSignOut}
-          />
-
-          {/* Área Principal - Cadastro de Professor */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Cadastro de alunos
-                  </h2>
-                  <p className="text-gray-600 mt-1">
-                    Adicione novos Alunos ao sistema acadêmico
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-gray-600">Online</span>
-                </div>
-              </div>
-            </div>
             
-            <div className="p-6">
-              {/* <CadastroProfessor onSuccess={handleProfessorSuccess} /> */}
-              {/* futuro cadastro alunos */}
-            </div>
+            <Header 
+              title="Gerenciamento de Alunos"
+              subtitle="Bem-vindo(a),"
+              secretariaData={secretariaData}
+              user={user}
+              onSignOut={handleSignOut}
+            />
+
+            <CadastroAluno onSuccess={handleAlunoSuccess} />
+            
           </div>
-        </div>  
         </div>
       </main>
     </div>
