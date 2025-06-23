@@ -403,7 +403,7 @@ export default function ProfessorProvasPage(): React.JSX.Element {
             />
 
             {/* Navegação por Abas */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className=" text-gray-600 bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
                   

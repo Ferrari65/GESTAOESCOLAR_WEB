@@ -1,5 +1,5 @@
 // src/hooks/shared/index.ts
-// USANDO O ENDPOINT CORRETO: /professor/{id_professor}
+// ← ALTERADO: Endpoint corrigido para /professor/{id_professor}
 
 import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';

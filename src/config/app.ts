@@ -1,4 +1,3 @@
-
 // API 
 
 export const API_CONFIG = {
@@ -26,7 +25,7 @@ export const AUTH_CONFIG = {
   
   dashboardRoutes: {
     ROLE_SECRETARIA: '/secretaria/alunos',
-    ROLE_PROFESSOR: '/professor/home',
+    ROLE_PROFESSOR: '/professor/atividades', // ← ALTERADO: era '/professor/home'
   }
 } as const;
 

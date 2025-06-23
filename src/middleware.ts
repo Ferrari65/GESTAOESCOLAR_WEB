@@ -6,16 +6,15 @@ const AUTH_CONFIG = {
   tokenCookieName: 'nextauth.token',
   publicPaths: ['/login', '/redefinir'],
   
-
   protectedRoutes: {
     '/secretaria': 'ROLE_SECRETARIA',
     '/professor': 'ROLE_PROFESSOR'
   },
   
+  // ✅ Professor inicia em /atividades (página já existe)
   dashboardRoutes: {
     ROLE_SECRETARIA: '/secretaria/alunos',
     ROLE_PROFESSOR: '/professor/atividades'
-
   }
 } as const;
 
@@ -74,7 +73,6 @@ function isTokenValid(token: string): { valid: boolean; payload?: JWTPayload } {
 }
 
 function hasPermissionForRoute(userRole: string, pathname: string): boolean {
-
   let hasProtectedRoute = false;
   let requiredRole = '';
   
@@ -138,7 +136,6 @@ export default function middleware(request: NextRequest) {
 
   // ===== USUÁRIO AUTENTICADO COM TOKEN VÁLIDO =====
   
-
   if (pathname === '/login') {
     const dashboardRoute = getDashboardRoute(payload.role);
     return NextResponse.redirect(new URL(dashboardRoute, request.url));
@@ -148,7 +145,6 @@ export default function middleware(request: NextRequest) {
     const dashboardRoute = getDashboardRoute(payload.role);
     return NextResponse.redirect(new URL(dashboardRoute, request.url));
   }
-
 
   if (!hasPermissionForRoute(payload.role, pathname)) {
     const dashboardRoute = getDashboardRoute(payload.role);
