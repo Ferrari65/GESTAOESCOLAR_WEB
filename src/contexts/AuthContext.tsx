@@ -71,7 +71,7 @@ const LOGIN_ENDPOINTS = [
 
 const DASHBOARD_ROUTES = {
   ROLE_SECRETARIA: '/secretaria/alunos', 
-  ROLE_PROFESSOR: '/professor/home'
+  ROLE_PROFESSOR: '/professor/atividades'
 } as const;
 
 // ===== AXIOS INSTANCE =====

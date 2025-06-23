@@ -14,7 +14,7 @@ const AUTH_CONFIG = {
   
   dashboardRoutes: {
     ROLE_SECRETARIA: '/secretaria/alunos',
-    ROLE_PROFESSOR: '/professor/home'
+    ROLE_PROFESSOR: '/professor/atividades'
 
   }
 } as const;
