@@ -3,7 +3,7 @@
 import { createContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError } from 'axios';
 
 // ===== INTERFACES =====
 interface LoginResponse {
@@ -46,12 +46,10 @@ interface JWTPayload {
   email?: string;
   role: string;
   exp: number;
-  iat?: number;
 }
 
 interface ApiErrorResponse {
   message?: string;
-  error?: string;
 }
 
 // ===== CONFIGURAÇÕES =====
@@ -59,7 +57,6 @@ const AUTH_CONFIG = {
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   requestTimeout: 10000,
   tokenCookieName: 'nextauth.token',
-  tokenLocalStorageKey: 'nextauth.token',
   secretariaIdKey: 'secretaria_id',
   maxAge: 604800,
 } as const;
@@ -84,29 +81,14 @@ const api = axios.create({
   }
 });
 
-function isAxiosError(error: unknown): error is AxiosError {
-  return error !== null && typeof error === 'object' && 'isAxiosError' in error;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  if (typeof error === 'string') {
-    return error;
-  }
-  return 'Erro desconhecido';
-}
-
 // ===== TOKEN MANAGER =====
 const TokenManager = {
-  save: (token: string, secretariaId?: string): void => {
-    if (typeof window === 'undefined') return;
+  save: (token: string, secretariaId?: string) => {
+    if (typeof document === 'undefined') return;
     try {
       const expires = new Date(Date.now() + AUTH_CONFIG.maxAge * 1000).toUTCString();
       const isSecure = window.location.protocol === 'https:';
       document.cookie = `${AUTH_CONFIG.tokenCookieName}=${token}; path=/; expires=${expires}; SameSite=Lax${isSecure ? '; Secure' : ''}`;
-      localStorage.setItem(AUTH_CONFIG.tokenLocalStorageKey, token);
       if (secretariaId) {
         localStorage.setItem(AUTH_CONFIG.secretariaIdKey, secretariaId);
       }
@@ -114,65 +96,36 @@ const TokenManager = {
   },
 
   get: (): string | null => {
-    if (typeof window === 'undefined') return null;
+    if (typeof document === 'undefined') return null;
     try {
-      const cookieMatch = document.cookie.match(new RegExp(`${AUTH_CONFIG.tokenCookieName}=([^;]+)`));
-      if (cookieMatch?.[1]) return cookieMatch[1];
-      return localStorage.getItem(AUTH_CONFIG.tokenLocalStorageKey);
+      const match = document.cookie.match(new RegExp(`${AUTH_CONFIG.tokenCookieName}=([^;]+)`));
+      return match?.[1] || null;
     } catch {
       return null;
     }
   },
 
-  remove: (): void => {
-    if (typeof window === 'undefined') return;
+  remove: () => {
+    if (typeof document === 'undefined') return;
     try {
       document.cookie = `${AUTH_CONFIG.tokenCookieName}=; path=/; max-age=0`;
-      localStorage.removeItem(AUTH_CONFIG.tokenLocalStorageKey);
       localStorage.removeItem(AUTH_CONFIG.secretariaIdKey);
     } catch {}
   },
 
   getSecretariaId: (): string | null => {
     if (typeof window === 'undefined') return null;
-    try {
-      return localStorage.getItem(AUTH_CONFIG.secretariaIdKey);
-    } catch {
-      return null;
-    }
+    return localStorage.getItem(AUTH_CONFIG.secretariaIdKey);
   },
 
   isValid: (token: string): boolean => {
     try {
       const payload = jwtDecode<JWTPayload>(token);
-      const isExpired = payload.exp <= Date.now() / 1000;
-      const hasRole = Boolean(payload.role);
-      return !isExpired && hasRole;
+      return payload.exp > Date.now() / 1000 && Boolean(payload.role);
     } catch {
       return false;
     }
   }
-};
-
-const createError = (type: AuthError['type'], message: string, statusCode?: number): AuthError => ({
-  type, message, statusCode
-});
-
-const handleAxiosError = (error: AxiosError<ApiErrorResponse>): AuthError => {
-  if (error.response) {
-    const status = error.response.status;
-    const serverMessage = error.response.data?.message;
-    switch (status) {
-      case 400: return createError('validation', serverMessage || 'Dados inválidos fornecidos.', status);
-      case 401: return createError('unauthorized', 'Email ou senha incorretos.', status);
-      case 403: return createError('unauthorized', 'Sem permissão para acessar.', status);
-      case 404: return createError('server', 'Serviço não encontrado.', status);
-      case 500: return createError('server', 'Erro interno do servidor.', status);
-      default: return createError('server', serverMessage || 'Erro no servidor.', status);
-    }
-  }
-  if (error.request) return createError('network', 'Erro de conexão. Verifique sua internet.');
-  return createError('unknown', error.message || 'Erro desconhecido.');
 };
 
 // ===== CONTEXT =====
@@ -186,132 +139,124 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
-  const clearError = useCallback(() => setError(null), []);
+  const clearError = () => setError(null);
 
-  const getRedirectPath = useCallback((role: string): string => {
-    return DASHBOARD_ROUTES[role as keyof typeof DASHBOARD_ROUTES] || '/login';
-  }, []);
+  const getRedirectPath = (role: string) =>
+    DASHBOARD_ROUTES[role as keyof typeof DASHBOARD_ROUTES] || '/login';
 
-  const processToken = useCallback((token: string, secretariaId?: string): User | null => {
+  const processToken = (token: string, secretariaId?: string): User | null => {
     try {
       if (!TokenManager.isValid(token)) return null;
       const payload = jwtDecode<JWTPayload>(token);
-      const finalId = payload.role === 'ROLE_SECRETARIA'
+      const id = payload.role === 'ROLE_SECRETARIA'
         ? secretariaId || TokenManager.getSecretariaId() || payload.sub || ''
         : payload.sub || '';
-
-      return {
-        email: payload.email || payload.sub || '',
-        role: payload.role,
-        id: finalId
-      };
+      return { id, email: payload.email || payload.sub || '', role: payload.role };
     } catch {
       return null;
     }
-  }, []);
+  };
 
-  const refreshAuth = useCallback(async (): Promise<void> => {
+  const refreshAuth = async () => {
     const token = TokenManager.get();
-    if (!token || !TokenManager.isValid(token)) {
-      TokenManager.remove();
-      setUser(null);
-      return;
+    if (token && TokenManager.isValid(token)) {
+      const userData = processToken(token);
+      if (userData) {
+        setUser(userData);
+        return;
+      }
     }
-    const userData = processToken(token);
-    if (userData) {
-      setUser(userData);
-    } else {
-      TokenManager.remove();
-      setUser(null);
-    }
-  }, [processToken]);
+    TokenManager.remove();
+    setUser(null);
+  };
 
-  const attemptLogin = useCallback(async (credentials: LoginCredentials): Promise<AxiosResponse<LoginResponse>> => {
-    const errors: AxiosError[] = [];
-    for (const endpoint of LOGIN_ENDPOINTS) {
-      try {
-        const response = await api.post<LoginResponse>(endpoint, {
-          email: credentials.email,
-          senha: credentials.password
-        });
-        return response;
-      } catch (error: unknown) {
-        if (isAxiosError(error)) {
-          const axiosError = error as AxiosError<ApiErrorResponse>;
-          errors.push(axiosError);
-          if (axiosError.response?.status === 401 || axiosError.response?.status === 400) {
-            throw handleAxiosError(axiosError);
-          }
+  const attemptLogin = async (credentials: LoginCredentials) => {
+  for (const endpoint of LOGIN_ENDPOINTS) {
+    try {
+      const { data } = await api.post<LoginResponse>(endpoint, {
+        email: credentials.email,
+        senha: credentials.password,
+      });
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const serverMsg = error.response?.data?.message;
+
+        if (status === 404) {
+          throw { type: 'validation', message: 'Usuário não cadastrado.', statusCode: status };
+        }
+        if (status === 401) {
+          throw { type: 'unauthorized', message: 'Senha incorreta.', statusCode: status };
+        }
+        if (status === 400) {
+          throw { type: 'validation', message: serverMsg || 'Dados inválidos.', statusCode: status };
+        }
+        if (status === 500) {
+          throw { type: 'server', message: 'Erro interno do servidor.', statusCode: status };
         }
       }
     }
-    throw createError('server', 'Nenhum servidor disponível.');
-  }, []);
+  }
+  throw { type: 'server', message: 'Falha ao autenticar. Tente novamente.' };
+};
 
-  const signIn = useCallback(async (credentials: LoginCredentials): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      TokenManager.remove();
-      const response = await attemptLogin(credentials);
-      const data = response.data;
-      if (!data.token || !data.id) throw createError('server', 'Resposta inválida do servidor');
+const signIn = async (credentials: LoginCredentials) => {
+  setIsLoading(true);
+  setError(null);
+  try {
+    TokenManager.remove();
+    const { token, id } = await attemptLogin(credentials);
+    if (!token || !id) throw { type: 'server', message: 'Resposta inválida do servidor' };
 
-      TokenManager.save(data.token, data.id);
-      const userData = processToken(data.token, data.id);
-      if (!userData) throw createError('server', 'Token inválido recebido');
+    TokenManager.save(token, id);
+    const userData = processToken(token, id);
+    if (!userData) throw { type: 'server', message: 'Token inválido recebido' };
 
-      setUser(userData);
-      setShowWelcome(true);
+    setUser(userData);
+    setShowWelcome(true);
+    setTimeout(() => {
+      setShowWelcome(false);
+      router.push(getRedirectPath(userData.role));
+    }, 2000);
 
-      setTimeout(() => {
-        setShowWelcome(false);
-        router.push(getRedirectPath(userData.role));
-      }, 2000);
+  } catch (error: any) {
+    setError(error);
+    TokenManager.remove();
+    setUser(null);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-    } catch (error: unknown) {
-      if (isAxiosError(error)) setError(handleAxiosError(error as AxiosError<ApiErrorResponse>));
-      else if (error && typeof error === 'object' && 'type' in error) setError(error as AuthError);
-      else setError(createError('unknown', getErrorMessage(error)));
-      TokenManager.remove();
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [attemptLogin, processToken, getRedirectPath, router]);
 
-  const signOut = useCallback((): void => {
+  const signOut = () => {
+    TokenManager.remove();
     setUser(null);
     setError(null);
     setShowWelcome(false);
-    TokenManager.remove();
     router.push('/login');
-  }, [router]);
+  };
 
   useEffect(() => {
-    const initializeAuth = (): void => {
-      try {
-        const token = TokenManager.get();
-        if (!token || !TokenManager.isValid(token)) {
-          TokenManager.remove();
-          setUser(null);
-          setIsInitialized(true);
-          return;
-        }
+    const initialize = () => {
+      const token = TokenManager.get();
+      if (token && TokenManager.isValid(token)) {
         const userData = processToken(token);
-        if (userData) setUser(userData);
-        else TokenManager.remove();
-      } catch {
+        if (userData) {
+          setUser(userData);
+        } else {
+          TokenManager.remove();
+        }
+      } else {
         TokenManager.remove();
-        setUser(null);
-      } finally {
-        setIsInitialized(true);
       }
+      setIsInitialized(true);
     };
-    initializeAuth();
-  }, [processToken]);
+    initialize();
+  }, []);
 
-  const contextValue = useMemo((): AuthContextData => ({
+  const contextValue = useMemo(() => ({
     signIn,
     signOut,
     isLoading,
@@ -322,7 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshAuth,
     showWelcome,
     setShowWelcome
-  }), [signIn, signOut, isLoading, user, error, clearError, isInitialized, refreshAuth, showWelcome]);
+  }), [signIn, signOut, isLoading, user, error, isInitialized, showWelcome]);
 
   return (
     <AuthContext.Provider value={contextValue}>
